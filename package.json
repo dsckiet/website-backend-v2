@@ -1,0 +1,21 @@
+{
+    "name": "nodejs-starter",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "start": "nodemon node index.js"
+    },
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "body-parser": "^1.18.3",
+        "cors": "^2.8.5",
+        "dotenv": "^7.0.0",
+        "ejs": "^2.6.1",
+        "express": "^4.16.4",
+        "mongoose": "^5.4.21",
+        "nodemon": "^1.19.1",
+        "path": "^0.12.7"
+    }
+}
