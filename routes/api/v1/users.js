@@ -3,13 +3,13 @@ const router = express.Router();
 
 // load controller
 const {
-    users,
-    addUser,
-    updateUser,
-    deleteUser,
-    login,
-    profile,
-    updateProfile
+	users,
+	addUser,
+	updateUser,
+	deleteUser,
+	login,
+	profile,
+	updateProfile
 } = require("../../../controllers/users_controller");
 
 // middlewares
