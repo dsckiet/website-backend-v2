@@ -10,7 +10,7 @@ module.exports.users = async (req, res) => {
 		sortBy ? sortBy : "name";
 		sortType ? sortType : "asc";
 		users = await User.find({ role: { $in: role } }).sort({
-			"[sortBy]": sortType
+			[sortBy]: sortType
 		});
 	}
 	res.status(200).json({ message: "success", error: false, data: users });
@@ -26,16 +26,25 @@ module.exports.addUser = async (req, res) => {
 			data: null
 		});
 	} else {
-		if (req.user.role === "core") {
-			role = "member";
+		if (req.user.role === "core" && (role === "lead" || role === "core")) {
+			res.status(401).json({
+				message: "Forbidden: Core members cannot add lead/core members",
+				error: true,
+				data: req.body
+			});
+		} else {
+			user = await User.create(req.body);
+			let password = user._id.toString().slice(16, 24);
+			const salt = await bcrypt.genSalt(10);
+			user.password = await bcrypt.hash(password, salt);
+			await user.save();
+			// schedule to send details by email to user!!
+			res.status(200).json({
+				message: "success",
+				error: false,
+				data: null
+			});
 		}
-		user = await User.create(req.body);
-		let password = user._id.toString().slice(16, 24);
-		const salt = await bcrypt.genSalt(10);
-		user.password = await bcrypt.hash(password, salt);
-		await user.save();
-		// send details by email to user!!
-		res.status(200).json({ message: "success", error: false, data: null });
 	}
 };
 
@@ -59,7 +68,7 @@ module.exports.login = async (req, res) => {
 		.json({ message: "success", error: false, data: user });
 };
 
-module.exports.updateUser = async (req, res) => {
+module.exports.approveUser = async (req, res) => {
 	let { role, showOnWebsite } = req.body;
 	let user = await User.findById(req.params.id);
 	user.role = role;
@@ -71,8 +80,8 @@ module.exports.updateUser = async (req, res) => {
 module.exports.deleteUser = async (req, res) => {
 	let user = User.findById(req.params.id);
 	if (req.user.role === "core" && user.role !== "member") {
-		res.status(403).json({
-			message: "Not Authorized.",
+		res.status(401).json({
+			message: "Forbidden: Core members cannot delete lead/core members",
 			error: true,
 			data: null
 		});

@@ -5,7 +5,7 @@ const router = express.Router();
 const {
 	users,
 	addUser,
-	updateUser,
+	approveUser,
 	deleteUser,
 	login,
 	profile,
@@ -19,9 +19,9 @@ const { userValidation } = require("../../../middlewares/validations");
 
 // routes
 router.get("/", coreAuth, catchErrors(users));
-router.post("/", coreAuth, userValidation, catchErrors(addUser));
-router.put("/:id", leadAuth, catchErrors(updateUser));
-router.delete("/:id", coreAuth, catchErrors(deleteUser));
+router.post("/add", coreAuth, userValidation, catchErrors(addUser));
+router.put("/approve/:id", leadAuth, catchErrors(approveUser));
+router.delete("/delete/:id", coreAuth, catchErrors(deleteUser));
 router.post("/login", catchErrors(login));
 router.get("/profile", allAuth, catchErrors(profile));
 router.post("/profile", allAuth, catchErrors(updateProfile));
