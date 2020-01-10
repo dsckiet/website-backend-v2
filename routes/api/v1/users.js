@@ -3,13 +3,13 @@ const router = express.Router();
 
 // load controller
 const {
-    users,
-    addUser,
-    updateUser,
-    deleteUser,
-    login,
-    profile,
-    updateProfile
+	users,
+	addUser,
+	approveUser,
+	deleteUser,
+	login,
+	profile,
+	updateProfile
 } = require("../../../controllers/users_controller");
 
 // middlewares
@@ -20,7 +20,7 @@ const { userValidation } = require("../../../middlewares/validations");
 // routes
 router.get("/", coreAuth, catchErrors(users));
 router.post("/", coreAuth, userValidation, catchErrors(addUser));
-router.put("/:id", leadAuth, catchErrors(updateUser));
+router.put("/:id", leadAuth, catchErrors(approveUser));
 router.delete("/:id", coreAuth, catchErrors(deleteUser));
 router.post("/login", catchErrors(login));
 router.get("/profile", allAuth, catchErrors(profile));
