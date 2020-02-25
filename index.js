@@ -37,11 +37,16 @@ app.use("*", notFound);
 //Error Handlers
 app.use(sendErrors);
 
+const { ENV, PORT } = require("./config/index");
 //Setting up server
 startServer = async () => {
 	try {
-		await app.listen(process.env.PORT);
-		console.log(`Server is up and running on Port ${process.env.PORT}`);
+		await app.listen(PORT);
+		console.log(
+			`ENV: ${
+				ENV == "dev" ? "Development" : "Production"
+			}\nServer is up and running on Port ${PORT}`
+		);
 	} catch (err) {
 		console.log("Error in running server.");
 	}

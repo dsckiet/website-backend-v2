@@ -18,7 +18,7 @@ const { allAuth, coreAuth, leadAuth } = require("../../../middlewares/auth");
 const { userValidation } = require("../../../middlewares/validations");
 
 // routes
-router.get("/", coreAuth, catchErrors(users));
+router.get("/", catchErrors(users));
 router.post("/", coreAuth, userValidation, catchErrors(addUser));
 router.put("/:id", leadAuth, catchErrors(approveUser));
 router.delete("/:id", coreAuth, catchErrors(deleteUser));
