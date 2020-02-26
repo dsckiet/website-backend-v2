@@ -4,17 +4,18 @@ const { JWT_PRIVATE_KEY } = require("../config/index");
 
 const UserSchema = new mongoose.Schema(
 	{
-		name: { type: String },
+		name: { type: String, required: true },
 		email: { type: String, required: true },
-		password: { type: String },
+		password: { type: String, required: true },
 		role: {
 			type: String,
 			default: "member",
-			enum: ["member", "core", "lead"]
+			enum: ["member", "core", "lead"],
+			required: true
 		},
 		contact: { type: Number },
 		img: { type: String },
-		designation: { type: String },
+		designation: { type: String, required: true },
 		github: { type: String },
 		linkedin: { type: String },
 		twitter: { type: String },

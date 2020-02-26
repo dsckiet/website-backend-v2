@@ -27,7 +27,7 @@ module.exports.users = async (req, res) => {
 };
 
 module.exports.addUser = async (req, res) => {
-	let { name, email, role } = req.body;
+	let { name, email, role, designation, password } = req.body;
 	let user = await User.findOne({ email });
 	if (user) {
 		sendError(res, "Already exist!!", BAD_REQUEST);
@@ -38,14 +38,20 @@ module.exports.addUser = async (req, res) => {
 				"Forbidden: Core members cannot add lead/core members",
 				NOT_AUTHORIZED
 			);
+		} else if (req.user.role === "lead" && role === "lead") {
+			sendError(
+				res,
+				"Forbidden: A lead cannot add another lead",
+				NOT_AUTHORIZED
+			)
 		} else {
 			user = await User.create(req.body);
-			let password = user._id.toString().slice(16, 24);
+			password = user._id.toString().slice(16, 24);
 			const salt = await bcrypt.genSalt(10);
 			user.password = await bcrypt.hash(password, salt);
 			await user.save();
 			// schedule to send details by email to user!!
-			sendSuccess(res, null);
+			sendSuccess(res, user);
 		}
 	}
 };
