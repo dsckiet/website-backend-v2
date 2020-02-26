@@ -17,7 +17,7 @@ module.exports.users = async (req, res) => {
 };
 
 module.exports.addUser = async (req, res) => {
-	let { name, email, role } = req.body;
+	let { name, email, role, designation, password } = req.body;
 	let user = await User.findOne({ email });
 	if (user) {
 		res.status(400).json({
@@ -32,9 +32,15 @@ module.exports.addUser = async (req, res) => {
 				error: true,
 				data: req.body
 			});
+		} else if (req.user.role === "lead" && role === "lead") {
+			res.status(401).json({
+				message: "Forbidden: A lead cannot add another lead",
+				error: true,
+				data: req.body
+			});
 		} else {
 			user = await User.create(req.body);
-			let password = user._id.toString().slice(16, 24);
+			password = user._id.toString().slice(16, 24);
 			const salt = await bcrypt.genSalt(10);
 			user.password = await bcrypt.hash(password, salt);
 			await user.save();
@@ -42,7 +48,7 @@ module.exports.addUser = async (req, res) => {
 			res.status(200).json({
 				message: "success",
 				error: false,
-				data: null
+				data: user
 			});
 		}
 	}
