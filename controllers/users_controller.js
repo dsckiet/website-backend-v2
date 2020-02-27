@@ -17,7 +17,7 @@ module.exports.users = async (req, res) => {
 };
 
 module.exports.addUser = async (req, res) => {
-	let { name, email, role, designation, password } = req.body;
+	let { name, email, role, designation } = req.body;
 	let user = await User.findOne({ email });
 	if (user) {
 		res.status(400).json({
