@@ -1,11 +1,3 @@
-const {
-	OK,
-	BAD_REQUEST,
-	NOT_AUTHORIZED,
-	FORBIDDEN,
-	SERVER_ERROR
-} = require("./statusCodes");
-
 module.exports.sendError = (res, message, status) => {
 	res.status(status).json({
 		message,
