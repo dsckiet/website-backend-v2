@@ -1,4 +1,14 @@
 const bcrypt = require("bcryptjs");
+// import http status codes
+const {
+	BAD_REQUEST,
+	NOT_AUTHORIZED,
+	FORBIDDEN,
+	NOT_FOUND,
+	NOT_ACCEPTABLE
+} = require("../utility/statusCodes");
+// import helper functions
+const { sendError, sendSuccess } = require("../utility/helpers");
 
 module.exports.users = async (req, res) => {
 	let { id, sortBy, sortType } = req.query;
@@ -13,31 +23,27 @@ module.exports.users = async (req, res) => {
 			[sortBy]: sortType
 		});
 	}
-	res.status(200).json({ message: "success", error: false, data: users });
+	sendSuccess(res, users);
 };
 
 module.exports.addUser = async (req, res) => {
 	let { name, email, role, designation } = req.body;
 	let user = await User.findOne({ email });
 	if (user) {
-		res.status(400).json({
-			message: "Already exist!!",
-			error: true,
-			data: null
-		});
+		sendError(res, "Already exist!!", BAD_REQUEST);
 	} else {
 		if (req.user.role === "core" && (role === "lead" || role === "core")) {
-			res.status(401).json({
-				message: "Forbidden: Core members cannot add lead/core members",
-				error: true,
-				data: req.body
-			});
+			sendError(
+				res,
+				"Forbidden: Core members cannot add lead/core members",
+				NOT_AUTHORIZED
+			);
 		} else if (req.user.role === "lead" && role === "lead") {
-			res.status(401).json({
-				message: "Forbidden: A lead cannot add another lead",
-				error: true,
-				data: req.body
-			});
+			sendError(
+				res,
+				"Forbidden: A lead cannot add another lead",
+				NOT_AUTHORIZED
+			)
 		} else {
 			user = await User.create(req.body);
 			password = user._id.toString().slice(16, 24);
@@ -45,11 +51,7 @@ module.exports.addUser = async (req, res) => {
 			user.password = await bcrypt.hash(password, salt);
 			await user.save();
 			// schedule to send details by email to user!!
-			res.status(200).json({
-				message: "success",
-				error: false,
-				data: user
-			});
+			sendSuccess(res, user);
 		}
 	}
 };
@@ -59,19 +61,12 @@ module.exports.login = async (req, res) => {
 	let user = await User.findOne({
 		email: { $regex: `^${email}$`, $options: "i" }
 	});
-	if (!user)
-		return res
-			.status(406)
-			.json({ message: "Invalid user.", error: true, data: null });
+	if (!user) return sendError(res, "Invalid User", NOT_ACCEPTABLE);
 	const validPassword = await bcrypt.compare(password, user.password);
 	if (!validPassword)
-		return res
-			.status(406)
-			.json({ message: "Invalid Password.", error: true, data: null });
+		return sendError(res, "Invalid Password", NOT_ACCEPTABLE);
 	const token = user.generateAuthToken();
-	res.status(200)
-		.header("x-auth-token", token)
-		.json({ message: "success", error: false, data: user });
+	sendSuccess(res, user);
 };
 
 module.exports.approveUser = async (req, res) => {
@@ -80,20 +75,20 @@ module.exports.approveUser = async (req, res) => {
 	user.role = role;
 	user.showOnWebsite = showOnWebsite;
 	user = await user.save();
-	res.status(200).json({ message: "success", error: false, data: user });
+	sendSuccess(res, user);
 };
 
 module.exports.deleteUser = async (req, res) => {
 	let user = User.findById(req.params.id);
 	if (req.user.role === "core" && user.role !== "member") {
-		res.status(401).json({
-			message: "Forbidden: Core members cannot delete lead/core members",
-			error: true,
-			data: null
-		});
+		sendError(
+			res,
+			"Forbidden: Core members cannot delete lead/core members",
+			NOT_AUTHORIZED
+		);
 	} else {
 		await user.delete();
-		res.status(200).json({ message: "success", error: false, data: null });
+		sendSuccess(res, null);
 	}
 };
 
@@ -104,7 +99,7 @@ module.exports.profile = async (req, res) => {
 	} else {
 		profile = await User.findById(req.user.id);
 	}
-	res.status(200).json({ message: "success", error: false, data: profile });
+	sendSuccess(res, profile);
 };
 
 module.exports.updateProfile = async (req, res) => {
@@ -131,5 +126,5 @@ module.exports.updateProfile = async (req, res) => {
 		profile.password = await bcrypt.hash(password, salt);
 	}
 	profile = await profile.save();
-	res.status(200).json({ message: "success", error: false, data: profile });
+	sendSuccess(res, profile);
 };
