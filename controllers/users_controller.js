@@ -7,17 +7,7 @@ const {
 	NOT_ACCEPTABLE
 } = require("../utility/statusCodes");
 // import helper functions
-const { sendError, sendSuccess } = require("../utility/helpers");
-
-generateHash = () => {
-	let chars =
-		"0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-	let code = "";
-	for (let i = 0; i < 6; i++) {
-		code += chars[Math.round(Math.random() * (chars.length - 1))];
-	}
-	return code;
-};
+const { sendError, sendSuccess, generateHash } = require("../utility/helpers");
 
 module.exports.users = async (req, res) => {
 	let { id, sortBy, sortType } = req.query;
@@ -54,7 +44,8 @@ module.exports.addUser = async (req, res) => {
 				NOT_AUTHORIZED
 			);
 		} else {
-			let password = generateHash();
+			const pwdLength = 6;
+			let password = generateHash(pwdLength);
 			user = new User({
 				name,
 				email,

@@ -25,3 +25,13 @@ module.exports.sendSuccess = (res, data, token) => {
 		});
 	}
 };
+
+module.exports.generateHash = length => {
+	let chars =
+		"0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+	let code = "";
+	for (let i = 0; i < length; i++) {
+		code += chars[Math.round(Math.random() * (chars.length - 1))];
+	}
+	return code;
+};
