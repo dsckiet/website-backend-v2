@@ -42,9 +42,10 @@ module.exports.sendErrors = (err, req, res, next) => {
 	};
 	//logging error for backend console
 	console.log(errorDetailsToSend);
+	console.log(err.stack);
 	logger = log4js.getLogger("Logs from sendErrors middleware");
 	logger.error(errorDetailsToSend);
 	logger.error(err.stack);
 	//sending error to frontend
-	sendError(res, errorDetailsToSend, err.status || SERVER_ERROR);;
+	sendError(res, errorDetailsToSend, err.status || SERVER_ERROR);
 };

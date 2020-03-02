@@ -1,3 +1,5 @@
+const { OK } = require("./statusCodes");
+
 module.exports.sendError = (res, message, status) => {
 	res.status(status).json({
 		message,
@@ -6,10 +8,20 @@ module.exports.sendError = (res, message, status) => {
 	});
 };
 
-module.exports.sendSuccess = (res, data) => {
-	res.status(OK).json({
-		message: "success",
-		error: false,
-		data
-	});
+module.exports.sendSuccess = (res, data, token) => {
+	if (token) {
+		res.status(OK)
+			.header("x-auth-token", token)
+			.json({
+				message: "success",
+				error: false,
+				data
+			});
+	} else {
+		res.status(OK).json({
+			message: "success",
+			error: false,
+			data
+		});
+	}
 };
