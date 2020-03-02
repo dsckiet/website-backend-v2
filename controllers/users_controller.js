@@ -1,4 +1,3 @@
-const bcrypt = require("bcryptjs");
 // import http status codes
 const {
 	BAD_REQUEST,
@@ -8,7 +7,7 @@ const {
 	NOT_ACCEPTABLE
 } = require("../utility/statusCodes");
 // import helper functions
-const { sendError, sendSuccess } = require("../utility/helpers");
+const { sendError, sendSuccess, generateHash } = require("../utility/helpers");
 
 module.exports.users = async (req, res) => {
 	let { id, sortBy, sortType } = req.query;
@@ -43,13 +42,18 @@ module.exports.addUser = async (req, res) => {
 				res,
 				"Forbidden: A lead cannot add another lead",
 				NOT_AUTHORIZED
-			)
+			);
 		} else {
-			user = await User.create(req.body);
-			password = user._id.toString().slice(16, 24);
-			const salt = await bcrypt.genSalt(10);
-			user.password = await bcrypt.hash(password, salt);
-			await user.save();
+			const pwdLength = 6;
+			let password = generateHash(pwdLength);
+			user = new User({
+				name,
+				email,
+				role,
+				designation,
+				password
+			});
+			user = await user.save();
 			// schedule to send details by email to user!!
 			sendSuccess(res, user);
 		}
@@ -62,11 +66,11 @@ module.exports.login = async (req, res) => {
 		email: { $regex: `^${email}$`, $options: "i" }
 	});
 	if (!user) return sendError(res, "Invalid User", NOT_ACCEPTABLE);
-	const validPassword = await bcrypt.compare(password, user.password);
+	const validPassword = await user.isValidPwd(String(password).trim());
 	if (!validPassword)
 		return sendError(res, "Invalid Password", NOT_ACCEPTABLE);
 	const token = user.generateAuthToken();
-	sendSuccess(res, user);
+	sendSuccess(res, user, token);
 };
 
 module.exports.approveUser = async (req, res) => {
@@ -121,10 +125,7 @@ module.exports.updateProfile = async (req, res) => {
 	profile.linkedin = linkedin;
 	profile.twitter = twitter;
 	profile.portfolio = portfolio;
-	if (password) {
-		const salt = await bcrypt.genSalt(10);
-		profile.password = await bcrypt.hash(password, salt);
-	}
+	profile.password = password;
 	profile = await profile.save();
 	sendSuccess(res, profile);
 };
