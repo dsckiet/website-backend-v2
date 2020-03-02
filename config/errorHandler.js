@@ -47,5 +47,5 @@ module.exports.sendErrors = (err, req, res, next) => {
 	logger.error(errorDetailsToSend);
 	logger.error(err.stack);
 	//sending error to frontend
-	sendError(res, errorDetailsToSend, err.status || SERVER_ERROR);
+	sendError(res, err.message, err.status || SERVER_ERROR);
 };
