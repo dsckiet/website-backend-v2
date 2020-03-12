@@ -27,10 +27,14 @@ app.use(
 
 //load Schemas
 const User = require("./models/User");
+const Participant = require("./models/Participant");
+const Event = require("./models/Event");
+const Attendance = require("./models/Attendance");
 
 //Routes
 app.use("/api/v1", require("./routes/api/v1/index"));
 app.use("/api/v1/users", require("./routes/api/v1/users"));
+// app.use("/api/v1/events", require("./routes/api/v1/events"));
 
 app.use("*", notFound);
 
@@ -39,7 +43,7 @@ app.use(sendErrors);
 
 const { ENV, PORT } = require("./config/index");
 //Setting up server
-startServer = async () => {
+(startServer = async () => {
 	try {
 		await app.listen(PORT);
 		console.log(
@@ -48,7 +52,6 @@ startServer = async () => {
 			}\nServer is up and running on Port ${PORT}`
 		);
 	} catch (err) {
-		console.log("Error in running server.");
+		console.error("Error in running server.", err);
 	}
-};
-startServer();
+})();
