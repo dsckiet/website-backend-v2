@@ -48,3 +48,20 @@ module.exports.coreAuth = (req, res, next) => {
 		return sendError(res, "Forbidden", NOT_AUTHORIZED);
 	}
 };
+
+module.exports.participantAuth = (req, res, next) => {
+	const token = req.header("x-auth-token");
+	if (!token)
+		return sendError(
+			res,
+			"Access denied. No Token provided",
+			NOT_AUTHORIZED
+		);
+	const decodedPayload = jwt.verify(token, process.env.JWT_PRIVATE_KEY);
+	if (decodedPayload.role === "participant") {
+		req.user = decodedPayload;
+		return next();
+	} else {
+		return sendError(res, "Forbidden", NOT_AUTHORIZED);
+	}
+};

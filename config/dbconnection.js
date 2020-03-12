@@ -7,7 +7,7 @@ mongoose.Promise = global.Promise;
 
 const connectionString = ENV === "dev" ? MONGO_URI_DEV : MONGO_URI_PROD;
 
-connectDb = async () => {
+(connectDb = async () => {
 	try {
 		await mongoose.connect(connectionString, {
 			useNewUrlParser: true,
@@ -17,5 +17,4 @@ connectDb = async () => {
 	} catch (err) {
 		console.log(err);
 	}
-};
-connectDb();
+})();

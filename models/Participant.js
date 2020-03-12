@@ -4,30 +4,37 @@ const { JWT_PRIVATE_KEY } = require("../config/index");
 const { toTitleCase } = require("../utility/helpers");
 const bcrypt = require("bcryptjs");
 
-const UserSchema = new mongoose.Schema(
+const ParticipantSchema = new mongoose.Schema(
 	{
 		name: { type: String, required: true },
 		email: { type: String, required: true },
+		branch: { type: String, required: true },
+		year: { type: Number, required: true },
+		phone: { type: Number, required: true },
 		password: { type: String, required: true },
-		role: {
-			type: String,
-			default: "member",
-			enum: ["member", "core", "lead"],
-			required: true
-		},
-		contact: { type: Number },
-		img: { type: String },
-		designation: { type: String, required: true },
-		github: { type: String },
-		linkedin: { type: String },
-		twitter: { type: String },
-		portfolio: { type: String },
-		showOnWebsite: { type: Boolean, default: false }
+		isVerified: { type: Boolean, default: true },
+		events: [
+			{
+				event: {
+					type: mongoose.Schema.Types.ObjectId,
+					ref: "Event"
+				},
+				attendance: {
+					type: mongoose.Schema.Types.ObjectId,
+					ref: "Attendance"
+				},
+				status: {
+					type: String,
+					enum: ["not attended", "partially attended", "attended"],
+					default: "not attended"
+				}
+			}
+		]
 	},
 	{ timestamps: true }
 );
 
-UserSchema.pre("save", async function(next) {
+ParticipantSchema.pre("save", async function(next) {
 	this.name = toTitleCase(String(this.name));
 	this.email = String(this.email).toLowerCase();
 	if (!this.isModified("password")) return next();
@@ -37,22 +44,22 @@ UserSchema.pre("save", async function(next) {
 	next();
 });
 
-UserSchema.methods.isValidPwd = async function(password) {
+ParticipantSchema.methods.isValidPwd = async function(password) {
 	let isMatchPwd = await bcrypt.compare(password, this.password);
 	return isMatchPwd;
 };
 
-UserSchema.methods.generateAuthToken = function() {
+ParticipantSchema.methods.generateAuthToken = function() {
 	const token = jwt.sign(
 		{
 			id: this._id,
 			name: this.name,
 			email: this.email,
-			role: this.role
+			role: "participant"
 		},
 		JWT_PRIVATE_KEY
 	);
 	return token;
 };
 
-module.exports = User = mongoose.model("User", UserSchema);
+module.exports = Participant = mongoose.model("Participant", ParticipantSchema);
