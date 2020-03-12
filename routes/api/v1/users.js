@@ -9,7 +9,8 @@ const {
 	deleteUser,
 	login,
 	profile,
-	updateProfile
+	updateProfile,
+	temp
 } = require("../../../controllers/users_controller");
 
 // middlewares
@@ -25,6 +26,7 @@ router.delete("/:id", coreAuth, catchErrors(deleteUser));
 router.post("/login", catchErrors(login));
 router.get("/profile", allAuth, catchErrors(profile));
 router.post("/profile", allAuth, catchErrors(updateProfile));
+router.post("/temp", catchErrors(temp)); // for dev purpose only
 
 // export router
 module.exports = router;

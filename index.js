@@ -1,7 +1,9 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const compression = require("compression");
+const morgan = require("morgan");
 const { notFound, sendErrors } = require("./config/errorHandler");
+const kue = require("kue");
 const app = express();
 
 const cors = require("cors");
@@ -9,6 +11,7 @@ require("dotenv").config();
 require("./config/dbconnection");
 
 app.use(compression());
+app.use(morgan("dev"));
 app.use(cors({ exposedHeaders: "x-auth-token" }));
 app.use(
 	bodyParser.urlencoded({
@@ -24,6 +27,7 @@ app.use(
 		parameterLimit: 1000000
 	})
 );
+app.use("/kue-cli", kue.app);
 
 //load Schemas
 const User = require("./models/User");
@@ -34,7 +38,7 @@ const Attendance = require("./models/Attendance");
 //Routes
 app.use("/api/v1", require("./routes/api/v1/index"));
 app.use("/api/v1/users", require("./routes/api/v1/users"));
-// app.use("/api/v1/events", require("./routes/api/v1/events"));
+app.use("/api/v1/events", require("./routes/api/v1/events"));
 
 app.use("*", notFound);
 

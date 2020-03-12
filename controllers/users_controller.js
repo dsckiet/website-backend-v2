@@ -1,11 +1,16 @@
+const kue = require("../config/Scheduler/kue");
+const worker = require("../config/Scheduler/worker");
+
+const { ENV } = require("../config/index");
+
 // import http status codes
 const {
 	BAD_REQUEST,
 	NOT_AUTHORIZED,
-	FORBIDDEN,
-	NOT_FOUND,
 	NOT_ACCEPTABLE
 } = require("../utility/statusCodes");
+// import constants
+const { USER_HASH_LENGTH } = require("../config/index");
 // import helper functions
 const { sendError, sendSuccess, generateHash } = require("../utility/helpers");
 
@@ -44,8 +49,7 @@ module.exports.addUser = async (req, res) => {
 				NOT_AUTHORIZED
 			);
 		} else {
-			const pwdLength = 6;
-			let password = generateHash(pwdLength);
+			let password = generateHash(USER_HASH_LENGTH);
 			user = new User({
 				name,
 				email,
@@ -54,7 +58,17 @@ module.exports.addUser = async (req, res) => {
 				password
 			});
 			user = await user.save();
-			// schedule to send details by email to user!!
+			let args = {
+				jobName: "sendLoginCreds",
+				time: Date.now(),
+				params: {
+					email,
+					password,
+					name,
+					role
+				}
+			};
+			kue.scheduleJob(args);
 			sendSuccess(res, user);
 		}
 	}
@@ -129,3 +143,19 @@ module.exports.updateProfile = async (req, res) => {
 	profile = await profile.save();
 	sendSuccess(res, profile);
 };
+
+module.exports.temp = async (req, res) => {
+	if(ENV === "prod") {
+		return sendError(res, "Unavailable!!", BAD_REQUEST)
+	}
+
+	let user = await new User({
+		name: "root",
+		email: "root@dsckiet.tech",
+		password: "root@dsckiet123",
+		role: "lead",
+		designation: "lead"
+	});
+	await user.save();
+	sendSuccess(res, null)
+}

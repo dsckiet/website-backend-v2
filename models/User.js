@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
 const { JWT_PRIVATE_KEY } = require("../config/index");
+const { toTitleCase } = require("../utility/helpers");
 const bcrypt = require("bcryptjs");
 
 const UserSchema = new mongoose.Schema(
@@ -27,6 +28,8 @@ const UserSchema = new mongoose.Schema(
 );
 
 UserSchema.pre("save", async function(next) {
+	this.name = toTitleCase(String(this.name));
+	this.email = String(this.email).toLowerCase();
 	if (!this.isModified("password")) return next();
 	let salt = await bcrypt.genSalt(10);
 	let hash = await bcrypt.hash(this.password, salt);

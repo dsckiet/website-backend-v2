@@ -1,13 +1,5 @@
-const log4js = require("log4js");
-const { sendError } = require("../utility/helpers");
+const { sendError, logger } = require("../utility/helpers");
 const { NOT_FOUND, SERVER_ERROR } = require("../utility/statusCodes");
-
-log4js.configure({
-	appenders: { cheese: { type: "file", filename: "server-logs.log" } },
-	categories: { default: { appenders: ["cheese"], level: "error" } }
-});
-let logger = log4js.getLogger();
-logger.level = "debug";
 
 module.exports.catchErrors = middlewareFunction => {
 	return async (req, res, next) => {
@@ -15,8 +7,7 @@ module.exports.catchErrors = middlewareFunction => {
 			await middlewareFunction(req, res, next);
 		} catch (err) {
 			//log
-			logger = log4js.getLogger("Logs from catchErrors middleware");
-			logger.error(err);
+			logger("error", "catchErrors", err);
 			//send to next
 			next(err);
 		}
@@ -25,11 +16,10 @@ module.exports.catchErrors = middlewareFunction => {
 
 // not found routes
 module.exports.notFound = (req, res) => {
-	logger = log4js.getLogger("Wrong endpoint request");
-	logger.info(`${req.params[0]} has been hit`);
+	logger("info", "Wrong endpoint request", `${req.params[0]} has been hit`);
 	sendError(
 		res,
-		"Welcome to DSC-KIET API!! This route does not exist",
+		"Welcome to DSC KIET API!! This route does not exist",
 		NOT_FOUND
 	);
 };
@@ -43,9 +33,9 @@ module.exports.sendErrors = (err, req, res, next) => {
 	//logging error for backend console
 	console.log(errorDetailsToSend);
 	console.log(err.stack);
-	logger = log4js.getLogger("Logs from sendErrors middleware");
-	logger.error(errorDetailsToSend);
-	logger.error(err.stack);
+	logger("fatal", "sendErrors", errorDetailsToSend);
+	logger("fatal", "sendErrors", err.stack);
+
 	//sending error to frontend
 	sendError(res, err.message, err.status || SERVER_ERROR);
 };
