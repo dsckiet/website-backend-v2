@@ -1,5 +1,6 @@
 const kue = require("../config/Scheduler/kue");
 const worker = require("../config/Scheduler/worker");
+const ObjectId = require("mongoose").Types.ObjectId;
 
 const { ENV } = require("../config/index");
 
@@ -145,17 +146,71 @@ module.exports.updateProfile = async (req, res) => {
 };
 
 module.exports.temp = async (req, res) => {
-	if(ENV === "prod") {
-		return sendError(res, "Unavailable!!", BAD_REQUEST)
+	if (ENV === "prod") {
+		return sendError(res, "Unavailable!!", BAD_REQUEST);
 	}
 
-	let user = await new User({
-		name: "root",
-		email: "root@dsckiet.tech",
-		password: "root@dsckiet123",
-		role: "lead",
-		designation: "lead"
-	});
-	await user.save();
-	sendSuccess(res, null)
-}
+	// create root lead user
+	// let user = await new User({
+	// 	name: "root",
+	// 	email: "root@dsckiet.tech",
+	// 	password: "root@dsckiet123",
+	// 	role: "lead",
+	// 	designation: "lead"
+	// });
+	// await user.save();
+
+	// create random users
+	// let branches = ["CS", "IT", "EC", "EN", "ME", "CE", "CO", "CSI", "MCA"],
+	// 	years = [1, 2, 3, 4],
+	// 	chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+	// 	numbers = "1234567890";
+	// let entries = 40;
+	// for (let i = 0; i < entries; i++) {
+	// 	let part = new Participant({
+	// 		name: generateHash(10),
+	// 		email: `${generateHash(8)}@gmail.com`,
+	// 		branch: branches[Math.floor(Math.random() * branches.length)],
+	// 		year: years[Math.floor(Math.random() * years.length)],
+	// 		password: generateHash(USER_HASH_LENGTH),
+	// 		phone: 9876543210
+	// 	});
+	// 	await part.save();
+	// 	console.log(`Partcipant ${i} created...`)
+	// }
+
+	// register random participants in event
+	// let entries = 50,
+	// 	eventId = new ObjectId("5e6bd6ebf5856101d815f101");
+	// let event = await Event.findById(eventId);
+	// let participants = await Participant.find().sort({ name: "asc" }).limit(entries);
+	
+	// for (let i = 0; i < entries; i++) {
+	// 	let attendance = new Attendance({
+	// 		participant: new ObjectId(participants[i]._id),
+	// 		event: new ObjectId(eventId),
+	// 		attend: []
+	// 	});
+
+	// 	for (let j = 0; j < event.days; j++) {
+	// 		let attendObj = {
+	// 			day: new Date(
+	// 				event.startDate.getTime() + i * 24 * 60 * 60 * 1000
+	// 			),
+	// 			present: false
+	// 		};
+	// 		attendance.attend.push(attendObj);
+	// 	}
+	// 	participants[i].events.push({
+	// 		event: new ObjectId(eventId),
+	// 		attendance: new ObjectId(attendance._id),
+	// 		status: "not attended"
+	// 	});
+	// 	[part, attendance] = await Promise.all([
+	// 		participants[i].save(),
+	// 		attendance.save()
+	// 	]);
+	// 	console.log(`Participant ${i} registered in event`);
+	// }
+	sendSuccess(res, null);
+};
