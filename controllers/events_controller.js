@@ -6,7 +6,7 @@ const ObjectId = require("mongoose").Types.ObjectId;
 // import http status codes
 const { BAD_REQUEST, NOT_ACCEPTABLE } = require("../utility/statusCodes");
 // import constants
-const { USER_HASH_LENGTH } = require("../config/index");
+const { USER_HASH_LENGTH, EVENT_HASH_LENGTH } = require("../config/index");
 // import helper functions
 const {
 	sendError,
@@ -17,11 +17,11 @@ const {
 
 module.exports.getParticipants = async (req, res) => {
 	let { eventId, query, branch, year, sortBy } = req.query;
-    let filters = {};
-    
-    if(eventId){
-		filters["events.event"] = new ObjectId(eventId)
-	};
+	let filters = {};
+
+	if (eventId) {
+		filters["events.event"] = new ObjectId(eventId);
+	}
 
 	if (query) {
 		const regex = new RegExp(escapeRegex(query), "gi");
@@ -53,7 +53,11 @@ module.exports.getParticipants = async (req, res) => {
 	}
 
 	let participants = await Participant.find(filters).sort(sortObj);
-	sendSuccess(res, participants);
+	let data = {
+		totalParticipants: participants.length,
+		participants
+	}
+	sendSuccess(res, data);
 };
 
 module.exports.registerParticipant = async (req, res) => {
@@ -148,7 +152,7 @@ module.exports.registerForEvent = async (req, res) => {
 
 	let [participant, event] = await Promise.all([
 		Participant.findById(participantId),
-		Event.findById(eventID)
+		Event.findById(eventId)
 	]);
 
 	if (!participant || !event) {
@@ -167,7 +171,7 @@ module.exports.registerForEvent = async (req, res) => {
 
 	let attendance = new Attendance({
 		participant: new ObjectId(participantId),
-		event: new ObjectId(eventID),
+		event: new ObjectId(eventId),
 		attend: []
 	});
 
@@ -179,7 +183,7 @@ module.exports.registerForEvent = async (req, res) => {
 		attendance.attend.push(attendObj);
 	}
 	participant.events.push({
-		event: new ObjectId(eventID),
+		event: new ObjectId(eventId),
 		attendance: new ObjectId(attendance._id),
 		status: "not attended"
 	});
@@ -265,4 +269,82 @@ module.exports.participantData = async (req, res) => {
 	};
 
 	sendSuccess(res, data);
+};
+
+module.exports.getEvents = async (req, res) => {
+	let events = await Event.find().sort({ createdAt: "desc" });
+	sendSuccess(res, events);
+};
+
+module.exports.addEvent = async (req, res) => {
+	let {
+		title,
+		description,
+		days,
+		startDate,
+		endDate,
+		time,
+		venue,
+		isRegistrationRequired,
+		isRegistrationOpened
+	} = req.body;
+
+	let code = generateHash(EVENT_HASH_LENGTH);
+
+	let event = new Event({ ...req.body, code });
+	event = await event.save();
+	sendSuccess(res, event);
+};
+
+module.exports.changeEventCode = async (req, res) => {
+	let { id } = req.body;
+	let event = await Event.findById(id);
+	if (event) {
+		event.code = generateHash(EVENT_HASH_LENGTH);
+		event = await event.save();
+		sendSuccess(res, event);
+	} else {
+		sendError(res, "Invalid Event!!", BAD_REQUEST);
+	}
+};
+
+module.exports.changeEventRegistrationOpen = async (req, res) => {
+	let { id } = req.body;
+	let event = await Event.findById(id);
+	if (event) {
+		event.isRegistrationOpen = event.isRegistrationOpen ? false : true;
+		event = await event.save();
+		sendSuccess(res, event);
+	} else {
+		sendError(res, "Invalid Event!!", BAD_REQUEST);
+	}
+};
+
+module.exports.updateEvent = async (req, res) => {
+	let { id } = req.params;
+	let event = await Event.findById(id);
+	if (event) {
+		let event = await Event.findByIdAndUpdate(id, req.body, { new: true });
+		sendSuccess(res, event);
+	} else {
+		sendError(res, "Invalid Event!!", BAD_REQUEST);
+	}
+};
+
+module.exports.deleteEvent = async (req, res) => {
+	let { id } = req.params;
+	let event = await Event.findById(id);
+	if (event) {
+		let args = {
+			jobName: "deleteEvent",
+			time: Date.now(),
+			params: {
+				eventId: new ObjectId(event._id)
+			}
+		};
+		kue.scheduleJob(args);
+		sendSuccess(res, null);
+	} else {
+		sendError(res, "Invalid Event!!", BAD_REQUEST);
+	}
 };

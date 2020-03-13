@@ -32,3 +32,33 @@ module.exports.participantValidation = (req, res, next) => {
 		return sendError(res, "Email not Valid!!", BAD_REQUEST);
 	}
 };
+
+module.exports.eventValidation = (req, res, next) => {
+	let {
+		title,
+		description,
+		days,
+		startDate,
+		endDate,
+		time,
+		venue,
+		isRegistrationRequired,
+		isRegistrationOpened
+	} = req.body;
+
+	if (
+		!title ||
+		!description ||
+		!days ||
+		!startDate ||
+		!endDate ||
+		!time ||
+		!venue ||
+		!isRegistrationRequired ||
+		!isRegistrationOpened
+	) {
+		return sendError(res, "All fields are mandatory!!", BAD_REQUEST);
+	} else {
+		return next();
+	}
+};

@@ -26,11 +26,12 @@ const { catchErrors } = require("../../../config/errorHandler");
 const {
 	coreAuth,
 	allAuth,
+	leadAuth,
 	participantAuth
 } = require("../../../middlewares/auth");
 const {
-	participantValidation
-	// eventValidation
+	participantValidation,
+	eventValidation
 } = require("../../../middlewares/validations");
 
 // routes for participants
@@ -48,22 +49,22 @@ router.put(
 );
 router.post("/part_login", catchErrors(participantLogin));
 router.post(
-	"register_in_event",
+	"/register_in_event",
 	participantAuth,
 	catchErrors(registerForEvent)
 );
 router.get("/part_data", allAuth, catchErrors(participantData));
 // routes for event details and operations
-// router.get("/get_events", catchErrors(getEvents));
-// router.post("/add_event", leadAuth, eventValidation, catchErrors(addEvent));
-// router.post("/change_event_code", coreAuth, catchErrors(changeEventCode));
-// router.post(
-// 	"/event_regist_open",
-// 	leadAuth,
-// 	catchErrors(changeEventRegistrationOpen)
-// );
-// router.put("/update_event/:id", coreAuth, catchErrors(updateEvent));
-// router.delete("/delete_event/:id", leadAuth, catchErrors(deleteEvent));
+router.get("/get_events", catchErrors(getEvents));
+router.post("/add_event", leadAuth, eventValidation, catchErrors(addEvent));
+router.post("/change_event_code", coreAuth, catchErrors(changeEventCode));
+router.post(
+	"/event_regist_open",
+	leadAuth,
+	catchErrors(changeEventRegistrationOpen)
+);
+router.put("/update_event/:id", coreAuth, catchErrors(updateEvent));
+router.delete("/delete_event/:id", leadAuth, catchErrors(deleteEvent));
 // routes for event attendance
 // router.get(
 // 	"/get_attend_report",
