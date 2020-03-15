@@ -66,18 +66,18 @@ router.post(
 router.put("/update_event/:id", coreAuth, catchErrors(updateEvent));
 router.delete("/delete_event/:id", leadAuth, catchErrors(deleteEvent));
 // routes for event attendance
-// router.get(
-// 	"/get_attend_report",
-// 	coreAuth,
-// 	catchErrors(getEventAttendanceReport)
-// );
-// router.get("/get_attend_stats", coreAuth, catchErrors(getEventAttendanceStats));
-// router.get(
-// 	"/get_user_attend",
-// 	participantAuth,
-// 	catchErrors(getUserEventAttendance)
-// );
-// router.post("/mark_attend", participantAuth, catchErrors(markUserAttendance));
+router.get(
+	"/get_attend_report",
+	coreAuth,
+	catchErrors(getEventAttendanceReport)
+);
+router.get("/get_attend_stats", coreAuth, catchErrors(getEventAttendanceStats));
+router.get(
+	"/get_user_attend",
+	participantAuth,
+	catchErrors(getUserEventAttendance)
+);
+router.post("/mark_attend", participantAuth, catchErrors(markUserAttendance));
 // routes for event certificates
 // routes for event feedbacks
 

@@ -10,12 +10,7 @@ const AttendanceSchema = new mongoose.Schema(
 			type: mongoose.Schema.Types.ObjectId,
 			ref: "Participant"
 		},
-		attend: [
-			{
-				day: Date,
-				present: { type: Boolean }
-			}
-		]
+		attend: []
 	},
 	{ timestamps: true }
 );

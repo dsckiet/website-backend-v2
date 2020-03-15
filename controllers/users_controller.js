@@ -161,11 +161,13 @@ module.exports.temp = async (req, res) => {
 	// await user.save();
 
 	// create random users
+	// console.time("Participants Created in: ");
+	// let promises = [];
 	// let branches = ["CS", "IT", "EC", "EN", "ME", "CE", "CO", "CSI", "MCA"],
 	// 	years = [1, 2, 3, 4],
 	// 	chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
 	// 	numbers = "1234567890";
-	// let entries = 40;
+	// let entries = 200;
 	// for (let i = 0; i < entries; i++) {
 	// 	let part = new Participant({
 	// 		name: generateHash(10),
@@ -175,16 +177,20 @@ module.exports.temp = async (req, res) => {
 	// 		password: generateHash(USER_HASH_LENGTH),
 	// 		phone: 9876543210
 	// 	});
-	// 	await part.save();
-	// 	console.log(`Partcipant ${i} created...`)
+	// 	promises.push(part.save());
+	// 	console.log(`Partcipant ${i} created...`);
 	// }
+	// await Promise.all(promises);
+	// console.timeEnd("Participants Created in: ");
 
 	// register random participants in event
-	// let entries = 50,
-	// 	eventId = new ObjectId("5e6bd6ebf5856101d815f101");
-	// let event = await Event.findById(eventId);
-	// let participants = await Participant.find().sort({ name: "asc" }).limit(entries);
-	
+	// console.time("Participants Registered in event in: ");
+	// let entries = 200;
+	// let eventIds = new ObjectId("5e6dfb7caad4441a9ceb5b2e");
+	// let participants = await Participant.find()
+	// 	.sort({ name: "asc" })
+	// 	.limit(entries);
+
 	// for (let i = 0; i < entries; i++) {
 	// 	let attendance = new Attendance({
 	// 		participant: new ObjectId(participants[i]._id),
@@ -192,15 +198,6 @@ module.exports.temp = async (req, res) => {
 	// 		attend: []
 	// 	});
 
-	// 	for (let j = 0; j < event.days; j++) {
-	// 		let attendObj = {
-	// 			day: new Date(
-	// 				event.startDate.getTime() + i * 24 * 60 * 60 * 1000
-	// 			),
-	// 			present: false
-	// 		};
-	// 		attendance.attend.push(attendObj);
-	// 	}
 	// 	participants[i].events.push({
 	// 		event: new ObjectId(eventId),
 	// 		attendance: new ObjectId(attendance._id),
@@ -212,5 +209,73 @@ module.exports.temp = async (req, res) => {
 	// 	]);
 	// 	console.log(`Participant ${i} registered in event`);
 	// }
+	// console.timeEnd("Participants Registered in event in: ");
+
+	// mark random attendences
+	// console.time("Marked in: ");
+	// let code = "AyI89CdiIUbWnlWtGMNO",
+	// 	eventId = "5e6dfb7caad4441a9ceb5b2e",
+	// 	entries = 49;
+	// let [event, participants] = await Promise.all([
+	// 	Event.findOne({ code }),
+	// 	Participant.find({ "events.event": new ObjectId(eventId) }).limit(
+	// 		entries
+	// 	)
+	// ]);
+	// if (!event) {
+	// 	return sendError(res, "Invalid Code!!", BAD_REQUEST);
+	// }
+	// let cnt = 0;
+	// for (let i = 0; i < entries; i++) {
+	// 	let attendance = await Attendance.findOne({
+	// 		$and: [{ event: event._id }, { participant: participants[i]._id }]
+	// 	});
+	// 	if (!attendance) {
+	// 		continue;
+	// 	}
+	// 	let dates = [15, 16, 17, 18, 19];
+
+	// 	let currTime = new Date(Date.now());
+	// 	let today = new Date(
+	// 		currTime.getFullYear(),
+	// 		currTime.getMonth(),
+	// 		dates[Math.floor(Math.random() * 5)]
+	// 	).toISOString();
+
+	// 	if (
+	// 		today < new Date(event.startDate).toISOString() ||
+	// 		today > new Date(event.endDate).toISOString()
+	// 	) {
+	// 		continue;
+	// 	}
+
+	// 	let attendIndex = attendance.attend
+	// 		.map(attend => {
+	// 			return new Date(attend).toISOString();
+	// 		})
+	// 		.indexOf(today);
+
+	// 	if (attendIndex !== -1) {
+	// 		continue;
+	// 	} else {
+	// 		attendance.attend.push(today);
+	// 		let eventInd = participants[i].events
+	// 			.map(event => {
+	// 				return String(event.event);
+	// 			})
+	// 			.indexOf(String(event._id));
+	// 		let daysPresent = attendance.attend.length;
+	// 		if (daysPresent < event.days) {
+	// 			participants[i].events[eventInd].status = "partially attended";
+	// 		} else {
+	// 			participants[i].events[eventInd].status = "attended";
+	// 		}
+	// 		await Promise.all([attendance.save(), participants[i].save()]);
+	// 		console.log(`Attendance Marked for Part ${i} of ${today}`);
+	// 		cnt++;
+	// 	}
+	// }
+	// console.log(`Attendences Marked: ${cnt}`);
+	// console.timeEnd("Marked in: ");
 	sendSuccess(res, null);
 };
