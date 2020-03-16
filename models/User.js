@@ -22,7 +22,8 @@ const UserSchema = new mongoose.Schema(
 		linkedin: { type: String },
 		twitter: { type: String },
 		portfolio: { type: String },
-		showOnWebsite: { type: Boolean, default: false }
+		showOnWebsite: { type: Boolean, default: false },
+		lastLogin: { type: Date, default: Date.now }
 	},
 	{ timestamps: true }
 );

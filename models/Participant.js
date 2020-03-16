@@ -29,7 +29,8 @@ const ParticipantSchema = new mongoose.Schema(
 					default: "not attended"
 				}
 			}
-		]
+		],
+		lastLogin: { type: Date, default: Date.now }
 	},
 	{ timestamps: true }
 );

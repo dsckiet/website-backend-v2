@@ -154,6 +154,8 @@ module.exports.participantLogin = async (req, res) => {
 	const validPassword = await participant.isValidPwd(String(password).trim());
 	if (!validPassword)
 		return sendError(res, "Invalid Password", NOT_ACCEPTABLE);
+	participant.lastLogin = new Date(Date.now()).toISOString();
+	await participant.save();
 	const token = participant.generateAuthToken();
 	sendSuccess(res, participant, token);
 };
@@ -279,6 +281,7 @@ module.exports.participantData = async (req, res) => {
 };
 
 module.exports.getEvents = async (req, res) => {
+	console.log(req);
 	let { id } = req.query;
 	let events;
 	if (id) {

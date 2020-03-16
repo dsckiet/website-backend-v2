@@ -84,6 +84,8 @@ module.exports.login = async (req, res) => {
 	const validPassword = await user.isValidPwd(String(password).trim());
 	if (!validPassword)
 		return sendError(res, "Invalid Password", NOT_ACCEPTABLE);
+	user.lastLogin = new Date(Date.now()).toISOString();
+	await user.save();
 	const token = user.generateAuthToken();
 	sendSuccess(res, user, token);
 };
@@ -131,7 +133,6 @@ module.exports.updateProfile = async (req, res) => {
 		linkedin,
 		twitter,
 		portfolio,
-		password
 	} = req.body;
 	let profile = await User.findById(req.query.id);
 	profile.name = name;
