@@ -34,6 +34,7 @@ module.exports.participantValidation = (req, res, next) => {
 };
 
 module.exports.eventValidation = (req, res, next) => {
+	console.log(req.body);
 	let {
 		title,
 		description,
