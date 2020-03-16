@@ -18,7 +18,9 @@ const {
 	getEventAttendanceReport,
 	getEventAttendanceStats,
 	getUserEventAttendance,
-	markUserAttendance
+	markUserAttendance,
+	submitFeedback,
+	getFeedbackReport
 } = require("../../../controllers/events_controller");
 
 // middlewares
@@ -80,6 +82,8 @@ router.get(
 router.post("/mark_attend", participantAuth, catchErrors(markUserAttendance));
 // routes for event certificates
 // routes for event feedbacks
+router.post("/feedback", participantAuth, catchErrors(submitFeedback));
+router.get("/feedback/:id", coreAuth, catchErrors(getFeedbackReport));
 
 // export router
 module.exports = router;

@@ -638,3 +638,89 @@ module.exports.getUserEventAttendance = async (req, res) => {
 
 	return sendSuccess(res, data);
 };
+
+module.exports.submitFeedback = async (req, res) => {
+	let { eventId, feedback } = req.body;
+
+	if (feedback.length === 0) {
+		return sendError(
+			res,
+			"Atleast one response is required!!",
+			BAD_REQUEST
+		);
+	}
+	let [hasGivenFeedback, hasAttendedEvent] = await Promise.all([
+		Feedback.findOne({
+			participant: req.user.id,
+			event: eventId
+		}),
+		Attendance.findOne({
+			event: eventId,
+			participant: req.user.id,
+			"attend.0": { $exists: true }
+		})
+	]);
+	if (hasGivenFeedback) {
+		return sendError(res, "You have already given feedback!!", BAD_REQUEST);
+	} else if (!hasAttendedEvent) {
+		return sendError(
+			res,
+			"You have not attended this event!!",
+			BAD_REQUEST
+		);
+	} else {
+		let fb = new Feedback({
+			participant: new ObjectId(req.user.id),
+			event: new ObjectId(eventId),
+			feedback
+		});
+		fb = await fb.save();
+		return sendSuccess(res, fb);
+	}
+};
+
+module.exports.getFeedbackReport = async (req, res) => {
+	let { id } = req.params; // event id
+	let feedback = await Feedback.aggregate([
+		{
+			$match: { event: new ObjectId(id) }
+		},
+		{
+			$lookup: {
+				from: "participants",
+				localField: "participant",
+				foreignField: "_id",
+				as: "participant"
+			}
+		},
+		{
+			$lookup: {
+				from: "events",
+				localField: "event",
+				foreignField: "_id",
+				as: "events"
+			}
+		},
+		{
+			$project: {
+				"events.title": 1,
+				"events.description": 1,
+				"events.img": 1,
+				"events.days": 1,
+				"events.startDate": 1,
+				"events.endDate": 1,
+				"events.venue": 1,
+				"events.time": 1,
+				"events._id": 1,
+				"participant.name": 1,
+				"participant.email": 1,
+				"participant.branch": 1,
+				"participant.year": 1,
+				"participant.phone": 1,
+				feedback: 1
+			}
+		}
+	]).sort({ createdAt: "desc" });
+
+	return sendSuccess(res, feedback);
+};
