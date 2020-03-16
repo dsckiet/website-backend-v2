@@ -42,9 +42,7 @@ module.exports.eventValidation = (req, res, next) => {
 		startDate,
 		endDate,
 		time,
-		venue,
-		isRegistrationRequired,
-		isRegistrationOpened
+		venue
 	} = req.body;
 
 	if (
