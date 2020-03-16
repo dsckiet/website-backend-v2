@@ -2,6 +2,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const compression = require("compression");
 const morgan = require("morgan");
+const helmet = require("helmet");
 const { notFound, sendErrors } = require("./config/errorHandler");
 const kue = require("kue");
 const app = express();
@@ -11,6 +12,7 @@ require("dotenv").config();
 require("./config/dbconnection");
 
 app.use(compression());
+app.use(helmet());
 app.use(morgan("dev"));
 app.use(cors({ exposedHeaders: "x-auth-token" }));
 app.use(
@@ -44,6 +46,18 @@ app.use("*", notFound);
 
 //Error Handlers
 app.use(sendErrors);
+
+// Allowing headers
+app.use((req, res, next) => {
+	res.header("Access-Control-Allow-Origin", "*");
+	res.header(
+		"Access-Control-Allow-Headers",
+		"Origin, X-Requested-With, Content-Type, Accept"
+	);
+	res.header("Access-Control-Allow-Credentials", true);
+	res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH");
+	next();
+});
 
 const { ENV, PORT } = require("./config/index");
 //Setting up server
