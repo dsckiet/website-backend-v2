@@ -132,7 +132,7 @@ module.exports.updateProfile = async (req, res) => {
 		github,
 		linkedin,
 		twitter,
-		portfolio,
+		portfolio
 	} = req.body;
 	let profile = await User.findById(req.query.id);
 	profile.name = name;
@@ -163,53 +163,53 @@ module.exports.temp = async (req, res) => {
 	// await user.save();
 
 	// create random users
-	console.time("Participants Created in: ");
-	let branches = ["CS", "IT", "EC", "EN", "ME", "CE", "CO", "CSI", "MCA"],
-		years = [1, 2, 3, 4],
-		chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-		numbers = "1234567890";
-	let entries = 200;
-	for (let i = 0; i < entries; i++) {
-		let part = new Participant({
-			name: generateHash(10),
-			email: `${generateHash(8)}@gmail.com`,
-			branch: branches[Math.floor(Math.random() * branches.length)],
-			year: years[Math.floor(Math.random() * years.length)],
-			password: generateHash(USER_HASH_LENGTH),
-			phone: 9876543210
-		});
-		await part.save();
-		console.log(`Partcipant ${i} created...`);
-	}
-	console.timeEnd("Participants Created in: ");
+	// console.time("Participants Created in: ");
+	// let branches = ["CS", "IT", "EC", "EN", "ME", "CE", "CO", "CSI", "MCA"],
+	// 	years = [1, 2, 3, 4],
+	// 	chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+	// 	numbers = "1234567890";
+	// let entries = 200;
+	// for (let i = 0; i < entries; i++) {
+	// 	let part = new Participant({
+	// 		name: generateHash(10),
+	// 		email: `${generateHash(8)}@gmail.com`,
+	// 		branch: branches[Math.floor(Math.random() * branches.length)],
+	// 		year: years[Math.floor(Math.random() * years.length)],
+	// 		password: generateHash(USER_HASH_LENGTH),
+	// 		phone: 9876543210
+	// 	});
+	// 	await part.save();
+	// 	console.log(`Partcipant ${i} created...`);
+	// }
+	// console.timeEnd("Participants Created in: ");
 
 	// register random participants in event
-	console.time("Participants Registered in event in: ");
-	// let entries = 200;
-	let eventId = new ObjectId("5e6fe1b985e811179472ca44");
-	let participants = await Participant.find()
-		.sort({ name: "asc" })
-		.limit(entries);
+	// console.time("Participants Registered in event in: ");
+	// // let entries = 200;
+	// let eventId = new ObjectId("5e6fe1b985e811179472ca44");
+	// let participants = await Participant.find()
+	// 	.sort({ name: "asc" })
+	// 	.limit(entries);
 
-	for (let i = 0; i < entries; i++) {
-		let attendance = new Attendance({
-			participant: new ObjectId(participants[i]._id),
-			event: new ObjectId(eventId),
-			attend: []
-		});
+	// for (let i = 0; i < entries; i++) {
+	// 	let attendance = new Attendance({
+	// 		participant: new ObjectId(participants[i]._id),
+	// 		event: new ObjectId(eventId),
+	// 		attend: []
+	// 	});
 
-		participants[i].events.push({
-			event: new ObjectId(eventId),
-			attendance: new ObjectId(attendance._id),
-			status: "not attended"
-		});
-		[part, attendance] = await Promise.all([
-			participants[i].save(),
-			attendance.save()
-		]);
-		console.log(`Participant ${i} registered in event`);
-	}
-	console.timeEnd("Participants Registered in event in: ");
+	// 	participants[i].events.push({
+	// 		event: new ObjectId(eventId),
+	// 		attendance: new ObjectId(attendance._id),
+	// 		status: "not attended"
+	// 	});
+	// 	[part, attendance] = await Promise.all([
+	// 		participants[i].save(),
+	// 		attendance.save()
+	// 	]);
+	// 	console.log(`Participant ${i} registered in event`);
+	// }
+	// console.timeEnd("Participants Registered in event in: ");
 
 	// mark random attendences
 	// console.time("Marked in: ");
