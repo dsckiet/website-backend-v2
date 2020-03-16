@@ -1,5 +1,6 @@
 const kue = require("kue");
 const ObjectId = require("mongoose").Types.ObjectId;
+const { catchErrors } = require("../errorHandler");
 
 const Queue = kue.createQueue({
 	redis: process.env.REDIS_URL
@@ -13,12 +14,16 @@ Queue.process("sendLoginCreds", async (job, done) => {
 		"Login Details sent to: " + data.email + " at " + Date(Date.now());
 	logger("info", "scheduler", log);
 	console.log(log);
-	await sendLoginCredsMail(data.email, {
-		name: data.name,
-		password: data.password,
-		role: data.role
-	});
-	done();
+	try {
+		await sendLoginCredsMail(data.email, {
+			name: data.name,
+			password: data.password,
+			role: data.role
+		});
+		done();
+	} catch (err) {
+		done(err);
+	}
 });
 
 Queue.process("deleteEvent", async (job, done) => {

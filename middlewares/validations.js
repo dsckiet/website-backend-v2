@@ -34,6 +34,7 @@ module.exports.participantValidation = (req, res, next) => {
 };
 
 module.exports.eventValidation = (req, res, next) => {
+	console.log(req.body);
 	let {
 		title,
 		description,
@@ -53,9 +54,7 @@ module.exports.eventValidation = (req, res, next) => {
 		!startDate ||
 		!endDate ||
 		!time ||
-		!venue ||
-		!isRegistrationRequired ||
-		!isRegistrationOpened
+		!venue
 	) {
 		return sendError(res, "All fields are mandatory!!", BAD_REQUEST);
 	} else {
