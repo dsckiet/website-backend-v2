@@ -11,7 +11,7 @@ const EventSchema = new mongoose.Schema(
 		time: { type: String, required: true },
 		venue: { type: String, requried: true },
 		isRegistrationRequired: { type: Boolean, default: true },
-		isRegistrationOpen: { type: Boolean, default: false },
+		isRegistrationOpened: { type: Boolean, default: false },
 		code: { type: String, required: true }
 	},
 	{ timestamps: true }

@@ -41,9 +41,7 @@ module.exports.eventValidation = (req, res, next) => {
 		startDate,
 		endDate,
 		time,
-		venue,
-		isRegistrationRequired,
-		isRegistrationOpened
+		venue
 	} = req.body;
 
 	if (
@@ -53,9 +51,7 @@ module.exports.eventValidation = (req, res, next) => {
 		!startDate ||
 		!endDate ||
 		!time ||
-		!venue ||
-		!isRegistrationRequired ||
-		!isRegistrationOpened
+		!venue
 	) {
 		return sendError(res, "All fields are mandatory!!", BAD_REQUEST);
 	} else {
