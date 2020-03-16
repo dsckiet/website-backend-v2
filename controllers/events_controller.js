@@ -124,13 +124,14 @@ module.exports.registerParticipant = async (req, res) => {
 };
 
 module.exports.updateParticipant = async (req, res) => {
-	let { name, email, branch, year, phone } = req.body;
+	let { name, email, branch, year, phone, password } = req.body;
 	let updateObj = {
 		name,
 		email,
 		branch,
 		year,
-		phone
+		phone,
+		password
 	};
 	participant = await Participant.findByIdAndUpdate(
 		req.params.id,

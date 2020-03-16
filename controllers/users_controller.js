@@ -130,7 +130,8 @@ module.exports.updateProfile = async (req, res) => {
 		github,
 		linkedin,
 		twitter,
-		portfolio
+		portfolio,
+		password
 	} = req.body;
 	let profile = await User.findById(req.query.id);
 	profile.name = name;
