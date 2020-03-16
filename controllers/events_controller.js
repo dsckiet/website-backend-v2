@@ -278,7 +278,13 @@ module.exports.participantData = async (req, res) => {
 };
 
 module.exports.getEvents = async (req, res) => {
-	let events = await Event.find().sort({ createdAt: "desc" });
+	let { id } = req.query;
+	let events;
+	if (id) {
+		events = await Event.findById(id);
+	} else {
+		events = await Event.find().sort({ createdAt: "desc" });
+	}
 	sendSuccess(res, events);
 };
 
