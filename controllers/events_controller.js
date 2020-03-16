@@ -281,7 +281,6 @@ module.exports.participantData = async (req, res) => {
 };
 
 module.exports.getEvents = async (req, res) => {
-	console.log(req);
 	let { id } = req.query;
 	let events;
 	if (id) {
