@@ -14,6 +14,7 @@ const {
 const { USER_HASH_LENGTH } = require("../config/index");
 // import helper functions
 const { sendError, sendSuccess, generateHash } = require("../utility/helpers");
+const { deleteImage } = require("../config/imageService");
 
 module.exports.users = async (req, res) => {
 	let { id, sortBy, sortType } = req.query;
@@ -135,6 +136,9 @@ module.exports.updateProfile = async (req, res) => {
 		portfolio
 	} = req.body;
 	let profile = await User.findById(req.query.id);
+	if (!profile) {
+		return sendError(res, "No Profile Found", BAD_REQUEST);
+	}
 	profile.name = name;
 	profile.contact = contact;
 	profile.designation = designation;
@@ -143,7 +147,20 @@ module.exports.updateProfile = async (req, res) => {
 	profile.twitter = twitter;
 	profile.portfolio = portfolio;
 	profile.password = password;
-	profile = await profile.save();
+
+	if (req.files) {
+		if (profile.image && profile.image.includes("amazonaws")) {
+			let key = `${profile.image.split("/")[3]}/${
+				profile.image.split("/")[4]
+			}`;
+			console.log(key)
+			await deleteImage(key);
+		}
+		profile.image = req.files[0].location;
+	}
+
+	await profile.save();
+	profile = await User.findById(profile._id);
 	sendSuccess(res, profile);
 };
 

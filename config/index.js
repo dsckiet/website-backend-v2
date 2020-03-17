@@ -11,7 +11,8 @@ module.exports = {
 	EMAIL_PASS: process.env.EMAIL_PASS,
 	EVENT_HASH_LENGTH: 20,
 	USER_HASH_LENGTH: 8,
-	AWS_KEY: process.env.AWS_KEY, 
-	AWS_SECRET: process.env.AWS_SECRET, 
-	AWS_BUCKET_NAME: process.env.AWS_BUCKET_NAME
+	AWS_KEY: process.env.AWS_KEY,
+	AWS_SECRET: process.env.AWS_SECRET,
+	AWS_BUCKET_NAME: process.env.AWS_BUCKET_NAME,
+	AWS_REGION: process.env.AWS_REGION
 };
