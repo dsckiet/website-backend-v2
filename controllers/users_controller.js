@@ -153,7 +153,7 @@ module.exports.updateProfile = async (req, res) => {
 			let key = `${profile.image.split("/")[3]}/${
 				profile.image.split("/")[4]
 			}`;
-			console.log(key)
+			// not working due to undefind reasons!! :(
 			await deleteImage(key);
 		}
 		profile.image = req.files[0].location;

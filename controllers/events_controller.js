@@ -16,6 +16,8 @@ const {
 	formatHtmlDate
 } = require("../utility/helpers");
 
+const { deleteImage } = require("../config/imageService");
+
 getPushObject = (part, attendInd) => {
 	return {
 		id: part._id,
@@ -318,6 +320,10 @@ module.exports.addEvent = async (req, res) => {
 		isRegistrationRequired,
 		code
 	});
+
+	if (req.files) {
+		event.image = req.files[0].location;
+	}
 	event = await event.save();
 	sendSuccess(res, event);
 };
@@ -379,7 +385,20 @@ module.exports.updateEvent = async (req, res) => {
 			isRegistrationOpened,
 			isRegistrationRequired
 		};
-		let event = await Event.findByIdAndUpdate(id, updateObj, { new: true });
+
+		if (req.files) {
+			console.log(event);
+			if (event.image && event.image.includes("amazonaws")) {
+				let key = `${event.image.split("/")[3]}/${
+					event.image.split("/")[4]
+				}`;
+				// not working due to undefind reasons!! :(
+				await deleteImage(key);
+			}
+			updateObj.image = req.files[0].location;
+		}
+
+		event = await Event.findByIdAndUpdate(id, updateObj, { new: true });
 		sendSuccess(res, event);
 	} else {
 		sendError(res, "Invalid Event!!", BAD_REQUEST);
