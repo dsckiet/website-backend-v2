@@ -23,11 +23,19 @@ module.exports.upload = multer({
 		acl: "public-read",
 		contentType: multerS3.AUTO_CONTENT_TYPE,
 		key: function(req, file, cb) {
+			let url = req.originalUrl;
+			let folder;
+			if (url.includes("profile")) {
+				folder = "users";
+			} else if (url.includes("update_part")) {
+				folder = "participants";
+			} else {
+				folder = "events";
+			}
 			cb(
 				null,
-				`${req.baseUrl.split("/")[3]}/${Date.now()}${Math.floor(
-					Math.random() * 900000
-				) + 99999}`
+				`${folder}/${Date.now()}${Math.floor(Math.random() * 900000) +
+					99999}`
 			);
 		}
 	})

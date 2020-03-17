@@ -2,7 +2,7 @@ const kue = require("../config/Scheduler/kue");
 const worker = require("../config/Scheduler/worker");
 const ObjectId = require("mongoose").Types.ObjectId;
 
-const { ENV } = require("../config/index");
+const { ENV, AVATAR_URL } = require("../config/index");
 
 // import http status codes
 const {
@@ -57,7 +57,9 @@ module.exports.addUser = async (req, res) => {
 				email,
 				role,
 				designation,
-				password
+				password,
+				image: `${AVATAR_URL}${Math.floor(Math.random() * 10000) +
+					9999}.svg`
 			});
 			user = await user.save();
 			let args = {

@@ -2,7 +2,7 @@ const kue = require("../config/Scheduler/kue");
 const worker = require("../config/Scheduler/worker");
 
 const ObjectId = require("mongoose").Types.ObjectId;
-
+const { AVATAR_URL } = require("../config/index");
 // import http status codes
 const { BAD_REQUEST, NOT_ACCEPTABLE } = require("../utility/statusCodes");
 // import constants
@@ -107,7 +107,9 @@ module.exports.registerParticipant = async (req, res) => {
 			year,
 			phone,
 			password,
-			events: []
+			events: [],
+			image: `${AVATAR_URL}${Math.floor(Math.random() * 10000) +
+				9999}.svg`
 		});
 		participant = await participant.save();
 		let args = {
@@ -135,6 +137,11 @@ module.exports.updateParticipant = async (req, res) => {
 		phone,
 		password
 	};
+
+	if (req.files) {
+		updateObj.image = req.files[0].location;
+	}
+
 	participant = await Participant.findByIdAndUpdate(
 		req.params.id,
 		{ $set: updateObj },

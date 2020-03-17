@@ -47,6 +47,7 @@ router.post(
 router.put(
 	"/update_part/:id",
 	participantAuth,
+	upload.array("image", 1),
 	participantValidation,
 	catchErrors(updateParticipant)
 );
