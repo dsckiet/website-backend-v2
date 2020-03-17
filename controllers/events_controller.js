@@ -338,8 +338,14 @@ module.exports.changeEventRegistrationOpen = async (req, res) => {
 	let { id } = req.body;
 	let event = await Event.findById(id);
 	if (event) {
-		event.isRegistrationOpen = event.isRegistrationOpen ? false : true;
-		event = await event.save();
+		let isRegistrationOpened = event.isRegistrationOpened ? false : true;
+		event = await Event.findByIdAndUpdate(
+			id,
+			{
+				$set: { isRegistrationOpened: Boolean(isRegistrationOpened) }
+			},
+			{ new: true }
+		);
 		sendSuccess(res, event);
 	} else {
 		sendError(res, "Invalid Event!!", BAD_REQUEST);
