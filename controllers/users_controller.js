@@ -170,41 +170,35 @@ module.exports.profile = async (req, res) => {
 };
 
 module.exports.updateProfile = async (req, res) => {
-	let {
-		name,
-		password,
-		contact,
-		designation,
-		github,
-		linkedin,
-		twitter,
-		portfolio
-	} = req.body;
+	let { name, email } = req.body;
 	let profile = await User.findById(req.query.id);
 	if (!profile) {
 		return sendError(res, "No Profile Found", BAD_REQUEST);
 	}
-	profile.name = name;
-	profile.contact = contact;
-	profile.designation = designation;
-	profile.github = github;
-	profile.linkedin = linkedin;
-	profile.twitter = twitter;
-	profile.portfolio = portfolio;
-	profile.password = password;
 
-	if (req.files) {
+	if (name) {
+		if (name !== profile.name) setToken(req.query.id, "revalidate");
+	}
+
+	if (email) {
+		if (email !== profile.email) setToken(req.query.id, "revalidate");
+	}
+
+	if (req.files.length !== 0) {
 		if (profile.image && profile.image.includes("amazonaws")) {
 			let key = `${profile.image.split("/")[3]}/${
 				profile.image.split("/")[4]
 			}`;
 			await deleteImage(key);
 		}
-		profile.image = req.files[0].location;
+		req.body.image = req.files[0].location;
 	}
 
-	await profile.save();
-	profile = await User.findById(profile._id);
+	profile = await User.findByIdAndUpdate(
+		req.query.id,
+		{ $set: req.body },
+		{ new: true }
+	);
 	sendSuccess(res, profile);
 };
 

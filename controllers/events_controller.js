@@ -130,26 +130,28 @@ module.exports.registerParticipant = async (req, res) => {
 };
 
 module.exports.updateParticipant = async (req, res) => {
-	let { name, email, branch, year, phone, password } = req.body;
-	let updateObj = {
-		name,
-		email,
-		branch,
-		year,
-		phone,
-		password
-	};
+	let { name, email } = req.body;
+
+	let participant = await Participant.findById(req.params.id);
+
+	if (!participant)
+		return sendError(res, "Participant not found!!", BAD_REQUEST);
+
+	if (name) {
+		if (name !== participant.name) setToken(req.query.id, "revalidate");
+	}
+
+	if (email) {
+		if (email !== participant.email) setToken(req.query.id, "revalidate");
+	}
 
 	participant = await Participant.findByIdAndUpdate(
 		req.params.id,
-		{ $set: updateObj },
+		{ $set: req.body },
 		{ new: true }
 	);
-	if (participant) {
-		sendSuccess(res, participant);
-	} else {
-		sendError(res, "Participant not found!!", BAD_REQUEST);
-	}
+
+	sendSuccess(res, participant);
 };
 
 module.exports.participantLogin = async (req, res) => {
