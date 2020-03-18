@@ -34,7 +34,6 @@ module.exports.participantValidation = (req, res, next) => {
 };
 
 module.exports.eventValidation = (req, res, next) => {
-	console.log(req.body);
 	let {
 		title,
 		description,
@@ -44,6 +43,11 @@ module.exports.eventValidation = (req, res, next) => {
 		time,
 		venue
 	} = req.body;
+
+	let validDates =
+		Number(startDate.split("-")[2]) <= Number(endDate.split("-")[2]) &&
+		Number(endDate.split("-")[2]) - Number(startDate.split("-")[2]) ===
+			Number(days);
 
 	if (
 		!title ||
@@ -55,6 +59,8 @@ module.exports.eventValidation = (req, res, next) => {
 		!venue
 	) {
 		return sendError(res, "All fields are mandatory!!", BAD_REQUEST);
+	} else if (!validDates) {
+		return sendError(res, "Invalid dates", BAD_REQUEST);
 	} else {
 		return next();
 	}

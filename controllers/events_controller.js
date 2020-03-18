@@ -295,7 +295,30 @@ module.exports.getEvents = async (req, res) => {
 	if (id) {
 		events = await Event.findById(id);
 	} else {
-		events = await Event.find().sort({ createdAt: "desc" });
+		allEvents = await Event.find().sort({ createdAt: "desc" });
+
+		events = {
+			previousEvents: [],
+			runningEvents: [],
+			upcomingEvents: []
+		};
+
+		let currTime = new Date(Date.now()),
+			today = new Date(
+				currTime.getFullYear(),
+				currTime.getMonth(),
+				currTime.getDate()
+			).toISOString();
+
+		allEvents.map(event => {
+			if (today < new Date(event.startDate).toISOString()) {
+				events.upcomingEvents.push(event);
+			} else if (today > new Date(event.endDate).toISOString()) {
+				events.previousEvents.push(event);
+			} else {
+				events.runningEvents.push(event);
+			}
+		});
 	}
 	sendSuccess(res, events);
 };
