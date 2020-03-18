@@ -5,7 +5,8 @@ const router = express.Router();
 const {
 	users,
 	addUser,
-	approveUser,
+	toggleShowOnWeb,
+	toggleRevoke,
 	deleteUser,
 	login,
 	profile,
@@ -21,14 +22,15 @@ const { upload } = require("../../../config/imageService");
 
 // routes
 router.get("/", catchErrors(users));
-router.post("/", coreAuth, userValidation, catchErrors(addUser));
-router.put("/:id", leadAuth, catchErrors(approveUser));
-router.delete("/:id", coreAuth, catchErrors(deleteUser));
+router.post("/", catchErrors(coreAuth), userValidation, catchErrors(addUser));
+router.put("/approve/:id", catchErrors(leadAuth), catchErrors(toggleShowOnWeb));
+router.put("/revoke/:id", catchErrors(leadAuth), catchErrors(toggleRevoke));
+router.delete("/:id", catchErrors(coreAuth), catchErrors(deleteUser));
 router.post("/login", catchErrors(login));
-router.get("/profile", allAuth, catchErrors(profile));
+router.get("/profile", catchErrors(allAuth), catchErrors(profile));
 router.post(
 	"/profile",
-	allAuth,
+	catchErrors(allAuth),
 	upload.array("image", 1),
 	catchErrors(updateProfile)
 );

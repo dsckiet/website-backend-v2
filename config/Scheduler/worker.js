@@ -35,7 +35,8 @@ Queue.process("deleteEvent", async (job, done) => {
 
 	let promises = [
 		Event.findByIdAndDelete(id),
-		Attendance.deleteMany({ event: new ObjectId(id) })
+		Attendance.deleteMany({ event: new ObjectId(id) }),
+		Feedback.deleteMany({ event: new ObjectId(id) })
 	];
 
 	let participants = await Participant.find({

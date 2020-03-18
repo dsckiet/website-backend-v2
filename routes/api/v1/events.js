@@ -7,8 +7,10 @@ const {
 	registerParticipant,
 	updateParticipant,
 	participantLogin,
+	toggleRevoke,
 	registerForEvent,
 	participantData,
+	deleteParticipant,
 	getEvents,
 	addEvent,
 	updateEvent,
@@ -38,7 +40,7 @@ const {
 const { upload } = require("../../../config/imageService");
 
 // routes for participants
-router.get("/get_part", coreAuth, catchErrors(getParticipants));
+router.get("/get_part", catchErrors(coreAuth), catchErrors(getParticipants));
 router.post(
 	"/register_part",
 	participantValidation,
@@ -46,58 +48,91 @@ router.post(
 );
 router.put(
 	"/update_part/:id",
-	participantAuth,
-	upload.array("image", 1),
+	catchErrors(participantAuth),
 	participantValidation,
 	catchErrors(updateParticipant)
 );
 
 router.post("/part_login", catchErrors(participantLogin));
+router.put(
+	"/revoke_part/:id",
+	catchErrors(leadAuth),
+	catchErrors(toggleRevoke)
+);
 router.post(
 	"/register_in_event",
-	participantAuth,
+	catchErrors(participantAuth),
 	catchErrors(registerForEvent)
 );
-router.get("/part_data", allAuth, catchErrors(participantData));
+router.get("/part_data", catchErrors(allAuth), catchErrors(participantData));
+router.delete(
+	"/delete_part/:id",
+	catchErrors(leadAuth),
+	catchErrors(deleteParticipant)
+);
 // routes for event details and operations
 router.get("/get_events", catchErrors(getEvents));
 router.post(
 	"/add_event",
-	leadAuth,
+	catchErrors(leadAuth),
 	upload.array("image", 1),
 	eventValidation,
 	catchErrors(addEvent)
 );
-router.post("/change_event_code", coreAuth, catchErrors(changeEventCode));
+router.post(
+	"/change_event_code",
+	catchErrors(coreAuth),
+	catchErrors(changeEventCode)
+);
 router.post(
 	"/event_regist_open",
-	leadAuth,
+	catchErrors(leadAuth),
 	catchErrors(changeEventRegistrationOpen)
 );
 router.put(
 	"/update_event/:id",
-	coreAuth,
+	catchErrors(coreAuth),
 	upload.array("image", 1),
 	catchErrors(updateEvent)
 );
-router.delete("/delete_event/:id", leadAuth, catchErrors(deleteEvent));
+router.delete(
+	"/delete_event/:id",
+	catchErrors(leadAuth),
+	catchErrors(deleteEvent)
+);
 // routes for event attendance
 router.get(
 	"/get_attend_report",
-	coreAuth,
+	catchErrors(coreAuth),
 	catchErrors(getEventAttendanceReport)
 );
-router.get("/get_attend_stats", coreAuth, catchErrors(getEventAttendanceStats));
+router.get(
+	"/get_attend_stats",
+	catchErrors(coreAuth),
+	catchErrors(getEventAttendanceStats)
+);
 router.get(
 	"/get_user_attend",
-	participantAuth,
+	catchErrors(participantAuth),
 	catchErrors(getUserEventAttendance)
 );
-router.post("/mark_attend", participantAuth, catchErrors(markUserAttendance));
+router.post(
+	"/mark_attend",
+	catchErrors(participantAuth),
+	catchErrors(markUserAttendance)
+);
 // routes for event certificates
 // routes for event feedbacks
-router.post("/feedback", participantAuth, catchErrors(submitFeedback));
-router.get("/feedback/:id", coreAuth, catchErrors(getFeedbackReport));
+router.post(
+	"/feedback",
+	catchErrors(participantAuth),
+	catchErrors(submitFeedback)
+);
+router.get(
+	"/feedback/:id",
+	catchErrors(coreAuth),
+	catchErrors(getFeedbackReport)
+);
 
 // export router
 module.exports = router;

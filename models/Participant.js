@@ -12,7 +12,8 @@ const ParticipantSchema = new mongoose.Schema(
 		year: { type: Number, required: true },
 		phone: { type: Number, required: true },
 		password: { type: String, required: true },
-		isVerified: { type: Boolean, default: true },
+		isVerified: { type: Boolean, default: false },
+		isRevoked: {type:Boolean,default:false},
 		image: { type: String },
 		events: [
 			{

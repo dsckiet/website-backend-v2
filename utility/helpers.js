@@ -1,4 +1,12 @@
 const { OK } = require("./statusCodes");
+const redis = require("redis");
+const client = redis.createClient();
+const { promisify } = require("util");
+const getAsync = promisify(client.get).bind(client);
+
+client.on("error", function(error) {
+	console.error(error);
+});
 
 const log4js = require("log4js");
 log4js.configure({
@@ -89,4 +97,26 @@ module.exports.logger = (type, funcName, message) => {
 
 module.exports.escapeRegex = text => {
 	return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
+};
+
+module.exports.checkToken = async id => {
+	// id:revalidate ->  (generate new token)
+	// id:revoked ->  (log the user out)
+	// id:token -> give access if token == providedToken
+	// no id -> user account is deleted
+	let response;
+	try {
+		response = await getAsync(id);
+	} catch (err) {
+		throw err;
+	}
+	return response;
+};
+
+module.exports.setToken = (id, value) => {
+	if (value === "delete") {
+		client.del(id);
+	} else {
+		client.set(id, value);
+	}
 };

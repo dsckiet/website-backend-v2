@@ -1,6 +1,7 @@
 const aws = require("aws-sdk");
 const multer = require("multer");
 const multerS3 = require("multer-s3");
+const { promisify } = require("util");
 
 const { logger } = require("../utility/helpers");
 
@@ -42,18 +43,17 @@ module.exports.upload = multer({
 });
 
 // delete image
-module.exports.deleteImage = key => {
-	s3.deleteObject(
-		{
+module.exports.deleteImage = async key => {
+	const deleteObjectAsync = promisify(s3.deleteObject).bind(s3);
+
+	try {
+		await deleteObjectAsync({
 			Bucket: AWS_BUCKET_NAME,
 			Key: key
-		},
-		(err, data) => {
-			if (err) {
-				console.log(err);
-				logger("error", "imageService", err);
-				throw err;
-			}
-		}
-	);
+		});
+	} catch (err) {
+		console.log(err);
+		logger("error", "imageService", err);
+		throw err;
+	}
 };

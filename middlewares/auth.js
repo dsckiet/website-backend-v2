@@ -1,8 +1,8 @@
 const jwt = require("jsonwebtoken");
-const { sendError } = require("../utility/helpers");
-const { NOT_AUTHORIZED } = require("../utility/statusCodes");
+const { sendError, checkToken } = require("../utility/helpers");
+const { NOT_AUTHORIZED, FORBIDDEN } = require("../utility/statusCodes");
 
-module.exports.allAuth = (req, res, next) => {
+module.exports.allAuth = async (req, res, next) => {
 	const token = req.header("x-auth-token");
 	if (!token)
 		return sendError(
@@ -10,12 +10,26 @@ module.exports.allAuth = (req, res, next) => {
 			"Access denied. No Token provided",
 			NOT_AUTHORIZED
 		);
+
 	const decodedPayload = jwt.verify(token, process.env.JWT_PRIVATE_KEY);
+
+	let prev_token = await checkToken(decodedPayload.id);
+
+	if (prev_token) {
+		if (prev_token === "revoked") {
+			return sendError(res, "Account Revoked, Logout!", FORBIDDEN);
+		} else if (prev_token === "revalidate" || prev_token !== token) {
+			return sendError(res, "Session Expired, Logout!", FORBIDDEN);
+		}
+	} else {
+		return sendError(res, "Account Suspended, Logout!", FORBIDDEN);
+	}
+
 	req.user = decodedPayload;
 	return next();
 };
 
-module.exports.leadAuth = (req, res, next) => {
+module.exports.leadAuth = async (req, res, next) => {
 	const token = req.header("x-auth-token");
 	if (!token)
 		return sendError(
@@ -24,6 +38,19 @@ module.exports.leadAuth = (req, res, next) => {
 			NOT_AUTHORIZED
 		);
 	const decodedPayload = jwt.verify(token, process.env.JWT_PRIVATE_KEY);
+
+	let prev_token = await checkToken(decodedPayload.id);
+
+	if (prev_token) {
+		if (prev_token === "revoked") {
+			return sendError(res, "Account Revoked, Logout!", FORBIDDEN);
+		} else if (prev_token === "revalidate" || prev_token !== token) {
+			return sendError(res, "Session Expired, Logout!", FORBIDDEN);
+		}
+	} else {
+		return sendError(res, "Account Suspended, Logout!", FORBIDDEN);
+	}
+
 	if (decodedPayload.role === "lead") {
 		req.user = decodedPayload;
 		return next();
@@ -32,7 +59,7 @@ module.exports.leadAuth = (req, res, next) => {
 	}
 };
 
-module.exports.coreAuth = (req, res, next) => {
+module.exports.coreAuth = async (req, res, next) => {
 	const token = req.header("x-auth-token");
 	if (!token)
 		return sendError(
@@ -41,6 +68,19 @@ module.exports.coreAuth = (req, res, next) => {
 			NOT_AUTHORIZED
 		);
 	const decodedPayload = jwt.verify(token, process.env.JWT_PRIVATE_KEY);
+
+	let prev_token = await checkToken(decodedPayload.id);
+
+	if (prev_token) {
+		if (prev_token === "revoked") {
+			return sendError(res, "Account Revoked, Logout!", FORBIDDEN);
+		} else if (prev_token === "revalidate" || prev_token !== token) {
+			return sendError(res, "Session Expired, Logout!", FORBIDDEN);
+		}
+	} else {
+		return sendError(res, "Account Suspended, Logout!", FORBIDDEN);
+	}
+
 	if (decodedPayload.role === "core" || decodedPayload.role === "lead") {
 		req.user = decodedPayload;
 		return next();
@@ -49,7 +89,7 @@ module.exports.coreAuth = (req, res, next) => {
 	}
 };
 
-module.exports.participantAuth = (req, res, next) => {
+module.exports.participantAuth = async (req, res, next) => {
 	const token = req.header("x-auth-token");
 	if (!token)
 		return sendError(
@@ -58,6 +98,19 @@ module.exports.participantAuth = (req, res, next) => {
 			NOT_AUTHORIZED
 		);
 	const decodedPayload = jwt.verify(token, process.env.JWT_PRIVATE_KEY);
+
+	let prev_token = await checkToken(decodedPayload.id);
+
+	if (prev_token) {
+		if (prev_token === "revoked") {
+			return sendError(res, "Account Revoked, Logout!", FORBIDDEN);
+		} else if (prev_token === "revalidate" || prev_token !== token) {
+			return sendError(res, "Session Expired, Logout!", FORBIDDEN);
+		}
+	} else {
+		return sendError(res, "Account Suspended, Logout!", FORBIDDEN);
+	}
+
 	if (decodedPayload.role === "participant") {
 		req.user = decodedPayload;
 		return next();

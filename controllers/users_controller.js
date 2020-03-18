@@ -5,11 +5,21 @@ const ObjectId = require("mongoose").Types.ObjectId;
 const { ENV, AVATAR_URL } = require("../config/index");
 
 // import http status codes
-const { BAD_REQUEST, NOT_AUTHORIZED } = require("../utility/statusCodes");
+const {
+	BAD_REQUEST,
+	NOT_AUTHORIZED,
+	FORBIDDEN
+} = require("../utility/statusCodes");
 // import constants
 const { USER_HASH_LENGTH } = require("../config/index");
 // import helper functions
-const { sendError, sendSuccess, generateHash } = require("../utility/helpers");
+const {
+	sendError,
+	sendSuccess,
+	generateHash,
+	checkToken,
+	setToken
+} = require("../utility/helpers");
 const { deleteImage } = require("../config/imageService");
 
 module.exports.users = async (req, res) => {
@@ -58,6 +68,9 @@ module.exports.addUser = async (req, res) => {
 					9999}.svg`
 			});
 			user = await user.save();
+
+			const token = user.generateAuthToken();
+			setToken(String(user._id), token);
 			let args = {
 				jobName: "sendLoginCreds",
 				time: Date.now(),
@@ -84,21 +97,51 @@ module.exports.login = async (req, res) => {
 	if (!validPassword) return sendError(res, "Invalid Password", BAD_REQUEST);
 	user.lastLogin = new Date(Date.now()).toISOString();
 	await user.save();
-	const token = user.generateAuthToken();
+	let token = await checkToken(String(user._id));
+	if (token) {
+		if (token === "revoked") {
+			return sendError(res, "Account Revoked, Logout!", FORBIDDEN);
+		} else if (token === "revalidate") {
+			token = user.generateAuthToken();
+			setToken(String(user._id), token);
+		}
+	} else {
+		return sendError(res, "Account Suspended, Logout!", FORBIDDEN);
+	}
 	sendSuccess(res, user, token);
 };
 
-module.exports.approveUser = async (req, res) => {
-	let { role, showOnWebsite } = req.body;
-	let user = await User.findById(req.params.id);
-	user.role = role;
-	user.showOnWebsite = showOnWebsite;
+module.exports.toggleShowOnWeb = async (req, res) => {
+	let { id } = req.params;
+	let user = await User.findById(id);
+	if (!user) {
+		return sendError(res, "Invalid User", BAD_REQUEST);
+	}
+	user.showOnWebsite = user.showOnWebsite ? false : true;
+	user = await user.save();
+	sendSuccess(res, user);
+};
+
+module.exports.toggleRevoke = async (req, res) => {
+	let { id } = req.params;
+	let user = await User.findById(id);
+	if (!user) {
+		return sendError(res, "Invalid User", BAD_REQUEST);
+	}
+	//toggle the revoke status of user
+	user.isRevoked = user.isRevoked ? false : true;
+
+	//change token status
+	user.isRevoked ? setToken(id, "revoke") : setToken(id, "revalidate");
+
 	user = await user.save();
 	sendSuccess(res, user);
 };
 
 module.exports.deleteUser = async (req, res) => {
-	let user = User.findById(req.params.id);
+	let { id } = req.params;
+
+	let user = await User.findById(id);
 	if (req.user.role === "core" && user.role !== "member") {
 		sendError(
 			res,
@@ -108,9 +151,10 @@ module.exports.deleteUser = async (req, res) => {
 	} else {
 		if (user.image && user.image.includes("amazonaws")) {
 			let key = `${user.image.split("/")[3]}/${user.image.split("/")[4]}`;
-			deleteImage(key);
+			await deleteImage(key);
 		}
 		await user.delete();
+		setToken(id, "delete");
 		sendSuccess(res, null);
 	}
 };
@@ -154,7 +198,7 @@ module.exports.updateProfile = async (req, res) => {
 			let key = `${profile.image.split("/")[3]}/${
 				profile.image.split("/")[4]
 			}`;
-			deleteImage(key);
+			await deleteImage(key);
 		}
 		profile.image = req.files[0].location;
 	}
@@ -170,14 +214,16 @@ module.exports.temp = async (req, res) => {
 	}
 
 	// create root lead user
-	// let user = await new User({
-	// 	name: "root",
-	// 	email: "root@dsckiet.tech",
-	// 	password: "root@dsckiet123",
-	// 	role: "lead",
-	// 	designation: "lead"
-	// });
-	// await user.save();
+	let user = await new User({
+		name: "root",
+		email: "root@dsckiet.tech",
+		password: "root@dsckiet123",
+		role: "lead",
+		designation: "lead"
+	});
+	const token = user.generateAuthToken();
+	setToken(String(user._id), token);
+	await user.save();
 
 	// create random users
 	// console.time("Participants Created in: ");
