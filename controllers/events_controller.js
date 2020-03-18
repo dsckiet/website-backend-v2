@@ -4,7 +4,7 @@ const worker = require("../config/Scheduler/worker");
 const ObjectId = require("mongoose").Types.ObjectId;
 const { AVATAR_URL } = require("../config/index");
 // import http status codes
-const { BAD_REQUEST, NOT_ACCEPTABLE } = require("../utility/statusCodes");
+const { BAD_REQUEST } = require("../utility/statusCodes");
 // import constants
 const { USER_HASH_LENGTH, EVENT_HASH_LENGTH } = require("../config/index");
 // import helper functions
@@ -159,10 +159,9 @@ module.exports.participantLogin = async (req, res) => {
 	let participant = await Participant.findOne({
 		email: { $regex: `^${email}$`, $options: "i" }
 	});
-	if (!participant) return sendError(res, "Invalid User", NOT_ACCEPTABLE);
+	if (!participant) return sendError(res, "Invalid User", BAD_REQUEST);
 	const validPassword = await participant.isValidPwd(String(password).trim());
-	if (!validPassword)
-		return sendError(res, "Invalid Password", NOT_ACCEPTABLE);
+	if (!validPassword) return sendError(res, "Invalid Password", BAD_REQUEST);
 	participant.lastLogin = new Date(Date.now()).toISOString();
 	await participant.save();
 	const token = participant.generateAuthToken();

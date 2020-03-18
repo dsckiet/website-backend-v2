@@ -5,11 +5,7 @@ const ObjectId = require("mongoose").Types.ObjectId;
 const { ENV, AVATAR_URL } = require("../config/index");
 
 // import http status codes
-const {
-	BAD_REQUEST,
-	NOT_AUTHORIZED,
-	NOT_ACCEPTABLE
-} = require("../utility/statusCodes");
+const { BAD_REQUEST, NOT_AUTHORIZED } = require("../utility/statusCodes");
 // import constants
 const { USER_HASH_LENGTH } = require("../config/index");
 // import helper functions
@@ -83,10 +79,9 @@ module.exports.login = async (req, res) => {
 	let user = await User.findOne({
 		email: { $regex: `^${email}$`, $options: "i" }
 	});
-	if (!user) return sendError(res, "Invalid User", NOT_ACCEPTABLE);
+	if (!user) return sendError(res, "Invalid User", BAD_REQUEST);
 	const validPassword = await user.isValidPwd(String(password).trim());
-	if (!validPassword)
-		return sendError(res, "Invalid Password", NOT_ACCEPTABLE);
+	if (!validPassword) return sendError(res, "Invalid Password", BAD_REQUEST);
 	user.lastLogin = new Date(Date.now()).toISOString();
 	await user.save();
 	const token = user.generateAuthToken();
