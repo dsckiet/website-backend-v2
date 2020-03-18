@@ -2,7 +2,7 @@ const kue = require("../config/Scheduler/kue");
 const worker = require("../config/Scheduler/worker");
 
 const ObjectId = require("mongoose").Types.ObjectId;
-
+const { AVATAR_URL } = require("../config/index");
 // import http status codes
 const { BAD_REQUEST, NOT_ACCEPTABLE } = require("../utility/statusCodes");
 // import constants
@@ -15,6 +15,8 @@ const {
 	escapeRegex,
 	formatHtmlDate
 } = require("../utility/helpers");
+
+const { deleteImage } = require("../config/imageService");
 
 getPushObject = (part, attendInd) => {
 	return {
@@ -105,7 +107,9 @@ module.exports.registerParticipant = async (req, res) => {
 			year,
 			phone,
 			password,
-			events: []
+			events: [],
+			image: `${AVATAR_URL}${Math.floor(Math.random() * 10000) +
+				9999}.svg`
 		});
 		participant = await participant.save();
 		let args = {
@@ -124,14 +128,20 @@ module.exports.registerParticipant = async (req, res) => {
 };
 
 module.exports.updateParticipant = async (req, res) => {
-	let { name, email, branch, year, phone } = req.body;
+	let { name, email, branch, year, phone, password } = req.body;
 	let updateObj = {
 		name,
 		email,
 		branch,
 		year,
-		phone
+		phone,
+		password
 	};
+
+	if (req.files) {
+		updateObj.image = req.files[0].location;
+	}
+
 	participant = await Participant.findByIdAndUpdate(
 		req.params.id,
 		{ $set: updateObj },
@@ -153,6 +163,8 @@ module.exports.participantLogin = async (req, res) => {
 	const validPassword = await participant.isValidPwd(String(password).trim());
 	if (!validPassword)
 		return sendError(res, "Invalid Password", NOT_ACCEPTABLE);
+	participant.lastLogin = new Date(Date.now()).toISOString();
+	await participant.save();
 	const token = participant.generateAuthToken();
 	sendSuccess(res, participant, token);
 };
@@ -315,6 +327,10 @@ module.exports.addEvent = async (req, res) => {
 		isRegistrationRequired,
 		code
 	});
+
+	if (req.files) {
+		event.image = req.files[0].location;
+	}
 	event = await event.save();
 	sendSuccess(res, event);
 };
@@ -335,8 +351,14 @@ module.exports.changeEventRegistrationOpen = async (req, res) => {
 	let { id } = req.body;
 	let event = await Event.findById(id);
 	if (event) {
-		event.isRegistrationOpen = event.isRegistrationOpen ? false : true;
-		event = await event.save();
+		let isRegistrationOpened = event.isRegistrationOpened ? false : true;
+		event = await Event.findByIdAndUpdate(
+			id,
+			{
+				$set: { isRegistrationOpened: Boolean(isRegistrationOpened) }
+			},
+			{ new: true }
+		);
 		sendSuccess(res, event);
 	} else {
 		sendError(res, "Invalid Event!!", BAD_REQUEST);
@@ -370,7 +392,20 @@ module.exports.updateEvent = async (req, res) => {
 			isRegistrationOpened,
 			isRegistrationRequired
 		};
-		let event = await Event.findByIdAndUpdate(id, updateObj, { new: true });
+
+		if (req.files) {
+			console.log(event);
+			if (event.image && event.image.includes("amazonaws")) {
+				let key = `${event.image.split("/")[3]}/${
+					event.image.split("/")[4]
+				}`;
+				// not working due to undefind reasons!! :(
+				await deleteImage(key);
+			}
+			updateObj.image = req.files[0].location;
+		}
+
+		event = await Event.findByIdAndUpdate(id, updateObj, { new: true });
 		sendSuccess(res, event);
 	} else {
 		sendError(res, "Invalid Event!!", BAD_REQUEST);
@@ -637,4 +672,90 @@ module.exports.getUserEventAttendance = async (req, res) => {
 	};
 
 	return sendSuccess(res, data);
+};
+
+module.exports.submitFeedback = async (req, res) => {
+	let { eventId, feedback } = req.body;
+
+	if (feedback.length === 0) {
+		return sendError(
+			res,
+			"Atleast one response is required!!",
+			BAD_REQUEST
+		);
+	}
+	let [hasGivenFeedback, hasAttendedEvent] = await Promise.all([
+		Feedback.findOne({
+			participant: req.user.id,
+			event: eventId
+		}),
+		Attendance.findOne({
+			event: eventId,
+			participant: req.user.id,
+			"attend.0": { $exists: true }
+		})
+	]);
+	if (hasGivenFeedback) {
+		return sendError(res, "You have already given feedback!!", BAD_REQUEST);
+	} else if (!hasAttendedEvent) {
+		return sendError(
+			res,
+			"You have not attended this event!!",
+			BAD_REQUEST
+		);
+	} else {
+		let fb = new Feedback({
+			participant: new ObjectId(req.user.id),
+			event: new ObjectId(eventId),
+			feedback
+		});
+		fb = await fb.save();
+		return sendSuccess(res, fb);
+	}
+};
+
+module.exports.getFeedbackReport = async (req, res) => {
+	let { id } = req.params; // event id
+	let feedback = await Feedback.aggregate([
+		{
+			$match: { event: new ObjectId(id) }
+		},
+		{
+			$lookup: {
+				from: "participants",
+				localField: "participant",
+				foreignField: "_id",
+				as: "participant"
+			}
+		},
+		{
+			$lookup: {
+				from: "events",
+				localField: "event",
+				foreignField: "_id",
+				as: "events"
+			}
+		},
+		{
+			$project: {
+				"events.title": 1,
+				"events.description": 1,
+				"events.img": 1,
+				"events.days": 1,
+				"events.startDate": 1,
+				"events.endDate": 1,
+				"events.venue": 1,
+				"events.time": 1,
+				"events._id": 1,
+				"participant.name": 1,
+				"participant.email": 1,
+				"participant.branch": 1,
+				"participant.year": 1,
+				"participant.phone": 1,
+				feedback: 1
+			}
+		}
+	]).sort({ createdAt: "desc" });
+
+	return sendSuccess(res, feedback);
 };

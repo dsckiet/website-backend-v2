@@ -18,7 +18,9 @@ const {
 	getEventAttendanceReport,
 	getEventAttendanceStats,
 	getUserEventAttendance,
-	markUserAttendance
+	markUserAttendance,
+	submitFeedback,
+	getFeedbackReport
 } = require("../../../controllers/events_controller");
 
 // middlewares
@@ -33,6 +35,7 @@ const {
 	participantValidation,
 	eventValidation
 } = require("../../../middlewares/validations");
+const { upload } = require("../../../config/imageService");
 
 // routes for participants
 router.get("/get_part", coreAuth, catchErrors(getParticipants));
@@ -44,9 +47,11 @@ router.post(
 router.put(
 	"/update_part/:id",
 	participantAuth,
+	upload.array("image", 1),
 	participantValidation,
 	catchErrors(updateParticipant)
 );
+
 router.post("/part_login", catchErrors(participantLogin));
 router.post(
 	"/register_in_event",
@@ -56,14 +61,25 @@ router.post(
 router.get("/part_data", allAuth, catchErrors(participantData));
 // routes for event details and operations
 router.get("/get_events", catchErrors(getEvents));
-router.post("/add_event", leadAuth, eventValidation, catchErrors(addEvent));
+router.post(
+	"/add_event",
+	leadAuth,
+	upload.array("image", 1),
+	eventValidation,
+	catchErrors(addEvent)
+);
 router.post("/change_event_code", coreAuth, catchErrors(changeEventCode));
 router.post(
 	"/event_regist_open",
 	leadAuth,
 	catchErrors(changeEventRegistrationOpen)
 );
-router.put("/update_event/:id", coreAuth, catchErrors(updateEvent));
+router.put(
+	"/update_event/:id",
+	coreAuth,
+	upload.array("image", 1),
+	catchErrors(updateEvent)
+);
 router.delete("/delete_event/:id", leadAuth, catchErrors(deleteEvent));
 // routes for event attendance
 router.get(
@@ -80,6 +96,8 @@ router.get(
 router.post("/mark_attend", participantAuth, catchErrors(markUserAttendance));
 // routes for event certificates
 // routes for event feedbacks
+router.post("/feedback", participantAuth, catchErrors(submitFeedback));
+router.get("/feedback/:id", coreAuth, catchErrors(getFeedbackReport));
 
 // export router
 module.exports = router;

@@ -13,6 +13,7 @@ const ParticipantSchema = new mongoose.Schema(
 		phone: { type: Number, required: true },
 		password: { type: String, required: true },
 		isVerified: { type: Boolean, default: true },
+		image: { type: String },
 		events: [
 			{
 				event: {
@@ -29,7 +30,8 @@ const ParticipantSchema = new mongoose.Schema(
 					default: "not attended"
 				}
 			}
-		]
+		],
+		lastLogin: { type: Date, default: Date.now }
 	},
 	{ timestamps: true }
 );

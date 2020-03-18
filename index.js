@@ -36,6 +36,7 @@ const User = require("./models/User");
 const Participant = require("./models/Participant");
 const Event = require("./models/Event");
 const Attendance = require("./models/Attendance");
+const Feedback = require("./models/Feedback");
 
 //Routes
 app.use("/api/v1", require("./routes/api/v1/index"));

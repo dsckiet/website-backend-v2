@@ -2,7 +2,7 @@ const kue = require("../config/Scheduler/kue");
 const worker = require("../config/Scheduler/worker");
 const ObjectId = require("mongoose").Types.ObjectId;
 
-const { ENV } = require("../config/index");
+const { ENV, AVATAR_URL } = require("../config/index");
 
 // import http status codes
 const {
@@ -14,6 +14,7 @@ const {
 const { USER_HASH_LENGTH } = require("../config/index");
 // import helper functions
 const { sendError, sendSuccess, generateHash } = require("../utility/helpers");
+const { deleteImage } = require("../config/imageService");
 
 module.exports.users = async (req, res) => {
 	let { id, sortBy, sortType } = req.query;
@@ -56,7 +57,9 @@ module.exports.addUser = async (req, res) => {
 				email,
 				role,
 				designation,
-				password
+				password,
+				image: `${AVATAR_URL}${Math.floor(Math.random() * 10000) +
+					9999}.svg`
 			});
 			user = await user.save();
 			let args = {
@@ -84,6 +87,8 @@ module.exports.login = async (req, res) => {
 	const validPassword = await user.isValidPwd(String(password).trim());
 	if (!validPassword)
 		return sendError(res, "Invalid Password", NOT_ACCEPTABLE);
+	user.lastLogin = new Date(Date.now()).toISOString();
+	await user.save();
 	const token = user.generateAuthToken();
 	sendSuccess(res, user, token);
 };
@@ -133,6 +138,9 @@ module.exports.updateProfile = async (req, res) => {
 		portfolio
 	} = req.body;
 	let profile = await User.findById(req.query.id);
+	if (!profile) {
+		return sendError(res, "No Profile Found", BAD_REQUEST);
+	}
 	profile.name = name;
 	profile.contact = contact;
 	profile.designation = designation;
@@ -141,7 +149,20 @@ module.exports.updateProfile = async (req, res) => {
 	profile.twitter = twitter;
 	profile.portfolio = portfolio;
 	profile.password = password;
-	profile = await profile.save();
+
+	if (req.files) {
+		if (profile.image && profile.image.includes("amazonaws")) {
+			let key = `${profile.image.split("/")[3]}/${
+				profile.image.split("/")[4]
+			}`;
+			// not working due to undefind reasons!! :(
+			await deleteImage(key);
+		}
+		profile.image = req.files[0].location;
+	}
+
+	await profile.save();
+	profile = await User.findById(profile._id);
 	sendSuccess(res, profile);
 };
 
@@ -162,7 +183,6 @@ module.exports.temp = async (req, res) => {
 
 	// create random users
 	// console.time("Participants Created in: ");
-	// let promises = [];
 	// let branches = ["CS", "IT", "EC", "EN", "ME", "CE", "CO", "CSI", "MCA"],
 	// 	years = [1, 2, 3, 4],
 	// 	chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
@@ -177,16 +197,15 @@ module.exports.temp = async (req, res) => {
 	// 		password: generateHash(USER_HASH_LENGTH),
 	// 		phone: 9876543210
 	// 	});
-	// 	promises.push(part.save());
+	// 	await part.save();
 	// 	console.log(`Partcipant ${i} created...`);
 	// }
-	// await Promise.all(promises);
 	// console.timeEnd("Participants Created in: ");
 
 	// register random participants in event
 	// console.time("Participants Registered in event in: ");
-	// let entries = 200;
-	// let eventIds = new ObjectId("5e6dfb7caad4441a9ceb5b2e");
+	// // let entries = 200;
+	// let eventId = new ObjectId("5e6fe1b985e811179472ca44");
 	// let participants = await Participant.find()
 	// 	.sort({ name: "asc" })
 	// 	.limit(entries);

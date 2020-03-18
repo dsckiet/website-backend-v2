@@ -17,6 +17,7 @@ const {
 const { catchErrors } = require("../../../config/errorHandler");
 const { allAuth, coreAuth, leadAuth } = require("../../../middlewares/auth");
 const { userValidation } = require("../../../middlewares/validations");
+const { upload } = require("../../../config/imageService");
 
 // routes
 router.get("/", catchErrors(users));
@@ -25,7 +26,12 @@ router.put("/:id", leadAuth, catchErrors(approveUser));
 router.delete("/:id", coreAuth, catchErrors(deleteUser));
 router.post("/login", catchErrors(login));
 router.get("/profile", allAuth, catchErrors(profile));
-router.post("/profile", allAuth, catchErrors(updateProfile));
+router.post(
+	"/profile",
+	allAuth,
+	upload.array("image", 1),
+	catchErrors(updateProfile)
+);
 router.post("/temp", catchErrors(temp)); // for dev purpose only
 
 // export router
