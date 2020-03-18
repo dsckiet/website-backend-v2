@@ -45,7 +45,7 @@ module.exports.eventValidation = (req, res, next) => {
 	} = req.body;
 
 	let validDates =
-		Number(startDate.split("-")[2]) <= Number(endDate.split("-")[2]) &&
+		new Date(startDate).toISOString() <= new Date(endDate).toISOString() &&
 		Number(endDate.split("-")[2]) - Number(startDate.split("-")[2]) ===
 			Number(days);
 
