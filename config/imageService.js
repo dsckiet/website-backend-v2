@@ -35,22 +35,25 @@ module.exports.upload = multer({
 			cb(
 				null,
 				`${folder}/${Date.now()}${Math.floor(Math.random() * 900000) +
-					99999}`
+					99999}.jpeg`
 			);
 		}
 	})
 });
 
 // delete image
-module.exports.deleteImage = async key => {
-	try {
-		await s3.deleteObject({
+module.exports.deleteImage = key => {
+	s3.deleteObject(
+		{
 			Bucket: AWS_BUCKET_NAME,
 			Key: key
-		});
-	} catch (err) {
-		console.log(err);
-		logger("error", "imageService", err);
-		throw err;
-	}
+		},
+		(err, data) => {
+			if (err) {
+				console.log(err);
+				logger("error", "imageService", err);
+				throw err;
+			}
+		}
+	);
 };

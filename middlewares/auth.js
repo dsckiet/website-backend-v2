@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
 const { sendError } = require("../utility/helpers");
-const { NOT_AUTHORIZED, FORBIDDEN } = require("../utility/statusCodes");
+const { NOT_AUTHORIZED } = require("../utility/statusCodes");
 
 module.exports.allAuth = (req, res, next) => {
 	const token = req.header("x-auth-token");

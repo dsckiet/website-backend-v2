@@ -4,7 +4,7 @@ const worker = require("../config/Scheduler/worker");
 const ObjectId = require("mongoose").Types.ObjectId;
 const { AVATAR_URL } = require("../config/index");
 // import http status codes
-const { BAD_REQUEST, NOT_ACCEPTABLE } = require("../utility/statusCodes");
+const { BAD_REQUEST } = require("../utility/statusCodes");
 // import constants
 const { USER_HASH_LENGTH, EVENT_HASH_LENGTH } = require("../config/index");
 // import helper functions
@@ -138,10 +138,6 @@ module.exports.updateParticipant = async (req, res) => {
 		password
 	};
 
-	if (req.files) {
-		updateObj.image = req.files[0].location;
-	}
-
 	participant = await Participant.findByIdAndUpdate(
 		req.params.id,
 		{ $set: updateObj },
@@ -159,10 +155,9 @@ module.exports.participantLogin = async (req, res) => {
 	let participant = await Participant.findOne({
 		email: { $regex: `^${email}$`, $options: "i" }
 	});
-	if (!participant) return sendError(res, "Invalid User", NOT_ACCEPTABLE);
+	if (!participant) return sendError(res, "Invalid User", BAD_REQUEST);
 	const validPassword = await participant.isValidPwd(String(password).trim());
-	if (!validPassword)
-		return sendError(res, "Invalid Password", NOT_ACCEPTABLE);
+	if (!validPassword) return sendError(res, "Invalid Password", BAD_REQUEST);
 	participant.lastLogin = new Date(Date.now()).toISOString();
 	await participant.save();
 	const token = participant.generateAuthToken();
@@ -295,7 +290,30 @@ module.exports.getEvents = async (req, res) => {
 	if (id) {
 		events = await Event.findById(id);
 	} else {
-		events = await Event.find().sort({ createdAt: "desc" });
+		allEvents = await Event.find().sort({ createdAt: "desc" });
+
+		events = {
+			previousEvents: [],
+			runningEvents: [],
+			upcomingEvents: []
+		};
+
+		let currTime = new Date(Date.now()),
+			today = new Date(
+				currTime.getFullYear(),
+				currTime.getMonth(),
+				currTime.getDate()
+			).toISOString();
+
+		allEvents.map(event => {
+			if (today < new Date(event.startDate).toISOString()) {
+				events.upcomingEvents.push(event);
+			} else if (today > new Date(event.endDate).toISOString()) {
+				events.previousEvents.push(event);
+			} else {
+				events.runningEvents.push(event);
+			}
+		});
 	}
 	sendSuccess(res, events);
 };
@@ -394,13 +412,11 @@ module.exports.updateEvent = async (req, res) => {
 		};
 
 		if (req.files) {
-			console.log(event);
 			if (event.image && event.image.includes("amazonaws")) {
 				let key = `${event.image.split("/")[3]}/${
 					event.image.split("/")[4]
 				}`;
-				// not working due to undefind reasons!! :(
-				await deleteImage(key);
+				deleteImage(key);
 			}
 			updateObj.image = req.files[0].location;
 		}
@@ -416,6 +432,12 @@ module.exports.deleteEvent = async (req, res) => {
 	let { id } = req.params;
 	let event = await Event.findById(id);
 	if (event) {
+		if (event.image && event.image.includes("amazonaws")) {
+			let key = `${event.image.split("/")[3]}/${
+				event.image.split("/")[4]
+			}`;
+			deleteImage(key);
+		}
 		let args = {
 			jobName: "deleteEvent",
 			time: Date.now(),

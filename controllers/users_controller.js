@@ -5,11 +5,7 @@ const ObjectId = require("mongoose").Types.ObjectId;
 const { ENV, AVATAR_URL } = require("../config/index");
 
 // import http status codes
-const {
-	BAD_REQUEST,
-	NOT_AUTHORIZED,
-	NOT_ACCEPTABLE
-} = require("../utility/statusCodes");
+const { BAD_REQUEST, NOT_AUTHORIZED } = require("../utility/statusCodes");
 // import constants
 const { USER_HASH_LENGTH } = require("../config/index");
 // import helper functions
@@ -83,10 +79,9 @@ module.exports.login = async (req, res) => {
 	let user = await User.findOne({
 		email: { $regex: `^${email}$`, $options: "i" }
 	});
-	if (!user) return sendError(res, "Invalid User", NOT_ACCEPTABLE);
+	if (!user) return sendError(res, "Invalid User", BAD_REQUEST);
 	const validPassword = await user.isValidPwd(String(password).trim());
-	if (!validPassword)
-		return sendError(res, "Invalid Password", NOT_ACCEPTABLE);
+	if (!validPassword) return sendError(res, "Invalid Password", BAD_REQUEST);
 	user.lastLogin = new Date(Date.now()).toISOString();
 	await user.save();
 	const token = user.generateAuthToken();
@@ -111,6 +106,10 @@ module.exports.deleteUser = async (req, res) => {
 			NOT_AUTHORIZED
 		);
 	} else {
+		if (user.image && user.image.includes("amazonaws")) {
+			let key = `${user.image.split("/")[3]}/${user.image.split("/")[4]}`;
+			deleteImage(key);
+		}
 		await user.delete();
 		sendSuccess(res, null);
 	}
@@ -155,8 +154,7 @@ module.exports.updateProfile = async (req, res) => {
 			let key = `${profile.image.split("/")[3]}/${
 				profile.image.split("/")[4]
 			}`;
-			// not working due to undefind reasons!! :(
-			await deleteImage(key);
+			deleteImage(key);
 		}
 		profile.image = req.files[0].location;
 	}
