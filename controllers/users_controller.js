@@ -176,12 +176,12 @@ module.exports.updateProfile = async (req, res) => {
 		return sendError(res, "No Profile Found", BAD_REQUEST);
 	}
 
-	if (name) {
-		if (name !== profile.name) setToken(req.query.id, "revalidate");
+	if (name && name !== profile.name) {
+		setToken(req.query.id, "revalidate");
 	}
 
-	if (email) {
-		if (email !== profile.email) setToken(req.query.id, "revalidate");
+	if (email && email !== profile.email) {
+		setToken(req.query.id, "revalidate");
 	}
 
 	if (req.files.length !== 0) {

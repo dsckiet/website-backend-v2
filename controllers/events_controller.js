@@ -137,12 +137,12 @@ module.exports.updateParticipant = async (req, res) => {
 	if (!participant)
 		return sendError(res, "Participant not found!!", BAD_REQUEST);
 
-	if (name) {
-		if (name !== participant.name) setToken(req.query.id, "revalidate");
+	if (name && name !== participant.name) {
+		setToken(req.query.id, "revalidate");
 	}
 
-	if (email) {
-		if (email !== participant.email) setToken(req.query.id, "revalidate");
+	if (email && email !== participant.email) {
+		setToken(req.query.id, "revalidate");
 	}
 
 	participant = await Participant.findByIdAndUpdate(
@@ -164,7 +164,7 @@ module.exports.participantLogin = async (req, res) => {
 	if (!validPassword) return sendError(res, "Invalid Password", BAD_REQUEST);
 	participant.lastLogin = new Date(Date.now()).toISOString();
 	await participant.save();
-	let token = await checkToken(participant._id);
+	let token = await checkToken(String(participant._id));
 	if (token) {
 		if (token === "revoked") {
 			return sendError(res, "Account Revoked, Logout!", FORBIDDEN);
