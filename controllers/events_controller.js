@@ -138,10 +138,6 @@ module.exports.updateParticipant = async (req, res) => {
 		password
 	};
 
-	if (req.files) {
-		updateObj.image = req.files[0].location;
-	}
-
 	participant = await Participant.findByIdAndUpdate(
 		req.params.id,
 		{ $set: updateObj },
@@ -416,13 +412,11 @@ module.exports.updateEvent = async (req, res) => {
 		};
 
 		if (req.files) {
-			console.log(event);
 			if (event.image && event.image.includes("amazonaws")) {
 				let key = `${event.image.split("/")[3]}/${
 					event.image.split("/")[4]
 				}`;
-				// not working due to undefind reasons!! :(
-				await deleteImage(key);
+				deleteImage(key);
 			}
 			updateObj.image = req.files[0].location;
 		}
@@ -438,6 +432,12 @@ module.exports.deleteEvent = async (req, res) => {
 	let { id } = req.params;
 	let event = await Event.findById(id);
 	if (event) {
+		if (event.image && event.image.includes("amazonaws")) {
+			let key = `${event.image.split("/")[3]}/${
+				event.image.split("/")[4]
+			}`;
+			deleteImage(key);
+		}
 		let args = {
 			jobName: "deleteEvent",
 			time: Date.now(),

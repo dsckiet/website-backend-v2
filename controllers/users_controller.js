@@ -106,6 +106,10 @@ module.exports.deleteUser = async (req, res) => {
 			NOT_AUTHORIZED
 		);
 	} else {
+		if (user.image && user.image.includes("amazonaws")) {
+			let key = `${user.image.split("/")[3]}/${user.image.split("/")[4]}`;
+			deleteImage(key);
+		}
 		await user.delete();
 		sendSuccess(res, null);
 	}
@@ -150,8 +154,7 @@ module.exports.updateProfile = async (req, res) => {
 			let key = `${profile.image.split("/")[3]}/${
 				profile.image.split("/")[4]
 			}`;
-			// not working due to undefind reasons!! :(
-			await deleteImage(key);
+			deleteImage(key);
 		}
 		profile.image = req.files[0].location;
 	}
