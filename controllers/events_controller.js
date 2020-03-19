@@ -13,7 +13,9 @@ const {
 	sendSuccess,
 	generateHash,
 	escapeRegex,
-	formatHtmlDate
+	formatHtmlDate,
+	checkToken,
+	setToken
 } = require("../utility/helpers");
 
 const { deleteImage } = require("../config/imageService");
@@ -400,7 +402,7 @@ module.exports.addEvent = async (req, res) => {
 		code
 	});
 
-	if (req.files) {
+	if (req.files && req.files.length !== 0 ) {
 		event.image = req.files[0].location;
 	}
 	event = await event.save();
@@ -465,7 +467,7 @@ module.exports.updateEvent = async (req, res) => {
 			isRegistrationRequired
 		};
 
-		if (req.files.length !== 0) {
+		if (req.files && req.files.length !== 0 ) {
 			if (event.image && event.image.includes("amazonaws")) {
 				let key = `${event.image.split("/")[3]}/${
 					event.image.split("/")[4]

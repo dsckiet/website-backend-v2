@@ -184,7 +184,7 @@ module.exports.updateProfile = async (req, res) => {
 		setToken(req.query.id, "revalidate");
 	}
 
-	if (req.files.length !== 0) {
+	if (req.files && req.files.length !== 0 ) {
 		if (profile.image && profile.image.includes("amazonaws")) {
 			let key = `${profile.image.split("/")[3]}/${
 				profile.image.split("/")[4]
