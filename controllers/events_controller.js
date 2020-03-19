@@ -4,7 +4,7 @@ const worker = require("../config/Scheduler/worker");
 const ObjectId = require("mongoose").Types.ObjectId;
 const { AVATAR_URL } = require("../config/index");
 // import http status codes
-const { BAD_REQUEST } = require("../utility/statusCodes");
+const { BAD_REQUEST, FORBIDDEN } = require("../utility/statusCodes");
 // import constants
 const { USER_HASH_LENGTH, EVENT_HASH_LENGTH } = require("../config/index");
 // import helper functions
@@ -13,7 +13,9 @@ const {
 	sendSuccess,
 	generateHash,
 	escapeRegex,
-	formatHtmlDate
+	formatHtmlDate,
+	checkToken,
+	setToken
 } = require("../utility/helpers");
 
 const { deleteImage } = require("../config/imageService");
@@ -112,6 +114,8 @@ module.exports.registerParticipant = async (req, res) => {
 				9999}.svg`
 		});
 		participant = await participant.save();
+		const token = participant.generateAuthToken();
+		setToken(String(participant._id), token);
 		let args = {
 			jobName: "sendLoginCreds",
 			time: Date.now(),
@@ -128,26 +132,28 @@ module.exports.registerParticipant = async (req, res) => {
 };
 
 module.exports.updateParticipant = async (req, res) => {
-	let { name, email, branch, year, phone, password } = req.body;
-	let updateObj = {
-		name,
-		email,
-		branch,
-		year,
-		phone,
-		password
-	};
+	let { name, email } = req.body;
+
+	let participant = await Participant.findById(req.params.id);
+
+	if (!participant)
+		return sendError(res, "Participant not found!!", BAD_REQUEST);
+
+	if (name && name !== participant.name) {
+		setToken(req.query.id, "revalidate");
+	}
+
+	if (email && email !== participant.email) {
+		setToken(req.query.id, "revalidate");
+	}
 
 	participant = await Participant.findByIdAndUpdate(
 		req.params.id,
-		{ $set: updateObj },
+		{ $set: req.body },
 		{ new: true }
 	);
-	if (participant) {
-		sendSuccess(res, participant);
-	} else {
-		sendError(res, "Participant not found!!", BAD_REQUEST);
-	}
+
+	sendSuccess(res, participant);
 };
 
 module.exports.participantLogin = async (req, res) => {
@@ -160,8 +166,34 @@ module.exports.participantLogin = async (req, res) => {
 	if (!validPassword) return sendError(res, "Invalid Password", BAD_REQUEST);
 	participant.lastLogin = new Date(Date.now()).toISOString();
 	await participant.save();
-	const token = participant.generateAuthToken();
+	let token = await checkToken(String(participant._id));
+	if (token) {
+		if (token === "revoked") {
+			return sendError(res, "Account Revoked, Logout!", FORBIDDEN);
+		} else if (token === "revalidate") {
+			token = participant.generateAuthToken();
+			setToken(String(participant._id), token);
+		}
+	} else {
+		return sendError(res, "Account Suspended, Logout!", FORBIDDEN);
+	}
 	sendSuccess(res, participant, token);
+};
+
+module.exports.toggleRevoke = async (req, res) => {
+	let { id } = req.params;
+	let part = await Participant.findById(id);
+	if (!part) {
+		return sendError(res, "Invalid participant", BAD_REQUEST);
+	}
+	//toggle the revoke status of part
+	part.isRevoked = part.isRevoked ? false : true;
+
+	//change token status
+	part.isRevoked ? setToken(id, "revoke") : setToken(id, "revalidate");
+
+	part = await part.save();
+	sendSuccess(res, part);
 };
 
 module.exports.registerForEvent = async (req, res) => {
@@ -284,6 +316,30 @@ module.exports.participantData = async (req, res) => {
 	sendSuccess(res, data);
 };
 
+module.exports.deleteParticipant = async (req, res) => {
+	let { id } = req.params;
+	let part = await Participant.findById(id);
+
+	if (!part) {
+		return sendError(res, "Invalid participant", BAD_REQUEST);
+	}
+
+	if (part.image && part.image.includes("amazonaws")) {
+		let key = `${part.image.split("/")[3]}/${part.image.split("/")[4]}`;
+		await deleteImage(key);
+	}
+
+	let deletePromises = [
+		part.delete(),
+		Attendance.deleteOne({ participant: new ObjectId(id) }),
+		Feedback.deleteOne({ participant: new ObjectId(id) })
+	];
+
+	await Promise.all(deletePromises);
+	setToken(id, "delete");
+	sendSuccess(res, null);
+};
+
 module.exports.getEvents = async (req, res) => {
 	let { id } = req.query;
 	let events;
@@ -346,7 +402,7 @@ module.exports.addEvent = async (req, res) => {
 		code
 	});
 
-	if (req.files) {
+	if (req.files && req.files.length !== 0 ) {
 		event.image = req.files[0].location;
 	}
 	event = await event.save();
@@ -411,12 +467,12 @@ module.exports.updateEvent = async (req, res) => {
 			isRegistrationRequired
 		};
 
-		if (req.files) {
+		if (req.files && req.files.length !== 0 ) {
 			if (event.image && event.image.includes("amazonaws")) {
 				let key = `${event.image.split("/")[3]}/${
 					event.image.split("/")[4]
 				}`;
-				deleteImage(key);
+				await deleteImage(key);
 			}
 			updateObj.image = req.files[0].location;
 		}
@@ -436,7 +492,7 @@ module.exports.deleteEvent = async (req, res) => {
 			let key = `${event.image.split("/")[3]}/${
 				event.image.split("/")[4]
 			}`;
-			deleteImage(key);
+			await deleteImage(key);
 		}
 		let args = {
 			jobName: "deleteEvent",

@@ -16,7 +16,6 @@ const UserSchema = new mongoose.Schema(
 			required: true
 		},
 		contact: { type: Number },
-		img: { type: String },
 		designation: { type: String, required: true },
 		github: { type: String },
 		linkedin: { type: String },
@@ -24,6 +23,7 @@ const UserSchema = new mongoose.Schema(
 		portfolio: { type: String },
 		showOnWebsite: { type: Boolean, default: false },
 		image: { type: String },
+		isRevoked: { type: Boolean, default: false },
 		lastLogin: { type: Date, default: Date.now }
 	},
 	{ timestamps: true }

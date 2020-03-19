@@ -1,4 +1,4 @@
-const { sendError } = require("../utility/helpers");
+const { sendError, formatHtmlDate } = require("../utility/helpers");
 const { BAD_REQUEST } = require("../utility/statusCodes");
 
 let emailRegex = /^\S+@\S+\.\S+/,
@@ -44,11 +44,6 @@ module.exports.eventValidation = (req, res, next) => {
 		venue
 	} = req.body;
 
-	let validDates =
-		Number(startDate.split("-")[2]) <= Number(endDate.split("-")[2]) &&
-		Number(endDate.split("-")[2]) - Number(startDate.split("-")[2]) ===
-			Number(days);
-
 	if (
 		!title ||
 		!description ||
@@ -59,7 +54,13 @@ module.exports.eventValidation = (req, res, next) => {
 		!venue
 	) {
 		return sendError(res, "All fields are mandatory!!", BAD_REQUEST);
-	} else if (!validDates) {
+	} else if (
+		formatHtmlDate(startDate).toISOString() >
+			formatHtmlDate(endDate).toISOString() ||
+		(formatHtmlDate(endDate) - formatHtmlDate(startDate)) /
+			(1000 * 3600 * 24) !==
+			Number(days)
+	) {
 		return sendError(res, "Invalid dates", BAD_REQUEST);
 	} else {
 		return next();
