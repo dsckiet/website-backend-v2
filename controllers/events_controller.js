@@ -202,13 +202,22 @@ module.exports.registerForEvent = async (req, res) => {
 		return sendError(res, "Invalid Event!!", BAD_REQUEST);
 	}
 
-	let [participant, event] = await Promise.all([
+	let [participant, event, totRegistrations] = await Promise.all([
 		Participant.findById(req.user.id),
-		Event.findById(eventId)
+		Event.findById(eventId),
+		Participant.countDocuments({ "events.event": eventId })
 	]);
 
 	if (!participant || !event) {
 		return sendError(res, "Invalid Request!!", BAD_REQUEST);
+	}
+
+	if (totRegistrations >= event.maxRegister) {
+		return sendError(
+			res,
+			"Maximum registrations limit reached!!",
+			BAD_REQUEST
+		);
 	}
 
 	let eventIndex = participant.events
@@ -232,9 +241,16 @@ module.exports.registerForEvent = async (req, res) => {
 		attendance: new ObjectId(attendance._id),
 		status: "not attended"
 	});
-	[participant, attendance] = await Promise.all([
+
+	if (event.maxRegister === totRegistrations + 1) {
+		event.isRegistrationOpened = false;
+		event.hasLimitReached = true;
+	}
+
+	[participant, attendance, event] = await Promise.all([
 		participant.save(),
-		attendance.save()
+		attendance.save(),
+		event.save()
 	]);
 	sendSuccess(res, event);
 };
@@ -273,6 +289,7 @@ module.exports.participantData = async (req, res) => {
 				"eventsList.venue": 1,
 				"eventsList.time": 1,
 				"eventsList._id": 1,
+				"eventList.maxRegister": 1,
 				events: 1,
 				name: 1,
 				email: 1,
@@ -384,7 +401,8 @@ module.exports.addEvent = async (req, res) => {
 		time,
 		venue,
 		isRegistrationRequired,
-		isRegistrationOpened
+		isRegistrationOpened,
+		maxRegister
 	} = req.body;
 
 	let code = generateHash(EVENT_HASH_LENGTH);
@@ -399,10 +417,11 @@ module.exports.addEvent = async (req, res) => {
 		venue,
 		isRegistrationOpened,
 		isRegistrationRequired,
-		code
+		code,
+		maxRegister
 	});
 
-	if (req.files && req.files.length !== 0 ) {
+	if (req.files && req.files.length !== 0) {
 		event.image = req.files[0].location;
 	}
 	event = await event.save();
@@ -441,7 +460,10 @@ module.exports.changeEventRegistrationOpen = async (req, res) => {
 
 module.exports.updateEvent = async (req, res) => {
 	let { id } = req.params;
-	let event = await Event.findById(id);
+	let [event, totRegistrations] = await Promise.all([
+		Event.findById(id),
+		Participant.countDocuments({ "events.event": id })
+	]);
 	if (event) {
 		let {
 			title,
@@ -452,9 +474,17 @@ module.exports.updateEvent = async (req, res) => {
 			time,
 			venue,
 			isRegistrationRequired,
-			isRegistrationOpened
+			isRegistrationOpened,
+			maxRegister
 		} = req.body;
-
+		console.log(totRegistrations);
+		if (Number(maxRegister) < Number(totRegistrations)) {
+			return sendError(
+				res,
+				"Max registrations can't be less than already registered!!",
+				BAD_REQUEST
+			);
+		}
 		let updateObj = {
 			title,
 			description,
@@ -464,10 +494,14 @@ module.exports.updateEvent = async (req, res) => {
 			time,
 			venue,
 			isRegistrationOpened,
-			isRegistrationRequired
+			isRegistrationRequired,
+			maxRegister
 		};
 
-		if (req.files && req.files.length !== 0 ) {
+		if (Number(maxRegister) === Number(totRegistrations)) {
+			updateObj.isRegistrationOpened = false;
+		}
+		if (req.files && req.files.length !== 0) {
 			if (event.image && event.image.includes("amazonaws")) {
 				let key = `${event.image.split("/")[3]}/${
 					event.image.split("/")[4]
@@ -480,7 +514,7 @@ module.exports.updateEvent = async (req, res) => {
 		event = await Event.findByIdAndUpdate(id, updateObj, { new: true });
 		sendSuccess(res, event);
 	} else {
-		sendError(res, "Invalid Event!!", BAD_REQUEST);
+		sendError(res, "Event not found!!", BAD_REQUEST);
 	}
 };
 
@@ -825,6 +859,7 @@ module.exports.getFeedbackReport = async (req, res) => {
 				"events.venue": 1,
 				"events.time": 1,
 				"events._id": 1,
+				"events.maxRegister": 1,
 				"participant.name": 1,
 				"participant.email": 1,
 				"participant.branch": 1,

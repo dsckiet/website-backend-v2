@@ -184,7 +184,7 @@ module.exports.updateProfile = async (req, res) => {
 		setToken(req.query.id, "revalidate");
 	}
 
-	if (req.files && req.files.length !== 0 ) {
+	if (req.files && req.files.length !== 0) {
 		if (profile.image && profile.image.includes("amazonaws")) {
 			let key = `${profile.image.split("/")[3]}/${
 				profile.image.split("/")[4]
@@ -207,17 +207,20 @@ module.exports.temp = async (req, res) => {
 		return sendError(res, "Unavailable!!", BAD_REQUEST);
 	}
 
+	// flush users collection
+	// await User.remove();
+
 	// create root lead user
-	let user = await new User({
-		name: "root",
-		email: "root@dsckiet.tech",
-		password: "root@dsckiet123",
-		role: "lead",
-		designation: "lead"
-	});
-	const token = user.generateAuthToken();
-	setToken(String(user._id), token);
-	await user.save();
+	// let user = await new User({
+	// 	name: "root",
+	// 	email: "root@dsckiet.tech",
+	// 	password: "root@dsckiet123",
+	// 	role: "lead",
+	// 	designation: "lead"
+	// });
+	// const token = user.generateAuthToken();
+	// setToken(String(user._id), token);
+	// await user.save();
 
 	// create random users
 	// console.time("Participants Created in: ");

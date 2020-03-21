@@ -12,6 +12,7 @@ const EventSchema = new mongoose.Schema(
 		venue: { type: String, requried: true },
 		isRegistrationRequired: { type: Boolean, default: true },
 		isRegistrationOpened: { type: Boolean, default: false },
+		maxRegister: { type: Number, default: 100 },
 		code: { type: String, required: true }
 	},
 	{ timestamps: true }
