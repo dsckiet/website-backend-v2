@@ -15,10 +15,11 @@ const {
 	escapeRegex,
 	formatHtmlDate,
 	checkToken,
-	setToken
+	setToken,
+	getImageKey
 } = require("../utility/helpers");
 
-const { deleteImage } = require("../config/imageService");
+const { uploadImage, deleteImage } = require("../config/imageService");
 
 getPushObject = (part, attendInd) => {
 	return {
@@ -244,7 +245,6 @@ module.exports.registerForEvent = async (req, res) => {
 
 	if (event.maxRegister === totRegistrations + 1) {
 		event.isRegistrationOpened = false;
-		event.hasLimitReached = true;
 	}
 
 	[participant, attendance, event] = await Promise.all([
@@ -422,7 +422,12 @@ module.exports.addEvent = async (req, res) => {
 	});
 
 	if (req.files && req.files.length !== 0) {
-		event.image = req.files[0].location;
+		let file = req.files[0];
+		let key = getImageKey(req.originalUrl);
+		let uploaded = await uploadImage(file, key);
+		if (uploaded) {
+			event.image = uploaded;
+		}
 	}
 	event = await event.save();
 	sendSuccess(res, event);
@@ -502,13 +507,20 @@ module.exports.updateEvent = async (req, res) => {
 			updateObj.isRegistrationOpened = false;
 		}
 		if (req.files && req.files.length !== 0) {
+			let promises = [];
 			if (event.image && event.image.includes("amazonaws")) {
 				let key = `${event.image.split("/")[3]}/${
 					event.image.split("/")[4]
 				}`;
-				await deleteImage(key);
+				promises.push(deleteImage(key));
 			}
-			updateObj.image = req.files[0].location;
+			let file = req.files[0];
+			let key = getImageKey(req.originalUrl);
+			promises.push(uploadImage(file, key));
+			let [deleted, uploaded] = await Promise.all(promises);
+			if (uploaded) {
+				updateObj.image = uploaded;
+			}
 		}
 
 		event = await Event.findByIdAndUpdate(id, updateObj, { new: true });

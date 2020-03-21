@@ -120,3 +120,16 @@ module.exports.setToken = (id, value) => {
 		client.set(id, value);
 	}
 };
+
+module.exports.getImageKey = url => {
+	let folder;
+	if (url.includes("profile")) {
+		folder = "users";
+	} else if (url.includes("update_part")) {
+		folder = "participants";
+	} else {
+		folder = "events";
+	}
+	return `${folder}/${Date.now()}${Math.floor(Math.random() * 900000) +
+		99999}.jpeg`;
+};

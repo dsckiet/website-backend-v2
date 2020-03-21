@@ -1,6 +1,4 @@
 const aws = require("aws-sdk");
-const multer = require("multer");
-const multerS3 = require("multer-s3");
 const { promisify } = require("util");
 
 const { logger } = require("../utility/helpers");
@@ -16,31 +14,25 @@ aws.config.region = AWS_REGION;
 
 const s3 = new aws.S3();
 
-// upload file
-module.exports.upload = multer({
-	storage: multerS3({
-		s3: s3,
-		bucket: AWS_BUCKET_NAME,
+// upload image
+module.exports.uploadImage = async (file, key) => {
+	const uploadObjectAsync = promisify(s3.upload).bind(s3);
+	let params = {
+		Bucket: AWS_BUCKET_NAME,
+		Key: key,
+		Body: file.buffer,
 		acl: "public-read",
-		contentType: multerS3.AUTO_CONTENT_TYPE,
-		key: function(req, file, cb) {
-			let url = req.originalUrl;
-			let folder;
-			if (url.includes("profile")) {
-				folder = "users";
-			} else if (url.includes("update_part")) {
-				folder = "participants";
-			} else {
-				folder = "events";
-			}
-			cb(
-				null,
-				`${folder}/${Date.now()}${Math.floor(Math.random() * 900000) +
-					99999}.jpeg`
-			);
-		}
-	})
-});
+		ServerSideEncryption: "AES256"
+	};
+	try {
+		let resp = await uploadObjectAsync(params);
+		return resp.Location;
+	} catch (err) {
+		console.log(err);
+		logger("error", "imageService", err);
+		return;
+	}
+};
 
 // delete image
 module.exports.deleteImage = async key => {
@@ -54,6 +46,6 @@ module.exports.deleteImage = async key => {
 	} catch (err) {
 		console.log(err);
 		logger("error", "imageService", err);
-		throw err;
+		return;
 	}
 };

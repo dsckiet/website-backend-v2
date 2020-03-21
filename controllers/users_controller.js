@@ -1,5 +1,7 @@
 const kue = require("../config/Scheduler/kue");
 const worker = require("../config/Scheduler/worker");
+const bcrypt = require("bcryptjs");
+
 const ObjectId = require("mongoose").Types.ObjectId;
 
 const { ENV, AVATAR_URL } = require("../config/index");
@@ -18,9 +20,10 @@ const {
 	sendSuccess,
 	generateHash,
 	checkToken,
-	setToken
+	setToken,
+	getImageKey
 } = require("../utility/helpers");
-const { deleteImage } = require("../config/imageService");
+const { uploadImage, deleteImage } = require("../config/imageService");
 
 module.exports.users = async (req, res) => {
 	let { id, sortBy, sortType } = req.query;
@@ -191,7 +194,18 @@ module.exports.updateProfile = async (req, res) => {
 			}`;
 			await deleteImage(key);
 		}
-		req.body.image = req.files[0].location;
+		let file = req.files[0];
+		let key = getImageKey(req.originalUrl);
+		let uploaded = await uploadImage(file, key);
+		console.log(uploaded);
+		if (uploaded) {
+			req.body.image = uploaded;
+		}
+	}
+
+	if (req.body.password) {
+		let salt = await bcrypt.genSalt(10);
+		req.body.password = await bcrypt.hash(req.body.password, salt);
 	}
 
 	profile = await User.findByIdAndUpdate(
