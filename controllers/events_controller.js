@@ -518,17 +518,15 @@ module.exports.updateEvent = async (req, res) => {
 		}
 
 		if (req.files && req.files.length !== 0) {
-			let promises = [];
 			if (event.image && event.image.includes("amazonaws")) {
 				let key = `${event.image.split("/")[3]}/${
 					event.image.split("/")[4]
 				}`;
-				promises.push(deleteImage(key));
+				await deleteImage(key);
 			}
 			let file = req.files[0];
 			let key = getImageKey(req.originalUrl);
-			promises.push(uploadImage(file, key));
-			let [deleted, uploaded] = await Promise.all(promises);
+			let uploaded = await uploadImage(file, key);
 			if (uploaded) {
 				updateObj.image = uploaded;
 			}
