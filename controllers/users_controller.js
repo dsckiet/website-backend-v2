@@ -1,5 +1,7 @@
 const kue = require("../config/Scheduler/kue");
 const worker = require("../config/Scheduler/worker");
+const bcrypt = require("bcryptjs");
+
 const ObjectId = require("mongoose").Types.ObjectId;
 
 const { ENV, AVATAR_URL } = require("../config/index");
@@ -18,9 +20,10 @@ const {
 	sendSuccess,
 	generateHash,
 	checkToken,
-	setToken
+	setToken,
+	getImageKey
 } = require("../utility/helpers");
-const { deleteImage } = require("../config/imageService");
+const { uploadImage, deleteImage } = require("../config/imageService");
 
 module.exports.users = async (req, res) => {
 	let { id, sortBy, sortType } = req.query;
@@ -184,14 +187,25 @@ module.exports.updateProfile = async (req, res) => {
 		setToken(req.query.id, "revalidate");
 	}
 
-	if (req.files && req.files.length !== 0 ) {
+	if (req.files && req.files.length !== 0) {
 		if (profile.image && profile.image.includes("amazonaws")) {
 			let key = `${profile.image.split("/")[3]}/${
 				profile.image.split("/")[4]
 			}`;
 			await deleteImage(key);
 		}
-		req.body.image = req.files[0].location;
+		let file = req.files[0];
+		let key = getImageKey(req.originalUrl);
+		let uploaded = await uploadImage(file, key);
+		console.log(uploaded);
+		if (uploaded) {
+			req.body.image = uploaded;
+		}
+	}
+
+	if (req.body.password) {
+		let salt = await bcrypt.genSalt(10);
+		req.body.password = await bcrypt.hash(req.body.password, salt);
 	}
 
 	profile = await User.findByIdAndUpdate(
@@ -207,17 +221,20 @@ module.exports.temp = async (req, res) => {
 		return sendError(res, "Unavailable!!", BAD_REQUEST);
 	}
 
+	// flush users collection
+	// await User.remove();
+
 	// create root lead user
-	let user = await new User({
-		name: "root",
-		email: "root@dsckiet.tech",
-		password: "root@dsckiet123",
-		role: "lead",
-		designation: "lead"
-	});
-	const token = user.generateAuthToken();
-	setToken(String(user._id), token);
-	await user.save();
+	// let user = await new User({
+	// 	name: "root",
+	// 	email: "root@dsckiet.tech",
+	// 	password: "root@dsckiet123",
+	// 	role: "lead",
+	// 	designation: "lead"
+	// });
+	// const token = user.generateAuthToken();
+	// setToken(String(user._id), token);
+	// await user.save();
 
 	// create random users
 	// console.time("Participants Created in: ");
@@ -227,15 +244,15 @@ module.exports.temp = async (req, res) => {
 	// 	numbers = "1234567890";
 	// let entries = 200;
 	// for (let i = 0; i < entries; i++) {
-	// 	let part = new Participant({
-	// 		name: generateHash(10),
-	// 		email: `${generateHash(8)}@gmail.com`,
-	// 		branch: branches[Math.floor(Math.random() * branches.length)],
-	// 		year: years[Math.floor(Math.random() * years.length)],
-	// 		password: generateHash(USER_HASH_LENGTH),
-	// 		phone: 9876543210
-	// 	});
-	// 	await part.save();
+	// let part = new Participant({
+	// 	name: generateHash(10),
+	// 	email: `${generateHash(8)}@gmail.com`,
+	// 	branch: branches[Math.floor(Math.random() * branches.length)],
+	// 	year: years[Math.floor(Math.random() * years.length)],
+	// 	password: generateHash(USER_HASH_LENGTH),
+	// 	phone: 9876543210
+	// });
+	// await part.save();
 	// 	console.log(`Partcipant ${i} created...`);
 	// }
 	// console.timeEnd("Participants Created in: ");

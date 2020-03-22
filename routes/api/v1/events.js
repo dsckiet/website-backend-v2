@@ -37,7 +37,7 @@ const {
 	participantValidation,
 	eventValidation
 } = require("../../../middlewares/validations");
-const { upload } = require("../../../config/imageService");
+const { multer, fileFilter } = require("../../../middlewares/imageValidations");
 
 // routes for participants
 router.get("/get_part", catchErrors(coreAuth), catchErrors(getParticipants));
@@ -75,8 +75,9 @@ router.get("/get_events", catchErrors(getEvents));
 router.post(
 	"/add_event",
 	catchErrors(leadAuth),
-	upload.array("image", 1),
+	multer.any(),
 	eventValidation,
+	fileFilter,
 	catchErrors(addEvent)
 );
 router.post(
@@ -92,7 +93,9 @@ router.post(
 router.put(
 	"/update_event/:id",
 	catchErrors(coreAuth),
-	upload.array("image", 1),
+	multer.any(),
+	eventValidation,
+	fileFilter,
 	catchErrors(updateEvent)
 );
 router.delete(

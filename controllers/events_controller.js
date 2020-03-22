@@ -15,10 +15,11 @@ const {
 	escapeRegex,
 	formatHtmlDate,
 	checkToken,
-	setToken
+	setToken,
+	getImageKey
 } = require("../utility/helpers");
 
-const { deleteImage } = require("../config/imageService");
+const { uploadImage, deleteImage } = require("../config/imageService");
 
 getPushObject = (part, attendInd) => {
 	return {
@@ -211,6 +212,14 @@ module.exports.registerForEvent = async (req, res) => {
 		return sendError(res, "Invalid Request!!", BAD_REQUEST);
 	}
 
+	if (event.registrations >= event.maxRegister) {
+		return sendError(
+			res,
+			"Maximum registrations limit reached!!",
+			BAD_REQUEST
+		);
+	}
+
 	let eventIndex = participant.events
 		.map(evnt => {
 			return String(evnt.event);
@@ -232,9 +241,17 @@ module.exports.registerForEvent = async (req, res) => {
 		attendance: new ObjectId(attendance._id),
 		status: "not attended"
 	});
-	[participant, attendance] = await Promise.all([
+
+	if (event.maxRegister === event.registrations + 1) {
+		event.isRegistrationOpened = false;
+	}
+
+	event.registrations++;
+
+	[participant, attendance, event] = await Promise.all([
 		participant.save(),
-		attendance.save()
+		attendance.save(),
+		event.save()
 	]);
 	sendSuccess(res, event);
 };
@@ -273,6 +290,8 @@ module.exports.participantData = async (req, res) => {
 				"eventsList.venue": 1,
 				"eventsList.time": 1,
 				"eventsList._id": 1,
+				"eventList.maxRegister": 1,
+				"eventList.registrations": 1,
 				events: 1,
 				name: 1,
 				email: 1,
@@ -384,7 +403,8 @@ module.exports.addEvent = async (req, res) => {
 		time,
 		venue,
 		isRegistrationRequired,
-		isRegistrationOpened
+		isRegistrationOpened,
+		maxRegister
 	} = req.body;
 
 	let code = generateHash(EVENT_HASH_LENGTH);
@@ -399,11 +419,17 @@ module.exports.addEvent = async (req, res) => {
 		venue,
 		isRegistrationOpened,
 		isRegistrationRequired,
-		code
+		code,
+		maxRegister
 	});
 
-	if (req.files && req.files.length !== 0 ) {
-		event.image = req.files[0].location;
+	if (req.files && req.files.length !== 0) {
+		let file = req.files[0];
+		let key = getImageKey(req.originalUrl);
+		let uploaded = await uploadImage(file, key);
+		if (uploaded) {
+			event.image = uploaded;
+		}
 	}
 	event = await event.save();
 	sendSuccess(res, event);
@@ -425,15 +451,27 @@ module.exports.changeEventRegistrationOpen = async (req, res) => {
 	let { id } = req.body;
 	let event = await Event.findById(id);
 	if (event) {
-		let isRegistrationOpened = event.isRegistrationOpened ? false : true;
-		event = await Event.findByIdAndUpdate(
-			id,
-			{
-				$set: { isRegistrationOpened: Boolean(isRegistrationOpened) }
-			},
-			{ new: true }
-		);
-		sendSuccess(res, event);
+		if (event.registrations === event.maxRegister) {
+			return sendError(
+				res,
+				"Maximum registrations limit reached!!",
+				BAD_REQUEST
+			);
+		} else {
+			let isRegistrationOpened = event.isRegistrationOpened
+				? false
+				: true;
+			event = await Event.findByIdAndUpdate(
+				id,
+				{
+					$set: {
+						isRegistrationOpened: Boolean(isRegistrationOpened)
+					}
+				},
+				{ new: true }
+			);
+			sendSuccess(res, event);
+		}
 	} else {
 		sendError(res, "Invalid Event!!", BAD_REQUEST);
 	}
@@ -452,9 +490,17 @@ module.exports.updateEvent = async (req, res) => {
 			time,
 			venue,
 			isRegistrationRequired,
-			isRegistrationOpened
+			isRegistrationOpened,
+			maxRegister
 		} = req.body;
 
+		if (Number(maxRegister) < Number(event.registrations)) {
+			return sendError(
+				res,
+				"Max registrations can't be less than already registered!!",
+				BAD_REQUEST
+			);
+		}
 		let updateObj = {
 			title,
 			description,
@@ -464,23 +510,33 @@ module.exports.updateEvent = async (req, res) => {
 			time,
 			venue,
 			isRegistrationOpened,
-			isRegistrationRequired
+			isRegistrationRequired,
+			maxRegister
 		};
 
-		if (req.files && req.files.length !== 0 ) {
+		if (Number(maxRegister) === Number(event.registrations)) {
+			updateObj.isRegistrationOpened = false;
+		}
+
+		if (req.files && req.files.length !== 0) {
 			if (event.image && event.image.includes("amazonaws")) {
 				let key = `${event.image.split("/")[3]}/${
 					event.image.split("/")[4]
 				}`;
 				await deleteImage(key);
 			}
-			updateObj.image = req.files[0].location;
+			let file = req.files[0];
+			let key = getImageKey(req.originalUrl);
+			let uploaded = await uploadImage(file, key);
+			if (uploaded) {
+				updateObj.image = uploaded;
+			}
 		}
 
 		event = await Event.findByIdAndUpdate(id, updateObj, { new: true });
 		sendSuccess(res, event);
 	} else {
-		sendError(res, "Invalid Event!!", BAD_REQUEST);
+		sendError(res, "Event not found!!", BAD_REQUEST);
 	}
 };
 
@@ -825,6 +881,8 @@ module.exports.getFeedbackReport = async (req, res) => {
 				"events.venue": 1,
 				"events.time": 1,
 				"events._id": 1,
+				"events.maxRegister": 1,
+				"events.registrations": 1,
 				"participant.name": 1,
 				"participant.email": 1,
 				"participant.branch": 1,

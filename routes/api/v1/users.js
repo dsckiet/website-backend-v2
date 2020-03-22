@@ -18,7 +18,7 @@ const {
 const { catchErrors } = require("../../../config/errorHandler");
 const { allAuth, coreAuth, leadAuth } = require("../../../middlewares/auth");
 const { userValidation } = require("../../../middlewares/validations");
-const { upload } = require("../../../config/imageService");
+const { multer, fileFilter } = require("../../../middlewares/imageValidations");
 
 // routes
 router.get("/", catchErrors(users));
@@ -31,7 +31,8 @@ router.get("/profile", catchErrors(allAuth), catchErrors(profile));
 router.post(
 	"/profile",
 	catchErrors(allAuth),
-	upload.array("image", 1),
+	multer.any(),
+	fileFilter,
 	catchErrors(updateProfile)
 );
 router.post("/temp", catchErrors(temp)); // for dev purpose only
