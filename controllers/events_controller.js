@@ -203,17 +203,16 @@ module.exports.registerForEvent = async (req, res) => {
 		return sendError(res, "Invalid Event!!", BAD_REQUEST);
 	}
 
-	let [participant, event, totRegistrations] = await Promise.all([
+	let [participant, event] = await Promise.all([
 		Participant.findById(req.user.id),
-		Event.findById(eventId),
-		Participant.countDocuments({ "events.event": eventId })
+		Event.findById(eventId)
 	]);
 
 	if (!participant || !event) {
 		return sendError(res, "Invalid Request!!", BAD_REQUEST);
 	}
 
-	if (totRegistrations >= event.maxRegister) {
+	if (event.registrations >= event.maxRegister) {
 		return sendError(
 			res,
 			"Maximum registrations limit reached!!",
@@ -243,9 +242,11 @@ module.exports.registerForEvent = async (req, res) => {
 		status: "not attended"
 	});
 
-	if (event.maxRegister === totRegistrations + 1) {
+	if (event.maxRegister === event.registrations + 1) {
 		event.isRegistrationOpened = false;
 	}
+
+	event.registrations++;
 
 	[participant, attendance, event] = await Promise.all([
 		participant.save(),
@@ -449,15 +450,27 @@ module.exports.changeEventRegistrationOpen = async (req, res) => {
 	let { id } = req.body;
 	let event = await Event.findById(id);
 	if (event) {
-		let isRegistrationOpened = event.isRegistrationOpened ? false : true;
-		event = await Event.findByIdAndUpdate(
-			id,
-			{
-				$set: { isRegistrationOpened: Boolean(isRegistrationOpened) }
-			},
-			{ new: true }
-		);
-		sendSuccess(res, event);
+		if (event.registrations === event.maxRegister) {
+			return sendError(
+				res,
+				"Maximum registrations limit reached!!",
+				BAD_REQUEST
+			);
+		} else {
+			let isRegistrationOpened = event.isRegistrationOpened
+				? false
+				: true;
+			event = await Event.findByIdAndUpdate(
+				id,
+				{
+					$set: {
+						isRegistrationOpened: Boolean(isRegistrationOpened)
+					}
+				},
+				{ new: true }
+			);
+			sendSuccess(res, event);
+		}
 	} else {
 		sendError(res, "Invalid Event!!", BAD_REQUEST);
 	}
@@ -465,10 +478,7 @@ module.exports.changeEventRegistrationOpen = async (req, res) => {
 
 module.exports.updateEvent = async (req, res) => {
 	let { id } = req.params;
-	let [event, totRegistrations] = await Promise.all([
-		Event.findById(id),
-		Participant.countDocuments({ "events.event": id })
-	]);
+	let event = await Event.findById(id);
 	if (event) {
 		let {
 			title,
@@ -482,8 +492,8 @@ module.exports.updateEvent = async (req, res) => {
 			isRegistrationOpened,
 			maxRegister
 		} = req.body;
-		console.log(totRegistrations);
-		if (Number(maxRegister) < Number(totRegistrations)) {
+
+		if (Number(maxRegister) < Number(event.registrations)) {
 			return sendError(
 				res,
 				"Max registrations can't be less than already registered!!",
@@ -503,9 +513,10 @@ module.exports.updateEvent = async (req, res) => {
 			maxRegister
 		};
 
-		if (Number(maxRegister) === Number(totRegistrations)) {
+		if (Number(maxRegister) === Number(event.registrations)) {
 			updateObj.isRegistrationOpened = false;
 		}
+
 		if (req.files && req.files.length !== 0) {
 			let promises = [];
 			if (event.image && event.image.includes("amazonaws")) {

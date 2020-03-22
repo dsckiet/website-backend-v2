@@ -244,15 +244,15 @@ module.exports.temp = async (req, res) => {
 	// 	numbers = "1234567890";
 	// let entries = 200;
 	// for (let i = 0; i < entries; i++) {
-	// 	let part = new Participant({
-	// 		name: generateHash(10),
-	// 		email: `${generateHash(8)}@gmail.com`,
-	// 		branch: branches[Math.floor(Math.random() * branches.length)],
-	// 		year: years[Math.floor(Math.random() * years.length)],
-	// 		password: generateHash(USER_HASH_LENGTH),
-	// 		phone: 9876543210
-	// 	});
-	// 	await part.save();
+	// let part = new Participant({
+	// 	name: generateHash(10),
+	// 	email: `${generateHash(8)}@gmail.com`,
+	// 	branch: branches[Math.floor(Math.random() * branches.length)],
+	// 	year: years[Math.floor(Math.random() * years.length)],
+	// 	password: generateHash(USER_HASH_LENGTH),
+	// 	phone: 9876543210
+	// });
+	// await part.save();
 	// 	console.log(`Partcipant ${i} created...`);
 	// }
 	// console.timeEnd("Participants Created in: ");
