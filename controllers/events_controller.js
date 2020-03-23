@@ -283,7 +283,7 @@ module.exports.participantData = async (req, res) => {
 			$project: {
 				"eventsList.title": 1,
 				"eventsList.description": 1,
-				"eventsList.img": 1,
+				"eventsList.image": 1,
 				"eventsList.days": 1,
 				"eventsList.startDate": 1,
 				"eventsList.endDate": 1,
@@ -297,7 +297,8 @@ module.exports.participantData = async (req, res) => {
 				email: 1,
 				branch: 1,
 				year: 1,
-				phone: 1
+				phone: 1,
+				image: 1
 			}
 		}
 	]);
@@ -874,7 +875,7 @@ module.exports.getFeedbackReport = async (req, res) => {
 			$project: {
 				"events.title": 1,
 				"events.description": 1,
-				"events.img": 1,
+				"events.image": 1,
 				"events.days": 1,
 				"events.startDate": 1,
 				"events.endDate": 1,
@@ -888,6 +889,7 @@ module.exports.getFeedbackReport = async (req, res) => {
 				"participant.branch": 1,
 				"participant.year": 1,
 				"participant.phone": 1,
+				"participant.image": 1,
 				feedback: 1
 			}
 		}
