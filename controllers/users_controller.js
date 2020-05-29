@@ -4,7 +4,7 @@ const bcrypt = require("bcryptjs");
 
 const ObjectId = require("mongoose").Types.ObjectId;
 
-const { ENV, AVATAR_URL } = require("../config/index");
+const { NODE_ENV, AVATAR_URL } = require("../config/index");
 
 // import http status codes
 const {
@@ -67,8 +67,9 @@ module.exports.addUser = async (req, res) => {
 				role,
 				designation,
 				password,
-				image: `${AVATAR_URL}${Math.floor(Math.random() * 10000) +
-					9999}.svg`
+				image: `${AVATAR_URL}${
+					Math.floor(Math.random() * 10000) + 9999
+				}.svg`
 			});
 			user = await user.save();
 
@@ -217,7 +218,7 @@ module.exports.updateProfile = async (req, res) => {
 };
 
 module.exports.temp = async (req, res) => {
-	if (ENV === "prod") {
+	if (NODE_ENV === "production") {
 		return sendError(res, "Unavailable!!", BAD_REQUEST);
 	}
 

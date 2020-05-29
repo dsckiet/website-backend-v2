@@ -3,6 +3,7 @@ const bodyParser = require("body-parser");
 const compression = require("compression");
 const morgan = require("morgan");
 const helmet = require("helmet");
+const { NODE_ENV, PORT } = require("./config/index");
 const { notFound, sendErrors } = require("./config/errorHandler");
 const kue = require("kue");
 const app = express();
@@ -30,6 +31,10 @@ app.use(
 	})
 );
 app.use("/kue-cli", kue.app);
+
+if (NODE_ENV === "production") {
+	console.log = console.warn = console.error = () => {};
+}
 
 //load Schemas
 const User = require("./models/User");
@@ -60,17 +65,14 @@ app.use((req, res, next) => {
 	next();
 });
 
-const { ENV, PORT } = require("./config/index");
 //Setting up server
-(startServer = async () => {
+(async () => {
 	try {
 		await app.listen(PORT);
-		console.log(
-			`ENV: ${
-				ENV == "dev" ? "Development" : "Production"
-			}\nServer is up and running on Port ${PORT}`
+		console.info(
+			`NODE_ENV: ${NODE_ENV}\nServer is up and running on Port ${PORT}`
 		);
 	} catch (err) {
-		console.error("Error in running server.", err);
+		console.info("Error in running server.", err);
 	}
 })();
