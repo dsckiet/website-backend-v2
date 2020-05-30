@@ -124,13 +124,14 @@ module.exports.registerParticipant = async (req, res) => {
 		const token = participant.generateAuthToken();
 		setToken(String(participant._id), token);
 		let args = {
-			jobName: "sendLoginCreds",
+			jobName: "sendSystemEmailJob",
 			time: Date.now(),
 			params: {
 				email,
 				password,
 				name,
-				role: "Participant"
+				role: "Participant",
+				mailType: "login-creds"
 			}
 		};
 		kue.scheduleJob(args);
@@ -192,12 +193,13 @@ module.exports.forgotPassword = async (req, res) => {
 
 	promises.push(newResetToken.save());
 	let args = {
-		jobName: "sendPwdResetLink",
+		jobName: "sendSystemEmailJob",
 		time: Date.now(),
 		params: {
 			email,
 			name: participant.name,
-			link: `${FRONTEND_URL}/reset/${participant._id}/${newResetToken.token}`
+			link: `${FRONTEND_URL}/reset/${participant._id}/${newResetToken.token}`,
+			mailType: "pwd-reset-link"
 		}
 	};
 	kue.scheduleJob(args);
