@@ -1,12 +1,17 @@
 const kue = require("../config/Scheduler/kue");
 const worker = require("../config/Scheduler/worker");
+const bcrypt = require("bcryptjs");
 
 const ObjectId = require("mongoose").Types.ObjectId;
 const { AVATAR_URL } = require("../config/index");
 // import http status codes
 const { BAD_REQUEST, FORBIDDEN } = require("../utility/statusCodes");
 // import constants
-const { USER_HASH_LENGTH, EVENT_HASH_LENGTH } = require("../config/index");
+const {
+	USER_HASH_LENGTH,
+	EVENT_HASH_LENGTH,
+	FRONTEND_URL
+} = require("../config/index");
 // import helper functions
 const {
 	sendError,
@@ -111,8 +116,9 @@ module.exports.registerParticipant = async (req, res) => {
 			phone,
 			password,
 			events: [],
-			image: `${AVATAR_URL}${Math.floor(Math.random() * 10000) +
-				9999}.svg`
+			image: `${AVATAR_URL}${
+				Math.floor(Math.random() * 10000) + 9999
+			}.svg`
 		});
 		participant = await participant.save();
 		const token = participant.generateAuthToken();
@@ -148,6 +154,11 @@ module.exports.updateParticipant = async (req, res) => {
 		setToken(req.query.id, "revalidate");
 	}
 
+	if (req.body.password) {
+		let salt = await bcrypt.genSalt(10);
+		req.body.password = await bcrypt.hash(req.body.password, salt);
+	}
+
 	participant = await Participant.findByIdAndUpdate(
 		req.params.id,
 		{ $set: req.body },
@@ -155,6 +166,66 @@ module.exports.updateParticipant = async (req, res) => {
 	);
 
 	sendSuccess(res, participant);
+};
+
+module.exports.forgotPassword = async (req, res) => {
+	let { email } = req.body;
+	email = String(email).trim().toLowerCase();
+	let [participant, resetToken] = await Promise.all([
+		Participant.findOne({ email }),
+		ResetToken.findOne({ email })
+	]);
+	if (!participant) {
+		return sendError(res, "No Profile Found", BAD_REQUEST);
+	}
+	let promises = [];
+	if (resetToken) {
+		promises.push(resetToken.delete());
+	}
+
+	let newResetToken = new ResetToken({
+		email: participant.email,
+		id: participant._id,
+		token: `${generateHash(3)}${Date.now()}${generateHash(3)}`,
+		expires: Date.now() + 3600000
+	});
+
+	promises.push(newResetToken.save());
+	let args = {
+		jobName: "sendPwdResetLink",
+		time: Date.now(),
+		params: {
+			email,
+			name: participant.name,
+			link: `${FRONTEND_URL}/reset/${participant._id}/${newResetToken.token}`
+		}
+	};
+	kue.scheduleJob(args);
+	await Promise.all(promises);
+	return sendSuccess(res, null);
+};
+
+module.exports.resetPassword = async (req, res) => {
+	let { token, id, pwd } = req.body;
+
+	let [participant, resetToken] = await Promise.all([
+		Participant.findById(id),
+		ResetToken.findOne({
+			$and: [{ id }, { token }, { expires: { $gte: Date.now() } }]
+		})
+	]);
+	if (!participant || !resetToken) {
+		return sendError(
+			res,
+			"Reset link is not valid or expired.",
+			BAD_REQUEST
+		);
+	}
+
+	participant.password = String(pwd).trim();
+	await Promise.all([participant.save(), resetToken.delete()]);
+
+	return sendSuccess(res, null);
 };
 
 module.exports.participantLogin = async (req, res) => {

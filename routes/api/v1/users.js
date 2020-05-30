@@ -11,6 +11,8 @@ const {
 	login,
 	profile,
 	updateProfile,
+	forgotPassword,
+	resetPassword,
 	temp
 } = require("../../../controllers/users_controller");
 
@@ -35,6 +37,8 @@ router.post(
 	fileFilter,
 	catchErrors(updateProfile)
 );
+router.post("/forgot", catchErrors(forgotPassword));
+router.post("/reset", catchErrors(resetPassword));
 router.post("/temp", catchErrors(temp)); // for dev purpose only
 
 // export router

@@ -6,7 +6,7 @@ const Queue = kue.createQueue({
 	redis: process.env.REDIS_URL
 });
 const { logger } = require("../../utility/helpers");
-const { sendLoginCredsMail } = require("../emailService");
+const { sendLoginCredsMail, sendPwdResetLinkMail } = require("../emailService");
 
 Queue.process("sendLoginCreds", async (job, done) => {
 	let { data } = job;
@@ -54,4 +54,21 @@ Queue.process("deleteEvent", async (job, done) => {
 
 	await Promise.all(promises);
 	done();
+});
+
+Queue.process("sendPwdResetLink", async (job, done) => {
+	let { data } = job;
+	let log =
+		"Password reset link sent to: " + data.email + " at " + Date(Date.now());
+	logger("info", "scheduler", log);
+	console.log(log);
+	try {
+		await sendPwdResetLinkMail(data.email, {
+			name: data.name,
+			link: data.link
+		});
+		done();
+	} catch (err) {
+		done(err);
+	}
 });

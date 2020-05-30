@@ -4,7 +4,7 @@ const bcrypt = require("bcryptjs");
 
 const ObjectId = require("mongoose").Types.ObjectId;
 
-const { NODE_ENV, AVATAR_URL } = require("../config/index");
+const { NODE_ENV, AVATAR_URL, FRONTEND_URL } = require("../config/index");
 
 // import http status codes
 const {
@@ -215,6 +215,66 @@ module.exports.updateProfile = async (req, res) => {
 		{ new: true }
 	);
 	sendSuccess(res, profile);
+};
+
+module.exports.forgotPassword = async (req, res) => {
+	let { email } = req.body;
+	email = String(email).trim().toLowerCase();
+	let [user, resetToken] = await Promise.all([
+		User.findOne({ email }),
+		ResetToken.findOne({ email })
+	]);
+	if (!user) {
+		return sendError(res, "No Profile Found", BAD_REQUEST);
+	}
+	let promises = [];
+	if (resetToken) {
+		promises.push(resetToken.delete());
+	}
+
+	let newResetToken = new ResetToken({
+		email,
+		id: user._id,
+		token: `${generateHash(3)}${Date.now()}${generateHash(3)}`,
+		expires: Date.now() + 3600000
+	});
+
+	promises.push(newResetToken.save());
+	let args = {
+		jobName: "sendPwdResetLink",
+		time: Date.now(),
+		params: {
+			email,
+			name: user.name,
+			link: `${FRONTEND_URL}/reset/${user._id}/${newResetToken.token}`
+		}
+	};
+	kue.scheduleJob(args);
+	await Promise.all(promises);
+	return sendSuccess(res, null);
+};
+
+module.exports.resetPassword = async (req, res) => {
+	let { token, id, pwd } = req.body;
+
+	let [user, resetToken] = await Promise.all([
+		User.findById(id),
+		ResetToken.findOne({
+			$and: [{ id }, { token }, { expires: { $gte: Date.now() } }]
+		})
+	]);
+	if (!user || !resetToken) {
+		return sendError(
+			res,
+			"Reset link is not valid or expired.",
+			BAD_REQUEST
+		);
+	}
+
+	user.password = String(pwd).trim();
+	await Promise.all([user.save(), resetToken.delete()]);
+
+	return sendSuccess(res, null);
 };
 
 module.exports.temp = async (req, res) => {

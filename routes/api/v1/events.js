@@ -6,6 +6,8 @@ const {
 	getParticipants,
 	registerParticipant,
 	updateParticipant,
+	forgotPassword,
+	resetPassword,
 	participantLogin,
 	toggleRevoke,
 	registerForEvent,
@@ -52,7 +54,8 @@ router.put(
 	participantValidation,
 	catchErrors(updateParticipant)
 );
-
+router.post("/forgot", catchErrors(forgotPassword));
+router.post("/reset", catchErrors(resetPassword));
 router.post("/part_login", catchErrors(participantLogin));
 router.put(
 	"/revoke_part/:id",
