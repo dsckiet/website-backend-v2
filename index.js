@@ -2,6 +2,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const compression = require("compression");
 const morgan = require("morgan");
+const path = require("path");
 const helmet = require("helmet");
 const { NODE_ENV, PORT } = require("./config/index");
 const { notFound, sendErrors } = require("./config/errorHandler");
@@ -16,6 +17,7 @@ app.use(compression());
 app.use(helmet());
 app.use(morgan("dev"));
 app.use(cors({ exposedHeaders: "x-auth-token" }));
+app.use(express.static(path.join(__dirname, "public")));
 app.use(
 	bodyParser.urlencoded({
 		limit: "50mb",
