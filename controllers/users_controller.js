@@ -174,7 +174,17 @@ module.exports.profile = async (req, res) => {
 };
 
 module.exports.updateProfile = async (req, res) => {
-	let { name, email } = req.body;
+	let {
+		name,
+		email,
+		// contact,
+		// github,
+		// linkedin,
+		// twitter,
+		// portfolio,
+		dob
+	} = req.body;
+
 	let profile = await User.findById(req.query.id);
 	if (!profile) {
 		return sendError(res, "No Profile Found", BAD_REQUEST);
@@ -207,6 +217,10 @@ module.exports.updateProfile = async (req, res) => {
 	if (req.body.password) {
 		let salt = await bcrypt.genSalt(10);
 		req.body.password = await bcrypt.hash(req.body.password, salt);
+	}
+
+	if (dob) {
+		req.body.dob = formatHtmlDate(dob);
 	}
 
 	profile = await User.findByIdAndUpdate(

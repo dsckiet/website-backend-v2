@@ -23,13 +23,14 @@ const UserSchema = new mongoose.Schema(
 		portfolio: { type: String },
 		showOnWebsite: { type: Boolean, default: false },
 		image: { type: String },
+		dob: { type: Date },
 		isRevoked: { type: Boolean, default: false },
 		lastLogin: { type: Date, default: Date.now }
 	},
 	{ timestamps: true }
 );
 
-UserSchema.pre("save", async function(next) {
+UserSchema.pre("save", async function (next) {
 	this.name = toTitleCase(String(this.name));
 	this.email = String(this.email).toLowerCase();
 	if (!this.isModified("password")) return next();
@@ -39,12 +40,12 @@ UserSchema.pre("save", async function(next) {
 	next();
 });
 
-UserSchema.methods.isValidPwd = async function(password) {
+UserSchema.methods.isValidPwd = async function (password) {
 	let isMatchPwd = await bcrypt.compare(password, this.password);
 	return isMatchPwd;
 };
 
-UserSchema.methods.generateAuthToken = function() {
+UserSchema.methods.generateAuthToken = function () {
 	const token = jwt.sign(
 		{
 			id: this._id,
