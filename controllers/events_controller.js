@@ -1,7 +1,7 @@
 const kue = require("../config/Scheduler/kue");
 const worker = require("../config/Scheduler/worker");
 const path = require("path");
-const { degrees, PDFDocument, rgb, StandardFonts } = require("pdf-lib");
+const { PDFDocument, rgb } = require("pdf-lib");
 const fontkit = require("@pdf-lib/fontkit");
 const fs = require("fs");
 const { promisify } = require("util");
@@ -576,6 +576,9 @@ module.exports.deleteEvent = async (req, res) => {
 
 module.exports.getEventAttendanceReport = async (req, res) => {
 	let { event, query, branch, year, presentOn, sortBy } = req.query;
+
+	if (!event) return sendError(res, "Invalid event", BAD_REQUEST);
+
 	let partFilters = {
 		"events.event": new ObjectId(event)
 	};
@@ -681,6 +684,8 @@ module.exports.getEventAttendanceStats = async (req, res) => {
 	// present all days
 
 	let { event } = req.query;
+
+	if (!event) return sendError(res, "Invalid event", BAD_REQUEST);
 	let filter = { event: new ObjectId(event) };
 	let [
 		totalRegistrations,
@@ -800,19 +805,21 @@ module.exports.markUserAttendance = async (req, res) => {
 };
 
 module.exports.getUserEventAttendance = async (req, res) => {
-	let { event, attendance } = req.query;
-	let [events, attendances] = await Promise.all([
-		Event.findById(event),
-		Attendance.findById(attendance)
+	let { eventId } = req.query;
+	let [event, attendance] = await Promise.all([
+		Event.findById(eventId),
+		Attendance.findOne({
+			$and: [{ event: eventId }, { participant: req.user.id }]
+		})
 	]);
 
-	if (!events || !attendances) {
+	if (!event || !attendance) {
 		return sendError(res, "Invalid Request!!", BAD_REQUEST);
 	}
 
 	let data = {
-		event: events,
-		attendance: attendances.attend
+		event,
+		attendance: attendance.attend
 	};
 
 	return sendSuccess(res, data);
@@ -1024,4 +1031,78 @@ module.exports.addCerti = async (req, res) => {
 	sendSuccess(res, "Certificate design saved");
 };
 
-module.exports.generateCerti = async (req, res) => {};
+module.exports.generateCerti = async (req, res) => {
+	let { id } = req.params;
+
+	let [event, participant] = await Promise.all([
+		Event.findById(id),
+		Participant.findById(req.user.id)
+	]);
+
+	if (!participant || !event) {
+		return sendError(res, "Invalid Request!!", BAD_REQUEST);
+	}
+
+	let eventInd = participant.events
+		.map(event => {
+			return String(event.event);
+		})
+		.indexOf(String(event._id));
+
+	if (participant.events[eventInd].status === "attended") {
+		//get certi meta
+		if (event.certificateMeta !== undefined) {
+			let {
+					pdfFileName,
+					fontFileName,
+					x,
+					y,
+					size,
+					red,
+					green,
+					blue
+				} = event.certificateMeta,
+				{ name } = participant;
+
+			//read the pdf file
+			let pdfBytes = await readFileAsync(
+				`public/certificates/${id}/${pdfFileName}`
+			);
+			//read the font file
+			let fontBytes = await readFileAsync(
+				`public/certificates/${id}/${fontFileName}`
+			);
+
+			//generate certi
+			let srcDoc = await PDFDocument.load(pdfBytes);
+			let pdfDoc = await PDFDocument.create();
+			pdfDoc.registerFontkit(fontkit);
+			let customFont = await pdfDoc.embedFont(fontBytes);
+			let [designPage] = await pdfDoc.copyPages(srcDoc, [0]);
+
+			designPage.drawText(name, {
+				x: Number(x),
+				y: Number(y),
+				size: Number(size),
+				font: customFont,
+				color: rgb(
+					Number(red) / 255,
+					Number(green) / 255,
+					Number(blue) / 255
+				)
+			});
+			pdfDoc.addPage(designPage);
+			let newpdfBytes = await pdfDoc.save();
+
+			res.writeHead(200, { "Content-Type": "application/pdf" });
+			res.end(
+				new Buffer.alloc(newpdfBytes.length, newpdfBytes),
+				"binary"
+			);
+		} else {
+			return sendError(res, "Certificate not ready", BAD_REQUEST);
+		}
+	} else {
+		sendError(res, "Not eligible for certificate", BAD_REQUEST);
+	}
+};

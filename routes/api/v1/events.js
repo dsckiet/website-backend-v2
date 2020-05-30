@@ -158,7 +158,7 @@ router.post(
 	catchErrors(addCerti)
 );
 router.get(
-	"/certificate/generate",
+	"/certificate/generate/:id",
 	catchErrors(participantAuth),
 	catchErrors(generateCerti)
 );
