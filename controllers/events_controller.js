@@ -1,5 +1,14 @@
 const kue = require("../config/Scheduler/kue");
 const worker = require("../config/Scheduler/worker");
+const path = require("path");
+const { PDFDocument, rgb } = require("pdf-lib");
+const fontkit = require("@pdf-lib/fontkit");
+const fs = require("fs");
+const { promisify } = require("util");
+const readFileAsync = promisify(fs.readFile);
+const writeFileAsync = promisify(fs.writeFile);
+const mkdirAsync = promisify(fs.mkdir);
+const unlinkAsync = promisify(fs.unlink);
 
 const ObjectId = require("mongoose").Types.ObjectId;
 const { AVATAR_URL } = require("../config/index");
@@ -111,8 +120,9 @@ module.exports.registerParticipant = async (req, res) => {
 			phone,
 			password,
 			events: [],
-			image: `${AVATAR_URL}${Math.floor(Math.random() * 10000) +
-				9999}.svg`
+			image: `${AVATAR_URL}${
+				Math.floor(Math.random() * 10000) + 9999
+			}.svg`
 		});
 		participant = await participant.save();
 		const token = participant.generateAuthToken();
@@ -566,6 +576,9 @@ module.exports.deleteEvent = async (req, res) => {
 
 module.exports.getEventAttendanceReport = async (req, res) => {
 	let { event, query, branch, year, presentOn, sortBy } = req.query;
+
+	if (!event) return sendError(res, "Invalid event", BAD_REQUEST);
+
 	let partFilters = {
 		"events.event": new ObjectId(event)
 	};
@@ -671,6 +684,8 @@ module.exports.getEventAttendanceStats = async (req, res) => {
 	// present all days
 
 	let { event } = req.query;
+
+	if (!event) return sendError(res, "Invalid event", BAD_REQUEST);
 	let filter = { event: new ObjectId(event) };
 	let [
 		totalRegistrations,
@@ -790,19 +805,21 @@ module.exports.markUserAttendance = async (req, res) => {
 };
 
 module.exports.getUserEventAttendance = async (req, res) => {
-	let { event, attendance } = req.query;
-	let [events, attendances] = await Promise.all([
-		Event.findById(event),
-		Attendance.findById(attendance)
+	let { eventId } = req.query;
+	let [event, attendance] = await Promise.all([
+		Event.findById(eventId),
+		Attendance.findOne({
+			$and: [{ event: eventId }, { participant: req.user.id }]
+		})
 	]);
 
-	if (!events || !attendances) {
+	if (!event || !attendance) {
 		return sendError(res, "Invalid Request!!", BAD_REQUEST);
 	}
 
 	let data = {
-		event: events,
-		attendance: attendances.attend
+		event,
+		attendance: attendance.attend
 	};
 
 	return sendSuccess(res, data);
@@ -894,4 +911,198 @@ module.exports.getFeedbackReport = async (req, res) => {
 	]).sort({ createdAt: "desc" });
 
 	return sendSuccess(res, feedback);
+};
+
+module.exports.previewCerti = async (req, res) => {
+	let { name, x, y, size, red, green, blue } = req.body;
+	if (!name || !x || !y || !size || !red || !green || !blue) {
+		return sendError(res, "All fields required", BAD_REQUEST);
+	}
+
+	let file1 = req.files[0],
+		file2 = req.files[1];
+	let ext1 = path.extname(file1.originalname),
+		ext2 = path.extname(file2.originalname);
+	let pdfFile, fontFile;
+
+	if (ext1 === ".pdf") {
+		if ([".ttf", ".woff", ".woff2"].includes(ext2)) {
+			pdfFile = file1;
+			fontFile = file2;
+		}
+	} else if ([".ttf", ".woff", ".woff2"].includes(ext1)) {
+		if (ext2 === ".pdf") {
+			pdfFile = file2;
+			fontFile = file1;
+		}
+	}
+	let fontBytes = fontFile.buffer;
+	let pdfBytes = pdfFile.buffer;
+
+	let srcDoc = await PDFDocument.load(pdfBytes);
+	let pdfDoc = await PDFDocument.create();
+	pdfDoc.registerFontkit(fontkit);
+	let customFont = await pdfDoc.embedFont(fontBytes);
+	let [designPage] = await pdfDoc.copyPages(srcDoc, [0]);
+
+	designPage.drawText(name, {
+		x: Number(x),
+		y: Number(y),
+		size: Number(size),
+		font: customFont,
+		color: rgb(Number(red) / 255, Number(green) / 255, Number(blue) / 255)
+	});
+	pdfDoc.addPage(designPage);
+	let newpdfBytes = await pdfDoc.save();
+
+	res.writeHead(200, { "Content-Type": "application/pdf" });
+	res.end(new Buffer.alloc(newpdfBytes.length, newpdfBytes), "binary");
+};
+
+module.exports.addCerti = async (req, res) => {
+	let { x, y, size, red, green, blue } = req.body;
+	if (!x || !y || !size || !red || !green || !blue) {
+		return sendError(res, "All fields required", BAD_REQUEST);
+	}
+
+	let { id } = req.params;
+	if (!id) return sendError(res, "Invalid event id", BAD_REQUEST);
+
+	let event = await Event.findById(id);
+	if (!event) return sendError(res, "Invalid event", BAD_REQUEST);
+
+	let file1 = req.files[0],
+		file2 = req.files[1];
+	let ext1 = path.extname(file1.originalname),
+		ext2 = path.extname(file2.originalname);
+	let pdfFile, fontFile;
+
+	if (ext1 === ".pdf") {
+		if ([".ttf", ".woff", ".woff2"].includes(ext2)) {
+			pdfFile = file1;
+			fontFile = file2;
+		}
+	} else if ([".ttf", ".woff", ".woff2"].includes(ext1)) {
+		if (ext2 === ".pdf") {
+			pdfFile = file2;
+			fontFile = file1;
+		}
+	}
+
+	if (!fs.existsSync(`public/certificates/${id}`)) {
+		await mkdirAsync(`public/certificates/${id}`, { recursive: true });
+	}
+
+	if (event.certificateMeta !== undefined) {
+		if (event.certificateMeta.pdfFileName !== pdfFile.originalname) {
+			//DELETE prev pdf
+			await unlinkAsync(
+				`public/certificates/${id}/${event.certificateMeta.pdfFileName}`
+			);
+		}
+		if (event.certificateMeta.fontFileName !== fontFile.originalname) {
+			//DELETE prev font
+			await unlinkAsync(
+				`public/certificates/${id}/${event.certificateMeta.fontFileName}`
+			);
+		}
+	}
+
+	await writeFileAsync(
+		`public/certificates/${id}/${pdfFile.originalname}`,
+		pdfFile.buffer
+	);
+	await writeFileAsync(
+		`public/certificates/${id}/${fontFile.originalname}`,
+		fontFile.buffer
+	);
+
+	event.certificateMeta.pdfFileName = pdfFile.originalname;
+	event.certificateMeta.fontFileName = fontFile.originalname;
+	event.certificateMeta.x = x;
+	event.certificateMeta.y = y;
+	event.certificateMeta.size = size;
+	event.certificateMeta.red = red;
+	event.certificateMeta.green = green;
+	event.certificateMeta.blue = blue;
+
+	await event.save();
+
+	sendSuccess(res, "Certificate design saved");
+};
+
+module.exports.generateCerti = async (req, res) => {
+	let { id } = req.params;
+
+	let [event, participant] = await Promise.all([
+		Event.findById(id),
+		Participant.findById(req.user.id)
+	]);
+
+	if (!participant || !event) {
+		return sendError(res, "Invalid Request!!", BAD_REQUEST);
+	}
+
+	let eventInd = participant.events
+		.map(event => {
+			return String(event.event);
+		})
+		.indexOf(String(event._id));
+
+	if (participant.events[eventInd].status === "attended") {
+		//get certi meta
+		if (event.certificateMeta !== undefined) {
+			let {
+					pdfFileName,
+					fontFileName,
+					x,
+					y,
+					size,
+					red,
+					green,
+					blue
+				} = event.certificateMeta,
+				{ name } = participant;
+
+			//read the pdf file
+			let pdfBytes = await readFileAsync(
+				`public/certificates/${id}/${pdfFileName}`
+			);
+			//read the font file
+			let fontBytes = await readFileAsync(
+				`public/certificates/${id}/${fontFileName}`
+			);
+
+			//generate certi
+			let srcDoc = await PDFDocument.load(pdfBytes);
+			let pdfDoc = await PDFDocument.create();
+			pdfDoc.registerFontkit(fontkit);
+			let customFont = await pdfDoc.embedFont(fontBytes);
+			let [designPage] = await pdfDoc.copyPages(srcDoc, [0]);
+
+			designPage.drawText(name, {
+				x: Number(x),
+				y: Number(y),
+				size: Number(size),
+				font: customFont,
+				color: rgb(
+					Number(red) / 255,
+					Number(green) / 255,
+					Number(blue) / 255
+				)
+			});
+			pdfDoc.addPage(designPage);
+			let newpdfBytes = await pdfDoc.save();
+
+			res.writeHead(200, { "Content-Type": "application/pdf" });
+			res.end(
+				new Buffer.alloc(newpdfBytes.length, newpdfBytes),
+				"binary"
+			);
+		} else {
+			return sendError(res, "Certificate not ready", BAD_REQUEST);
+		}
+	} else {
+		sendError(res, "Not eligible for certificate", BAD_REQUEST);
+	}
 };

@@ -14,7 +14,17 @@ const EventSchema = new mongoose.Schema(
 		isRegistrationOpened: { type: Boolean, default: false },
 		registrations: { type: Number, default: 0 },
 		maxRegister: { type: Number, default: 100 },
-		code: { type: String, required: true }
+		code: { type: String, required: true },
+		certificateMeta: {
+			pdfFileName: { type: String, required: true },
+			fontFileName: { type: String, required: true },
+			x: { type: String, required: true },
+			y: { type: String, required: true },
+			size: { type: String, required: true },
+			red: { type: String, required: true },
+			green: { type: String, required: true },
+			blue: { type: String, required: true }
+		}
 	},
 	{ timestamps: true }
 );

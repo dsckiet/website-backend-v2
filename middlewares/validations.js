@@ -6,14 +6,16 @@ let emailRegex = /^\S+@\S+\.\S+/,
 	phoneRegex = /(^[6-9]{1}[0-9]{9}$)/;
 
 module.exports.userValidation = (req, res, next) => {
-	let { name, email, password } = req.body;
-	if (!name | !email) {
-		return sendError(res, "Email and name are mandatory!!", BAD_REQUEST);
+	let { name, email, role, designation } = req.body;
+	if (!name || !email || !role || !designation) {
+		return sendError(res, "All field are mandatory!!", BAD_REQUEST);
 	}
-	if (emailRegex.test(String(email))) {
-		return next();
-	} else {
+	if (!emailRegex.test(String(email))) {
 		return sendError(res, "Email not Valid!!", BAD_REQUEST);
+	} else if (!["core", "member"].includes(role)) {
+		return sendError(res, "Role not valid", BAD_REQUEST);
+	} else {
+		return next();
 	}
 };
 

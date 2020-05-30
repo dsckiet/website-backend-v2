@@ -22,7 +22,10 @@ const {
 	getUserEventAttendance,
 	markUserAttendance,
 	submitFeedback,
-	getFeedbackReport
+	getFeedbackReport,
+	previewCerti,
+	addCerti,
+	generateCerti
 } = require("../../../controllers/events_controller");
 
 // middlewares
@@ -37,7 +40,11 @@ const {
 	participantValidation,
 	eventValidation
 } = require("../../../middlewares/validations");
-const { multer, fileFilter } = require("../../../middlewares/imageValidations");
+const {
+	multer,
+	fileFilter,
+	certiFileFilter
+} = require("../../../middlewares/imageValidations");
 
 // routes for participants
 router.get("/get_part", catchErrors(coreAuth), catchErrors(getParticipants));
@@ -135,6 +142,25 @@ router.get(
 	"/feedback/:id",
 	catchErrors(coreAuth),
 	catchErrors(getFeedbackReport)
+);
+router.post(
+	"/certificate/preview",
+	catchErrors(coreAuth),
+	multer.any(),
+	certiFileFilter,
+	catchErrors(previewCerti)
+);
+router.post(
+	"/certificate/add/:id",
+	catchErrors(coreAuth),
+	multer.any(),
+	certiFileFilter,
+	catchErrors(addCerti)
+);
+router.get(
+	"/certificate/generate/:id",
+	catchErrors(participantAuth),
+	catchErrors(generateCerti)
 );
 
 // export router
