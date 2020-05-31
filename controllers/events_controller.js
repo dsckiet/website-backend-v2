@@ -47,6 +47,35 @@ getPushObject = (part, attendInd) => {
 	};
 };
 
+scheduleMailsInBatches = (users, jobName, props) => {
+	let batchSize = 20;
+	console.log(users);
+	let initial = 0,
+		i = 0;
+	while (initial < users.length) {
+		let currentBatch = users.slice(initial, initial + batchSize);
+		let start_time = Date.now() + i * 2 * 1000;
+		//do stuff with currentbatch
+		currentBatch.map((user, index) => {
+			let args = {
+				jobName,
+				time: start_time + index,
+				params: {
+					email: user.email,
+					name: user.name,
+					...props
+				}
+			};
+			console.log(args);
+			kue.scheduleJob(args);
+		});
+
+		i = i + 1;
+		initial = initial + batchSize;
+	}
+	return;
+};
+
 module.exports.getParticipants = async (req, res) => {
 	let { eventId, query, branch, year, sortBy } = req.query;
 	let filters = {};
@@ -234,6 +263,17 @@ module.exports.resetPassword = async (req, res) => {
 	}
 
 	participant.password = String(pwd).trim();
+
+	let args = {
+		jobName: "sendSystemEmailJob",
+		time: Date.now(),
+		params: {
+			email: participant.email,
+			name: participant.name,
+			mailType: "reset-pwd-success"
+		}
+	};
+	kue.scheduleJob(args);
 	await Promise.all([participant.save(), resetToken.delete()]);
 
 	return sendSuccess(res, null);
@@ -335,6 +375,19 @@ module.exports.registerForEvent = async (req, res) => {
 		attendance.save(),
 		event.save()
 	]);
+
+	let args = {
+		jobName: "sendSystemEmailJob",
+		time: Date.now(),
+		params: {
+			email: participant.email,
+			name: participant.name,
+			event,
+			mailType: "event-registered"
+		}
+	};
+	kue.scheduleJob(args);
+
 	sendSuccess(res, event);
 };
 
@@ -1179,4 +1232,37 @@ module.exports.generateCerti = async (req, res) => {
 	} else {
 		sendError(res, "Not eligible for certificate", BAD_REQUEST);
 	}
+};
+
+module.exports.sendEventMails = async (req, res) => {
+	let { type, users, event, subject, content } = req.body;
+	// type: event-reminder, event-followup, event-thanks
+	// users: [{ name, email }]
+	// event: event id
+
+	let events;
+	if (!subject && !content) {
+		events = await Event.findById(event);
+		if (!events) {
+			return sendError(res, "Invalid Event!!", BAD_REQUEST);
+		}
+	}
+
+	let params = {
+			mailType: type
+		},
+		jobname;
+
+	if (events) {
+		jobname = "sendSystemEmailJob";
+		params.event = events;
+	} else {
+		jobname = "sendGeneralEmailJob";
+		params.subject = subject;
+		params.content = content;
+	}
+
+	scheduleMailsInBatches(users, jobname, params);
+
+	return sendSuccess(res, null);
 };

@@ -1,5 +1,12 @@
 const { toTitleCase } = require("./helpers");
 
+const getReceiver = name => {
+	if (name) {
+		return toTitleCase(String(name).trim().split(" ")[0]);
+	}
+	return "";
+};
+
 const getFullHTML = (content, name) => {
 	return `<html>
 
@@ -40,13 +47,9 @@ const getFullHTML = (content, name) => {
                                                         <tr
                                                             style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,Cantarell,'Fira Sans','Droid Sans','Helvetica Neue',sans-serif;box-sizing:border-box;font-size:14px;margin:0">
                                                             <td style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,Cantarell,'Fira Sans','Droid Sans','Helvetica Neue',sans-serif;box-sizing:border-box;font-size:16px;line-height:24px;vertical-align:top;margin:0;word-wrap:break-word"
-                                                                valign="top">Hi ${toTitleCase(
-																	String(name)
-																		.trim()
-																		.split(
-																			" "
-																		)[0]
-																)},<br>Greetings from DSC KIET!<br>${content}<br />For
+                                                                valign="top">Hi ${getReceiver(
+																	name
+																)}<br>Greetings from DSC KIET!<br>${content}<br />For
                                                                 more information, please visit <a
                                                                     href="https://dsckiet.com">dsckiet.com</a><br /><br>
                                                             </td>
@@ -89,14 +92,21 @@ const getFullHTML = (content, name) => {
     </html>`;
 };
 
-module.exports.getMailTemplate = (data, type) => {
+module.exports.getMailTemplate = (data, type, content) => {
+	if (type === "other" && content) {
+		return getFullHTML(content);
+	}
+
 	let templates = {
 		"login-creds": {
 			subject: "[CREDS] DSCKIET Portal Credentials | DSC KIET",
-			html: getFullHTML(`
+			html: getFullHTML(
+				`
             You have been registered as a ${data.role} on DSC KIET
             Portal. Here are your login
-            credentials:<br /><b>${data.email}</b><br /><b>${data.password}</b>`)
+            credentials:<br /><b>${data.email}</b><br /><b>${data.password}</b>`,
+				data.name
+			)
 		},
 		"reset-pwd-link": {
 			subject:
@@ -108,6 +118,47 @@ module.exports.getMailTemplate = (data, type) => {
                 hour only.If you did not requested this reset, you can
                 simply ignore this email, your account will remain
                 untouched:)`,
+				data.name
+			)
+		},
+		"reset-pwd-success": {
+			subject: "[PASSWORD RESET] Success | DSC KIET",
+			html: getFullHTML(
+				`Your password for DSC KIET Portal has been reseteed successfully. 
+                If you did not triggered this action, please contact us at 
+                <a href="mailto:dsckiet@gmail.com">dsckiet@gmail.com</a></a>`,
+				data.name
+			)
+		},
+		"event-registered": {
+			subject: "[EVENt] Registration success | DSC KIET",
+			html: getFullHTML(
+				`Thank you for registering in the event ${data.event.title} to be held on details... 
+                please, content writer wale content de de:)`,
+				data.name
+			)
+		},
+		"event-reminder": {
+			subject: "[REMINDER] Event Reminder | DSC KIET",
+			html: getFullHTML(
+				`Thank you for registering in the event ${data.event.title} to be held on details... 
+                please, content writer wale content de de:)`,
+				data.name
+			)
+		},
+		"event-followup": {
+			subject: "[FOLLOWUP] Event completed | DSC KIET",
+			html: getFullHTML(
+				`Thank you for registering in the event ${data.event.name} to be held on details... 
+                Please visit the portal and feedback form if eligible, certificate could be doenloaded!:)`,
+				data.name
+			)
+		},
+		"event-thanks": {
+			subject: "[EVENt] Registration success | DSC KIET",
+			html: getFullHTML(
+				`Thank you for registering in the event ${data.event.name} to be held on details... 
+                please, content writer wale content de de:)`,
 				data.name
 			)
 		}

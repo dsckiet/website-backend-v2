@@ -6,11 +6,11 @@ const Queue = kue.createQueue({
 	redis: process.env.REDIS_URL
 });
 const { logger } = require("../../utility/helpers");
-const { sendSystemEmail } = require("../emailService");
+const { sendSystemEmail, sendGeneralEmail } = require("../emailService");
 
 Queue.process("sendSystemEmailJob", async (job, done) => {
 	let { data } = job;
-	let log = `${data.mailType} email sent to ${data.email} at ${Date(
+	let log = `${data.mailType} email sent to ${data.name} at ${Date(
 		Date.now()
 	)}`;
 	logger("info", "scheduler", log);
@@ -19,6 +19,8 @@ Queue.process("sendSystemEmailJob", async (job, done) => {
 		await sendSystemEmail(data.email, data, data.mailType);
 		done();
 	} catch (err) {
+		console.log(err);
+		logger("error", "scheduler", err);
 		done(err);
 	}
 });
@@ -51,4 +53,21 @@ Queue.process("deleteEvent", async (job, done) => {
 
 	await Promise.all(promises);
 	done();
+});
+
+Queue.process("sendGeneralEmailJob", async (job, done) => {
+	let { data } = job;
+	let log = `${data.mailType} email sent to ${data.name} at ${Date(
+		Date.now()
+	)}`;
+	logger("info", "scheduler", log);
+	console.log(log);
+	try {
+		await sendGeneralEmail(data.email, data.subject, data.content);
+		done();
+	} catch (err) {
+		console.log(err);
+		logger("error", "scheduler", err);
+		done(err);
+	}
 });

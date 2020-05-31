@@ -61,8 +61,12 @@ module.exports.eventValidation = (req, res, next) => {
 			formatHtmlDate(endDate).toISOString() ||
 		(formatHtmlDate(endDate) - formatHtmlDate(startDate)) /
 			(1000 * 3600 * 24) !==
-			Number(days)
+			Number(days) - 1
 	) {
+		console.log(formatHtmlDate(startDate).toISOString() >
+		formatHtmlDate(endDate).toISOString())
+		console.log((formatHtmlDate(endDate) - formatHtmlDate(startDate)) /
+		(1000 * 3600 * 24))
 		return sendError(res, "Invalid dates", BAD_REQUEST);
 	} else {
 		return next();

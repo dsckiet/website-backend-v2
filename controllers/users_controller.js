@@ -288,6 +288,17 @@ module.exports.resetPassword = async (req, res) => {
 	}
 
 	user.password = String(pwd).trim();
+
+	let args = {
+		jobName: "sendSystemEmailJob",
+		time: Date.now(),
+		params: {
+			email: user.email,
+			name: user.name,
+			mailType: "reset-pwd-success"
+		}
+	};
+	kue.scheduleJob(args);
 	await Promise.all([user.save(), resetToken.delete()]);
 
 	return sendSuccess(res, null);

@@ -4,7 +4,7 @@ const client = redis.createClient();
 const { promisify } = require("util");
 const getAsync = promisify(client.get).bind(client);
 
-client.on("error", function(error) {
+client.on("error", function (error) {
 	console.error(error);
 });
 
@@ -43,13 +43,11 @@ module.exports.sendError = (res, message, status) => {
 
 module.exports.sendSuccess = (res, data, token) => {
 	if (token) {
-		res.status(OK)
-			.header("x-auth-token", token)
-			.json({
-				message: "success",
-				error: false,
-				data
-			});
+		res.status(OK).header("x-auth-token", token).json({
+			message: "success",
+			error: false,
+			data
+		});
 	} else {
 		res.status(OK).json({
 			message: "success",
@@ -130,6 +128,7 @@ module.exports.getImageKey = url => {
 	} else {
 		folder = "events";
 	}
-	return `${folder}/${Date.now()}${Math.floor(Math.random() * 900000) +
-		99999}.jpeg`;
+	return `${folder}/${Date.now()}${
+		Math.floor(Math.random() * 900000) + 99999
+	}.jpeg`;
 };

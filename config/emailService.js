@@ -35,3 +35,25 @@ module.exports.sendSystemEmail = async (email, data, type) => {
 		throw err;
 	}
 };
+
+module.exports.sendGeneralEmail = async (email, subject, content) => {
+	let html = getMailTemplate(null, "other", content);
+	let mailOptions = {
+		from: `DSCKIET <${EMAIL_USER}>`,
+		to: email,
+		subject,
+		text: "",
+		html,
+		headers: {
+			"x-priority": "1",
+			"x-msmail-priority": "High",
+			importance: "high"
+		}
+	};
+	try {
+		await transporter.sendMail(mailOptions);
+	} catch (err) {
+		logger("error", "emailService", err);
+		throw err;
+	}
+};
