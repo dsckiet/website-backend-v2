@@ -45,11 +45,14 @@ const Event = require("./models/Event");
 const Attendance = require("./models/Attendance");
 const Feedback = require("./models/Feedback");
 const ResetToken = require("./models/ResetToken");
+const Subscriber = require("./models/Subscriber");
+const Subscription = require("./models/Subscription");
 
 //Routes
 app.use("/api/v1", require("./routes/api/v1/index"));
 app.use("/api/v1/users", require("./routes/api/v1/users"));
 app.use("/api/v1/events", require("./routes/api/v1/events"));
+app.use("/api/v1/subscription", require("./routes/api/v1/subscription"));
 
 app.use("*", notFound);
 

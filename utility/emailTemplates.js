@@ -133,7 +133,9 @@ module.exports.getMailTemplate = (data, type, content) => {
 		"event-registered": {
 			subject: "[EVENt] Registration success | DSC KIET",
 			html: getFullHTML(
-				`Thank you for registering in the event ${data.event.title} to be held on details... 
+				`Thank you for registering in the event ${
+					data.event ? data.event.title : ""
+				} to be held on details... 
                 please, content writer wale content de de:)`,
 				data.name
 			)
@@ -141,7 +143,9 @@ module.exports.getMailTemplate = (data, type, content) => {
 		"event-reminder": {
 			subject: "[REMINDER] Event Reminder | DSC KIET",
 			html: getFullHTML(
-				`Thank you for registering in the event ${data.event.title} to be held on details... 
+				`Thank you for registering in the event ${
+					data.event ? data.event.title : ""
+				} to be held on details... 
                 please, content writer wale content de de:)`,
 				data.name
 			)
@@ -149,7 +153,9 @@ module.exports.getMailTemplate = (data, type, content) => {
 		"event-followup": {
 			subject: "[FOLLOWUP] Event completed | DSC KIET",
 			html: getFullHTML(
-				`Thank you for registering in the event ${data.event.name} to be held on details... 
+				`Thank you for registering in the event ${
+					data.event ? data.event.title : ""
+				} to be held on details... 
                 Please visit the portal and feedback form if eligible, certificate could be doenloaded!:)`,
 				data.name
 			)
@@ -157,9 +163,17 @@ module.exports.getMailTemplate = (data, type, content) => {
 		"event-thanks": {
 			subject: "[EVENt] Registration success | DSC KIET",
 			html: getFullHTML(
-				`Thank you for registering in the event ${data.event.name} to be held on details... 
+				`Thank you for registering in the event ${
+					data.event ? data.event.title : ""
+				} to be held on details... 
                 please, content writer wale content de de:)`,
 				data.name
+			)
+		},
+		"subscriber-welcome": {
+			subject: "[SUBSCRIBED] Registration success | DSC KIET",
+			html: getFullHTML(
+				`Thank you for registering subscribing, baaki acha content:)`
 			)
 		}
 	};

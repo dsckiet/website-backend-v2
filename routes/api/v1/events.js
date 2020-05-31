@@ -172,7 +172,7 @@ router.get(
 );
 
 // send emails regarding event route
-router.post("/email", catchErrors(sendEventMails));
+router.post("/email", catchErrors(leadAuth), catchErrors(sendEventMails));
 
 // export router
 module.exports = router;

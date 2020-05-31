@@ -10,7 +10,7 @@ const { sendSystemEmail, sendGeneralEmail } = require("../emailService");
 
 Queue.process("sendSystemEmailJob", async (job, done) => {
 	let { data } = job;
-	let log = `${data.mailType} email sent to ${data.name} at ${Date(
+	let log = `${data.mailType} email sent to ${data.email} at ${Date(
 		Date.now()
 	)}`;
 	logger("info", "scheduler", log);
@@ -57,7 +57,7 @@ Queue.process("deleteEvent", async (job, done) => {
 
 Queue.process("sendGeneralEmailJob", async (job, done) => {
 	let { data } = job;
-	let log = `${data.mailType} email sent to ${data.name} at ${Date(
+	let log = `${data.mailType} email sent to ${data.email} at ${Date(
 		Date.now()
 	)}`;
 	logger("info", "scheduler", log);

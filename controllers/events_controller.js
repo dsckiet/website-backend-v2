@@ -49,7 +49,6 @@ getPushObject = (part, attendInd) => {
 
 scheduleMailsInBatches = (users, jobName, props) => {
 	let batchSize = 20;
-	console.log(users);
 	let initial = 0,
 		i = 0;
 	while (initial < users.length) {
@@ -66,7 +65,6 @@ scheduleMailsInBatches = (users, jobName, props) => {
 					...props
 				}
 			};
-			console.log(args);
 			kue.scheduleJob(args);
 		});
 
