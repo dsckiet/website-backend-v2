@@ -13,10 +13,11 @@ const {
 // middlewares
 const { catchErrors } = require("../../../config/errorHandler");
 const { leadAuth } = require("../../../middlewares/auth");
+const { emailValidation } = require("../../../middlewares/validations");
 
 // routes
 router.get("/", catchErrors(leadAuth), catchErrors(subscribers));
-router.post("/", catchErrors(subscribe));
+router.post("/", emailValidation, catchErrors(subscribe));
 router.delete("/:id", catchErrors(unsubscribe));
 router.get("/mail", catchErrors(leadAuth), catchErrors(subscriptions));
 router.post("/mail", catchErrors(leadAuth), catchErrors(sendSubscription));

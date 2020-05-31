@@ -19,7 +19,10 @@ const {
 // middlewares
 const { catchErrors } = require("../../../config/errorHandler");
 const { allAuth, coreAuth, leadAuth } = require("../../../middlewares/auth");
-const { userValidation } = require("../../../middlewares/validations");
+const {
+	userValidation,
+	emailValidation
+} = require("../../../middlewares/validations");
 const { multer, fileFilter } = require("../../../middlewares/imageValidations");
 
 // routes
@@ -37,7 +40,7 @@ router.post(
 	fileFilter,
 	catchErrors(updateProfile)
 );
-router.post("/forgot", catchErrors(forgotPassword));
+router.post("/forgot", emailValidation, catchErrors(forgotPassword));
 router.post("/reset", catchErrors(resetPassword));
 router.post("/temp", catchErrors(temp)); // for dev purpose only
 

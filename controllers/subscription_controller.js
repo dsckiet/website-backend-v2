@@ -3,6 +3,7 @@ const worker = require("../config/Scheduler/worker");
 
 // import helper functions
 const { sendError, sendSuccess } = require("../utility/helpers");
+const { BAD_REQUEST } = require("../utility/statusCodes");
 
 scheduleMailsInBatches = (users, jobName, props) => {
 	let batchSize = 20;
@@ -70,6 +71,10 @@ module.exports.subscriptions = async (req, res) => {
 
 module.exports.sendSubscription = async (req, res) => {
 	let { subject, content } = req.body;
+
+	if (!subject || !content) {
+		return sendError(res, "Please enter subject and content.", BAD_REQUEST);
+	}
 	let subscription = new Subscription({
 		subject,
 		content

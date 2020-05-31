@@ -41,7 +41,8 @@ const {
 } = require("../../../middlewares/auth");
 const {
 	participantValidation,
-	eventValidation
+	eventValidation,
+	emailValidation
 } = require("../../../middlewares/validations");
 const {
 	multer,
@@ -62,7 +63,7 @@ router.put(
 	participantValidation,
 	catchErrors(updateParticipant)
 );
-router.post("/forgot", catchErrors(forgotPassword));
+router.post("/forgot", emailValidation, catchErrors(forgotPassword));
 router.post("/reset", catchErrors(resetPassword));
 router.post("/part_login", catchErrors(participantLogin));
 router.put(
