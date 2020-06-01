@@ -3,7 +3,7 @@ const redis = require("redis");
 const client = redis.createClient();
 const { promisify } = require("util");
 const getAsync = promisify(client.get).bind(client);
-const { SENTRY_DSN } = require("../config/index");
+const { SENTRY_DSN, NODE_ENV } = require("../config/index");
 
 client.on("error", function (error) {
 	console.error(error);
@@ -95,12 +95,12 @@ module.exports.logger = (type, funcName, message) => {
 	logger = log4js.getLogger(`Logs from ${funcName} function`);
 
 	if (type === "error") {
-		if (process.env.NODE_ENV === "production") {
+		if (NODE_ENV === "production") {
 			Sentry.captureException(message);
 		}
 		logger.error(message);
 	} else if (type === "fatal") {
-		if (process.env.NODE_ENV === "production") {
+		if (NODE_ENV === "production") {
 			Sentry.captureException(message);
 		}
 		logger.fatal(message);
