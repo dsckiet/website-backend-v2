@@ -523,8 +523,8 @@ module.exports.getEvents = async (req, res) => {
 				events.runningEvents.push(event);
 			}
 		});
+		sendSuccess(res, events);
 	}
-	sendSuccess(res, event);
 };
 
 module.exports.addEvent = async (req, res) => {
