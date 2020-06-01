@@ -86,7 +86,7 @@ module.exports.sendSubscription = async (req, res) => {
 	]);
 
 	let params = {
-			mailType: "other",
+			mailType: "subscription",
 			subject,
 			content
 		},
