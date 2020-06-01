@@ -59,8 +59,8 @@ module.exports.subscribe = async (req, res) => {
 };
 
 module.exports.unsubscribe = async (req, res) => {
-	let { id } = req.params;
-	let subscriber = await Subscriber.findByIdAndDelete(id);
+	let { sid } = req.params;
+	await Subscriber.findByIdAndDelete(sid);
 	return sendSuccess(res, null);
 };
 

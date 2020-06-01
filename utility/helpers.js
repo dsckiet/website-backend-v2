@@ -3,6 +3,7 @@ const redis = require("redis");
 const client = redis.createClient();
 const { promisify } = require("util");
 const getAsync = promisify(client.get).bind(client);
+const { SENTRY_DSN } = require("../config/index");
 
 client.on("error", function (error) {
 	console.error(error);
@@ -32,6 +33,14 @@ log4js.configure({
 });
 let logger = log4js.getLogger();
 logger.level = "debug";
+
+const Sentry = require("@sentry/node");
+Sentry.init({
+	dsn: SENTRY_DSN,
+	attachStacktrace: true,
+	debug: true,
+	environment: "production"
+});
 
 module.exports.sendError = (res, message, status) => {
 	res.status(status).json({
@@ -85,9 +94,17 @@ module.exports.formatHtmlDate = date => {
 module.exports.logger = (type, funcName, message) => {
 	logger = log4js.getLogger(`Logs from ${funcName} function`);
 
-	if (type === "error") logger.error(message);
-	else if (type === "fatal") logger.fatal(message);
-	else if (type === "info") logger.info(message);
+	if (type === "error") {
+		if (process.env.NODE_ENV === "production") {
+			Sentry.captureException(message);
+		}
+		logger.error(message);
+	} else if (type === "fatal") {
+		if (process.env.NODE_ENV === "production") {
+			Sentry.captureException(message);
+		}
+		logger.fatal(message);
+	} else if (type === "info") logger.info(message);
 	else if (type === "warn") logger.warn(message);
 	else if (type === "debug") logger.debug(message);
 	else if (type === "trace") logger.trace(message);

@@ -28,9 +28,13 @@ const { multer, fileFilter } = require("../../../middlewares/imageValidations");
 // routes
 router.get("/", catchErrors(users));
 router.post("/", catchErrors(coreAuth), userValidation, catchErrors(addUser));
-router.put("/approve/:id", catchErrors(leadAuth), catchErrors(toggleShowOnWeb));
-router.put("/revoke/:id", catchErrors(leadAuth), catchErrors(toggleRevoke));
-router.delete("/:id", catchErrors(coreAuth), catchErrors(deleteUser));
+router.put(
+	"/approve/:uid",
+	catchErrors(leadAuth),
+	catchErrors(toggleShowOnWeb)
+);
+router.put("/revoke/:uid", catchErrors(leadAuth), catchErrors(toggleRevoke));
+router.delete("/:uid", catchErrors(coreAuth), catchErrors(deleteUser));
 router.post("/login", catchErrors(login));
 router.get("/profile", catchErrors(allAuth), catchErrors(profile));
 router.post(
