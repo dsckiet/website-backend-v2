@@ -47,7 +47,7 @@ getPushObject = (part, attendInd) => {
 	};
 };
 
-scheduleMailsInBatches = (users, jobName, props) => {
+const scheduleMailsInBatches = (users, jobName, props) => {
 	let batchSize = 20;
 	let initial = 0,
 		i = 0;
@@ -60,9 +60,9 @@ scheduleMailsInBatches = (users, jobName, props) => {
 				jobName,
 				time: start_time + index,
 				params: {
-					email: user.email,
+					...props,
 					name: user.name,
-					...props
+					email: user.email
 				}
 			};
 			kue.scheduleJob(args);
@@ -1238,10 +1238,10 @@ module.exports.sendEventMails = async (req, res) => {
 	// users: [{ name, email }]
 	// event: event id
 
-	let events;
+	let evnt;
 	if (!subject && !content) {
-		events = await Event.findById(event);
-		if (!events) {
+		evnt = await Event.findById(event);
+		if (!evnt) {
 			return sendError(res, "Invalid Event!!", BAD_REQUEST);
 		}
 	}
@@ -1251,9 +1251,9 @@ module.exports.sendEventMails = async (req, res) => {
 		},
 		jobname;
 
-	if (events) {
+	if (evnt) {
 		jobname = "sendSystemEmailJob";
-		params.event = events;
+		params.event = evnt;
 	} else {
 		jobname = "sendGeneralEmailJob";
 		params.subject = subject;

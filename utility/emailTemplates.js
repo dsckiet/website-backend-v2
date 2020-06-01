@@ -94,9 +94,8 @@ const getFullHTML = (content, name) => {
 
 module.exports.getMailTemplate = (data, type, content) => {
 	if (type === "other" && content) {
-		return getFullHTML(content);
+		return getFullHTML(content, data.name);
 	}
-
 	let templates = {
 		"login-creds": {
 			subject: "[CREDS] DSCKIET Portal Credentials | DSC KIET",
@@ -124,14 +123,14 @@ module.exports.getMailTemplate = (data, type, content) => {
 		"reset-pwd-success": {
 			subject: "[PASSWORD RESET] Success | DSC KIET",
 			html: getFullHTML(
-				`Your password for DSC KIET Portal has been reseteed successfully. 
+				`Your password has been successfully reset. 
                 If you did not triggered this action, please contact us at 
                 <a href="mailto:dsckiet@gmail.com">dsckiet@gmail.com</a></a>`,
 				data.name
 			)
 		},
 		"event-registered": {
-			subject: "[EVENt] Registration success | DSC KIET",
+			subject: "[EVENT] Registration success | DSC KIET",
 			html: getFullHTML(
 				`Thank you for registering in the event ${
 					data.event ? data.event.title : ""
@@ -156,7 +155,7 @@ module.exports.getMailTemplate = (data, type, content) => {
 				`Thank you for registering in the event ${
 					data.event ? data.event.title : ""
 				} to be held on details... 
-                Please visit the portal and feedback form if eligible, certificate could be doenloaded!:)`,
+                Please visit the portal and feedback form if eligible, certificate could be downloaded!:)`,
 				data.name
 			)
 		},

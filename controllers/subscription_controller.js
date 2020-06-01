@@ -5,7 +5,7 @@ const worker = require("../config/Scheduler/worker");
 const { sendError, sendSuccess } = require("../utility/helpers");
 const { BAD_REQUEST } = require("../utility/statusCodes");
 
-scheduleMailsInBatches = (users, jobName, props) => {
+const scheduleMailsInBatches = (users, jobName, props) => {
 	let batchSize = 20;
 	let initial = 0,
 		i = 0;

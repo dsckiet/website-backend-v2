@@ -36,8 +36,8 @@ module.exports.sendSystemEmail = async (email, data, type) => {
 	}
 };
 
-module.exports.sendGeneralEmail = async (email, subject, content) => {
-	let html = getMailTemplate(null, "other", content);
+module.exports.sendGeneralEmail = async (email, subject, content, name) => {
+	let html = getMailTemplate({ name }, "other", content);
 	let mailOptions = {
 		from: `DSCKIET <${EMAIL_USER}>`,
 		to: email,
