@@ -6,9 +6,7 @@ module.exports.catchErrors = middlewareFunction => {
 		try {
 			await middlewareFunction(req, res, next);
 		} catch (err) {
-			//log
-			logger("error", "catchErrors", err);
-			//send to next
+			//send to next handler for logging
 			next(err);
 		}
 	};
@@ -25,17 +23,9 @@ module.exports.notFound = (req, res) => {
 };
 
 module.exports.sendErrors = (err, req, res, next) => {
-	const errorDetailsToSend = {
-		message: err.message,
-		status: err.status || SERVER_ERROR,
-		error: true
-	};
 	//logging error for backend console
-	console.log(errorDetailsToSend);
-	console.log(err.stack);
-	logger("fatal", "sendErrors", errorDetailsToSend);
-	logger("fatal", "sendErrors", err.stack);
-
+	console.error(err.stack);
+	logger("fatal", "sendErrors", err);
 	//sending error to frontend
 	sendError(res, err.message, err.status || SERVER_ERROR);
 };
