@@ -43,7 +43,7 @@ getPushObject = (part, attendInd) => {
 		year: part.year,
 		phone: part.phone,
 		email: part.email,
-		attendance: part.attend[attendInd].attend
+		attendance: part.attend[attendInd].daysAttended
 	};
 };
 
@@ -75,11 +75,11 @@ const scheduleMailsInBatches = (users, jobName, props) => {
 };
 
 module.exports.getParticipants = async (req, res) => {
-	let { eventId, query, branch, year, sortBy } = req.query;
+	let { eid, query, branch, year, sortBy } = req.query;
 	let filters = {};
 
-	if (eventId) {
-		filters["events.event"] = new ObjectId(eventId);
+	if (eid) {
+		filters["events.eid"] = new ObjectId(eid);
 	}
 
 	if (query) {
@@ -178,17 +178,17 @@ module.exports.registerParticipant = async (req, res) => {
 module.exports.updateParticipant = async (req, res) => {
 	let { name, email } = req.body;
 
-	let participant = await Participant.findById(req.params.id);
+	let participant = await Participant.findById(req.user.id);
 
 	if (!participant)
 		return sendError(res, "Participant not found!!", BAD_REQUEST);
 
 	if (name && name !== participant.name) {
-		setToken(req.query.id, "revalidate");
+		setToken(req.user.id, "revalidate");
 	}
 
 	if (email && email !== participant.email) {
-		setToken(req.query.id, "revalidate");
+		setToken(req.user.id, "revalidate");
 	}
 
 	if (req.body.password) {
@@ -197,7 +197,7 @@ module.exports.updateParticipant = async (req, res) => {
 	}
 
 	participant = await Participant.findByIdAndUpdate(
-		req.params.id,
+		req.user.id,
 		{ $set: req.body },
 		{ new: true }
 	);
@@ -302,8 +302,8 @@ module.exports.participantLogin = async (req, res) => {
 };
 
 module.exports.toggleRevoke = async (req, res) => {
-	let { id } = req.params;
-	let part = await Participant.findById(id);
+	let { pid } = req.params;
+	let part = await Participant.findById(pid);
 	if (!part) {
 		return sendError(res, "Invalid participant", BAD_REQUEST);
 	}
@@ -311,21 +311,45 @@ module.exports.toggleRevoke = async (req, res) => {
 	part.isRevoked = part.isRevoked ? false : true;
 
 	//change token status
-	part.isRevoked ? setToken(id, "revoke") : setToken(id, "revalidate");
+	part.isRevoked ? setToken(pid, "revoke") : setToken(pid, "revalidate");
 
 	part = await part.save();
 	sendSuccess(res, part);
 };
 
+module.exports.deleteParticipant = async (req, res) => {
+	let { pid } = req.params;
+	let part = await Participant.findById(pid);
+
+	if (!part) {
+		return sendError(res, "Invalid participant", BAD_REQUEST);
+	}
+
+	if (part.image && part.image.includes("amazonaws")) {
+		let key = `${part.image.split("/")[3]}/${part.image.split("/")[4]}`;
+		await deleteImage(key);
+	}
+
+	let deletePromises = [
+		part.delete(),
+		Attendance.deleteOne({ pid: new ObjectId(pid) }),
+		Feedback.deleteOne({ pid: new ObjectId(pid) })
+	];
+
+	await Promise.all(deletePromises);
+	setToken(pid, "delete");
+	sendSuccess(res, null);
+};
+
 module.exports.registerForEvent = async (req, res) => {
-	let { eventId } = req.body;
-	if (!eventId) {
+	let { eid } = req.body;
+	if (!eid) {
 		return sendError(res, "Invalid Event!!", BAD_REQUEST);
 	}
 
 	let [participant, event] = await Promise.all([
 		Participant.findById(req.user.id),
-		Event.findById(eventId)
+		Event.findById(eid)
 	]);
 
 	if (!participant || !event) {
@@ -341,24 +365,24 @@ module.exports.registerForEvent = async (req, res) => {
 	}
 
 	let eventIndex = participant.events
-		.map(evnt => {
-			return String(evnt.event);
+		.map(event => {
+			return String(event.eid);
 		})
-		.indexOf(String(eventId));
+		.indexOf(String(eid));
 
 	if (eventIndex !== -1) {
 		return sendError(res, "Already Registered!!", BAD_REQUEST);
 	}
 
 	let attendance = new Attendance({
-		participant: new ObjectId(req.user.id),
-		event: new ObjectId(eventId),
-		attend: []
+		pid: new ObjectId(req.user.id),
+		eid: new ObjectId(eid),
+		daysAttended: []
 	});
 
 	participant.events.push({
-		event: new ObjectId(eventId),
-		attendance: new ObjectId(attendance._id),
+		eid: new ObjectId(eid),
+		aid: new ObjectId(attendance._id),
 		status: "not attended"
 	});
 
@@ -394,8 +418,8 @@ module.exports.participantData = async (req, res) => {
 
 	if (req.user.role === "participant") {
 		matchObj._id = new ObjectId(req.user.id);
-	} else if (req.query.participantId) {
-		matchObj._id = new ObjectId(req.query.participantId);
+	} else if (req.query.pid) {
+		matchObj._id = new ObjectId(req.query.pid);
 	} else {
 		return sendError(res, "Invalid Request!!", BAD_REQUEST);
 	}
@@ -407,7 +431,7 @@ module.exports.participantData = async (req, res) => {
 		{
 			$lookup: {
 				from: "events",
-				localField: "events.event",
+				localField: "events.eid",
 				foreignField: "_id",
 				as: "eventsList"
 			}
@@ -454,7 +478,7 @@ module.exports.participantData = async (req, res) => {
 			.map(ev => {
 				return String(ev._id);
 			})
-			.indexOf(String(event.event));
+			.indexOf(String(event.eid));
 		eventsArray.push({
 			...event,
 			details: participant.eventsList[eventListIndex]
@@ -469,39 +493,15 @@ module.exports.participantData = async (req, res) => {
 	sendSuccess(res, data);
 };
 
-module.exports.deleteParticipant = async (req, res) => {
-	let { id } = req.params;
-	let part = await Participant.findById(id);
-
-	if (!part) {
-		return sendError(res, "Invalid participant", BAD_REQUEST);
-	}
-
-	if (part.image && part.image.includes("amazonaws")) {
-		let key = `${part.image.split("/")[3]}/${part.image.split("/")[4]}`;
-		await deleteImage(key);
-	}
-
-	let deletePromises = [
-		part.delete(),
-		Attendance.deleteOne({ participant: new ObjectId(id) }),
-		Feedback.deleteOne({ participant: new ObjectId(id) })
-	];
-
-	await Promise.all(deletePromises);
-	setToken(id, "delete");
-	sendSuccess(res, null);
-};
-
 module.exports.getEvents = async (req, res) => {
-	let { id } = req.query;
-	let events;
-	if (id) {
-		events = await Event.findById(id);
+	let { eid } = req.query;
+	if (eid) {
+		let event = await Event.findById(eid);
+		sendSuccess(res, event);
 	} else {
-		allEvents = await Event.find().sort({ createdAt: "desc" });
+		let allEvents = await Event.find().sort({ createdAt: "desc" });
 
-		events = {
+		let events = {
 			previousEvents: [],
 			runningEvents: [],
 			upcomingEvents: []
@@ -524,7 +524,7 @@ module.exports.getEvents = async (req, res) => {
 			}
 		});
 	}
-	sendSuccess(res, events);
+	sendSuccess(res, event);
 };
 
 module.exports.addEvent = async (req, res) => {
@@ -570,8 +570,8 @@ module.exports.addEvent = async (req, res) => {
 };
 
 module.exports.changeEventCode = async (req, res) => {
-	let { id } = req.body;
-	let event = await Event.findById(id);
+	let { eid } = req.body;
+	let event = await Event.findById(eid);
 	if (event) {
 		event.code = generateHash(EVENT_HASH_LENGTH);
 		event = await event.save();
@@ -582,8 +582,8 @@ module.exports.changeEventCode = async (req, res) => {
 };
 
 module.exports.changeEventRegistrationOpen = async (req, res) => {
-	let { id } = req.body;
-	let event = await Event.findById(id);
+	let { eid } = req.body;
+	let event = await Event.findById(eid);
 	if (event) {
 		if (event.registrations === event.maxRegister) {
 			return sendError(
@@ -596,7 +596,7 @@ module.exports.changeEventRegistrationOpen = async (req, res) => {
 				? false
 				: true;
 			event = await Event.findByIdAndUpdate(
-				id,
+				eid,
 				{
 					$set: {
 						isRegistrationOpened: Boolean(isRegistrationOpened)
@@ -612,8 +612,8 @@ module.exports.changeEventRegistrationOpen = async (req, res) => {
 };
 
 module.exports.updateEvent = async (req, res) => {
-	let { id } = req.params;
-	let event = await Event.findById(id);
+	let { eid } = req.params;
+	let event = await Event.findById(eid);
 	if (event) {
 		let {
 			title,
@@ -667,7 +667,7 @@ module.exports.updateEvent = async (req, res) => {
 			}
 		}
 
-		event = await Event.findByIdAndUpdate(id, updateObj, { new: true });
+		event = await Event.findByIdAndUpdate(eid, updateObj, { new: true });
 		sendSuccess(res, event);
 	} else {
 		sendError(res, "Event not found!!", BAD_REQUEST);
@@ -675,8 +675,8 @@ module.exports.updateEvent = async (req, res) => {
 };
 
 module.exports.deleteEvent = async (req, res) => {
-	let { id } = req.params;
-	let event = await Event.findById(id);
+	let { eid } = req.params;
+	let event = await Event.findById(eid);
 	if (event) {
 		if (event.image && event.image.includes("amazonaws")) {
 			let key = `${event.image.split("/")[3]}/${
@@ -688,7 +688,7 @@ module.exports.deleteEvent = async (req, res) => {
 			jobName: "deleteEvent",
 			time: Date.now(),
 			params: {
-				eventId: new ObjectId(event._id)
+				eid: new ObjectId(event._id)
 			}
 		};
 		kue.scheduleJob(args);
@@ -699,12 +699,12 @@ module.exports.deleteEvent = async (req, res) => {
 };
 
 module.exports.getEventAttendanceReport = async (req, res) => {
-	let { event, query, branch, year, presentOn, sortBy } = req.query;
+	let { eid, query, branch, year, presentOn, sortBy } = req.query;
 
-	if (!event) return sendError(res, "Invalid event", BAD_REQUEST);
+	if (!eid) return sendError(res, "Invalid event", BAD_REQUEST);
 
 	let partFilters = {
-		"events.event": new ObjectId(event)
+		"events.eid": new ObjectId(eid)
 	};
 
 	if (query) {
@@ -747,7 +747,7 @@ module.exports.getEventAttendanceReport = async (req, res) => {
 		{
 			$lookup: {
 				from: "attendances",
-				localField: "events.attendance",
+				localField: "events.aid",
 				foreignField: "_id",
 				as: "attend"
 			}
@@ -755,7 +755,7 @@ module.exports.getEventAttendanceReport = async (req, res) => {
 		{
 			$lookup: {
 				from: "events",
-				localField: "events.event",
+				localField: "events.eid",
 				foreignField: "_id",
 				as: "events"
 			}
@@ -767,28 +767,29 @@ module.exports.getEventAttendanceReport = async (req, res) => {
 	participants.map(part => {
 		let attendInd = part.attend
 			.map(att => {
-				return String(att.event);
+				return String(att.eid);
 			})
-			.indexOf(String(event));
+			.indexOf(String(eid));
+
 		let eventInd = part.events
 			.map(evnt => {
 				return String(evnt._id);
 			})
-			.indexOf(String(event));
+			.indexOf(String(eid));
 
 		let eveDays = part.events[eventInd].days;
 		if (presentOn) {
 			if (presentOn === "all") {
-				if (part.attend[attendInd].attend.length === eveDays) {
+				if (part.attend[attendInd].daysAttended.length === eveDays) {
 					filteredAttendance.push(getPushObject(part, attendInd));
 				}
 			} else if (presentOn === "none") {
-				if (part.attend[attendInd].attend.length === 0) {
+				if (part.attend[attendInd].daysAttended.length === 0) {
 					filteredAttendance.push(getPushObject(part, attendInd));
 				}
 			} else {
 				let day = formatHtmlDate(presentOn).toISOString();
-				part.attend[attendInd].attend.map(att => {
+				part.attend[attendInd].daysAttended.map(att => {
 					if (new Date(att).toISOString() === day) {
 						filteredAttendance.push(getPushObject(part, attendInd));
 					}
@@ -807,41 +808,37 @@ module.exports.getEventAttendanceStats = async (req, res) => {
 	// present 0 days
 	// present all days
 
-	let { event } = req.query;
+	let { eid } = req.query;
 
-	if (!event) return sendError(res, "Invalid event", BAD_REQUEST);
-	let filter = { event: new ObjectId(event) };
+	if (!eid) return sendError(res, "Invalid event", BAD_REQUEST);
+
+	let filter = { eid: new ObjectId(eid) };
 	let [
 		totalRegistrations,
 		present0days,
 		presentAlldays,
-		eventDetail
+		event
 	] = await Promise.all([
 		Attendance.countDocuments(filter),
 		Participant.countDocuments({
 			events: {
 				$elemMatch: {
-					event: new ObjectId(event),
+					eid: new ObjectId(eid),
 					status: "not attended"
 				}
 			}
 		}),
 		Participant.countDocuments({
 			events: {
-				$elemMatch: { event: new ObjectId(event), status: "attended" }
+				$elemMatch: { eid: new ObjectId(eid), status: "attended" }
 			}
 		}),
-		Event.findById(event)
+		Event.findById(eid)
 	]);
 
-	if (!event) {
-		return sendError(res, "Invalid Event!!", BAD_REQUEST);
-	}
+	let eveDays = event.days;
 
-	let eveDays = eventDetail.days;
-
-	let dayWiseQueryArray = [],
-		i;
+	let dayWiseQueryArray = [];
 
 	for (let i = 0; i < eveDays; i++) {
 		dayWiseQueryArray.push(
@@ -879,7 +876,7 @@ module.exports.markUserAttendance = async (req, res) => {
 		return sendError(res, "Invalid Code!!", BAD_REQUEST);
 	}
 	let attendance = await Attendance.findOne({
-		$and: [{ event: event._id }, { participant: req.user.id }]
+		$and: [{ eid: event._id }, { pid: req.user.id }]
 	});
 	if (!attendance) {
 		return sendError(res, "Not Registered in this Event!!", BAD_REQUEST);
@@ -902,22 +899,22 @@ module.exports.markUserAttendance = async (req, res) => {
 		);
 	}
 
-	let attendIndex = attendance.attend
-		.map(attend => {
-			return new Date(attend).toISOString();
+	let attendIndex = attendance.daysAttended
+		.map(date => {
+			return new Date(date).toISOString();
 		})
 		.indexOf(today);
 
 	if (attendIndex !== -1) {
 		sendError(res, "Already Marked!!", BAD_REQUEST);
 	} else {
-		attendance.attend.push(today);
+		attendance.daysAttended.push(today);
 		let eventInd = participant.events
 			.map(event => {
-				return String(event.event);
+				return String(event.eid);
 			})
 			.indexOf(String(event._id));
-		let daysPresent = attendance.attend.length;
+		let daysPresent = attendance.daysAttended.length;
 		if (daysPresent < event.days) {
 			participant.events[eventInd].status = "partially attended";
 		} else {
@@ -929,11 +926,11 @@ module.exports.markUserAttendance = async (req, res) => {
 };
 
 module.exports.getUserEventAttendance = async (req, res) => {
-	let { eventId } = req.query;
+	let { eid } = req.query;
 	let [event, attendance] = await Promise.all([
-		Event.findById(eventId),
+		Event.findById(eid),
 		Attendance.findOne({
-			$and: [{ event: eventId }, { participant: req.user.id }]
+			$and: [{ eid }, { pid: req.user.id }]
 		})
 	]);
 
@@ -943,14 +940,14 @@ module.exports.getUserEventAttendance = async (req, res) => {
 
 	let data = {
 		event,
-		attendance: attendance.attend
+		attendance: attendance.daysAttended
 	};
 
 	return sendSuccess(res, data);
 };
 
 module.exports.submitFeedback = async (req, res) => {
-	let { eventId, feedback } = req.body;
+	let { eid, feedback } = req.body;
 
 	if (feedback.length === 0) {
 		return sendError(
@@ -961,12 +958,12 @@ module.exports.submitFeedback = async (req, res) => {
 	}
 	let [hasGivenFeedback, hasAttendedEvent] = await Promise.all([
 		Feedback.findOne({
-			participant: req.user.id,
-			event: eventId
+			pid: req.user.id,
+			eid
 		}),
 		Attendance.findOne({
-			event: eventId,
-			participant: req.user.id,
+			eid,
+			pid: req.user.id,
 			"attend.0": { $exists: true }
 		})
 	]);
@@ -980,8 +977,8 @@ module.exports.submitFeedback = async (req, res) => {
 		);
 	} else {
 		let fb = new Feedback({
-			participant: new ObjectId(req.user.id),
-			event: new ObjectId(eventId),
+			pid: new ObjectId(req.user.id),
+			eid: new ObjectId(eventId),
 			feedback
 		});
 		fb = await fb.save();
@@ -990,15 +987,15 @@ module.exports.submitFeedback = async (req, res) => {
 };
 
 module.exports.getFeedbackReport = async (req, res) => {
-	let { id } = req.params; // event id
+	let { eid } = req.params;
 	let feedback = await Feedback.aggregate([
 		{
-			$match: { event: new ObjectId(id) }
+			$match: { eid: new ObjectId(eid) }
 		},
 		{
 			$lookup: {
 				from: "participants",
-				localField: "participant",
+				localField: "pid",
 				foreignField: "_id",
 				as: "participant"
 			}
@@ -1006,7 +1003,7 @@ module.exports.getFeedbackReport = async (req, res) => {
 		{
 			$lookup: {
 				from: "events",
-				localField: "event",
+				localField: "eid",
 				foreignField: "_id",
 				as: "events"
 			}
@@ -1090,10 +1087,10 @@ module.exports.addCerti = async (req, res) => {
 		return sendError(res, "All fields required", BAD_REQUEST);
 	}
 
-	let { id } = req.params;
-	if (!id) return sendError(res, "Invalid event id", BAD_REQUEST);
+	let { eid } = req.params;
+	if (!eid) return sendError(res, "Invalid event id", BAD_REQUEST);
 
-	let event = await Event.findById(id);
+	let event = await Event.findById(eid);
 	if (!event) return sendError(res, "Invalid event", BAD_REQUEST);
 
 	let file1 = req.files[0],
@@ -1114,31 +1111,31 @@ module.exports.addCerti = async (req, res) => {
 		}
 	}
 
-	if (!fs.existsSync(`public/certificates/${id}`)) {
-		await mkdirAsync(`public/certificates/${id}`, { recursive: true });
+	if (!fs.existsSync(`public/certificates/${eid}`)) {
+		await mkdirAsync(`public/certificates/${eid}`, { recursive: true });
 	}
 
 	if (event.certificateMeta !== undefined) {
 		if (event.certificateMeta.pdfFileName !== pdfFile.originalname) {
 			//DELETE prev pdf
 			await unlinkAsync(
-				`public/certificates/${id}/${event.certificateMeta.pdfFileName}`
+				`public/certificates/${eid}/${event.certificateMeta.pdfFileName}`
 			);
 		}
 		if (event.certificateMeta.fontFileName !== fontFile.originalname) {
 			//DELETE prev font
 			await unlinkAsync(
-				`public/certificates/${id}/${event.certificateMeta.fontFileName}`
+				`public/certificates/${eid}/${event.certificateMeta.fontFileName}`
 			);
 		}
 	}
 
 	await writeFileAsync(
-		`public/certificates/${id}/${pdfFile.originalname}`,
+		`public/certificates/${eid}/${pdfFile.originalname}`,
 		pdfFile.buffer
 	);
 	await writeFileAsync(
-		`public/certificates/${id}/${fontFile.originalname}`,
+		`public/certificates/${eid}/${fontFile.originalname}`,
 		fontFile.buffer
 	);
 
@@ -1157,10 +1154,10 @@ module.exports.addCerti = async (req, res) => {
 };
 
 module.exports.generateCerti = async (req, res) => {
-	let { id } = req.params;
+	let { eid } = req.params;
 
 	let [event, participant] = await Promise.all([
-		Event.findById(id),
+		Event.findById(eid),
 		Participant.findById(req.user.id)
 	]);
 
@@ -1170,7 +1167,7 @@ module.exports.generateCerti = async (req, res) => {
 
 	let eventInd = participant.events
 		.map(event => {
-			return String(event.event);
+			return String(event.eid);
 		})
 		.indexOf(String(event._id));
 
@@ -1191,11 +1188,11 @@ module.exports.generateCerti = async (req, res) => {
 
 			//read the pdf file
 			let pdfBytes = await readFileAsync(
-				`public/certificates/${id}/${pdfFileName}`
+				`public/certificates/${eid}/${pdfFileName}`
 			);
 			//read the font file
 			let fontBytes = await readFileAsync(
-				`public/certificates/${id}/${fontFileName}`
+				`public/certificates/${eid}/${fontFileName}`
 			);
 
 			//generate certi
@@ -1233,10 +1230,10 @@ module.exports.generateCerti = async (req, res) => {
 };
 
 module.exports.sendEventMails = async (req, res) => {
-	let { type, users, event, subject, content } = req.body;
+	let { type, users, eid, subject, content } = req.body;
 	// type: event-reminder, event-followup, event-thanks
 	// users: [{ name, email }]
-	// event: event id
+	// eid
 
 	// for:
 	// - event-reminder, event-followup, event-thanks:
@@ -1245,11 +1242,11 @@ module.exports.sendEventMails = async (req, res) => {
 	// - other (example updates, etc):
 	// 	pass type can be anything, (subject, content) are mandatory
 
-	let evnt;
+	let event;
 	let systemMailTypes = ["event-reminder", "event-followup", "event-thanks"];
 	if (!subject && !content && systemMailTypes.indexOf(type) !== -1) {
-		evnt = await Event.findById(event);
-		if (!evnt) {
+		event = await Event.findById(eid);
+		if (!event) {
 			return sendError(res, "Invalid Event!!", BAD_REQUEST);
 		}
 	}
@@ -1259,9 +1256,9 @@ module.exports.sendEventMails = async (req, res) => {
 		},
 		jobname;
 
-	if (evnt) {
+	if (event) {
 		jobname = "sendSystemEmailJob";
-		params.event = evnt;
+		params.event = event;
 	} else {
 		jobname = "sendGeneralEmailJob";
 		params.subject = subject;

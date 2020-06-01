@@ -2,15 +2,15 @@ const mongoose = require("mongoose");
 
 const AttendanceSchema = new mongoose.Schema(
 	{
-		event: {
+		eid: {
 			type: mongoose.Schema.Types.ObjectId,
 			ref: "Event"
 		},
-		participant: {
+		pid: {
 			type: mongoose.Schema.Types.ObjectId,
 			ref: "Participant"
 		},
-		attend: []
+		daysAttended: []
 	},
 	{ timestamps: true }
 );
