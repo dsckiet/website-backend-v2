@@ -1238,8 +1238,16 @@ module.exports.sendEventMails = async (req, res) => {
 	// users: [{ name, email }]
 	// event: event id
 
+	// for:
+	// - event-reminder, event-followup, event-thanks:
+	// 	pass type among these, event: event id
+
+	// - other (example updates, etc):
+	// 	pass type can be anything, (subject, content) are mandatory
+
 	let evnt;
-	if (!subject && !content) {
+	let systemMailTypes = ["event-reminder", "event-followup", "event-thanks"];
+	if (!subject && !content && systemMailTypes.indexOf(type) !== -1) {
 		evnt = await Event.findById(event);
 		if (!evnt) {
 			return sendError(res, "Invalid Event!!", BAD_REQUEST);
