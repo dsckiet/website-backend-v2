@@ -58,7 +58,7 @@ router.post(
 	catchErrors(registerParticipant)
 );
 router.put(
-	"/update_part/:id",
+	"/update_part",
 	catchErrors(participantAuth),
 	participantValidation,
 	catchErrors(updateParticipant)
@@ -67,9 +67,14 @@ router.post("/forgot", emailValidation, catchErrors(forgotPassword));
 router.post("/reset", catchErrors(resetPassword));
 router.post("/part_login", catchErrors(participantLogin));
 router.put(
-	"/revoke_part/:id",
+	"/revoke_part/:pid",
 	catchErrors(leadAuth),
 	catchErrors(toggleRevoke)
+);
+router.delete(
+	"/delete_part/:pid",
+	catchErrors(leadAuth),
+	catchErrors(deleteParticipant)
 );
 router.post(
 	"/register_in_event",
@@ -77,11 +82,6 @@ router.post(
 	catchErrors(registerForEvent)
 );
 router.get("/part_data", catchErrors(allAuth), catchErrors(participantData));
-router.delete(
-	"/delete_part/:id",
-	catchErrors(leadAuth),
-	catchErrors(deleteParticipant)
-);
 
 // routes for event details and operations
 router.get("/get_events", catchErrors(getEvents));
@@ -104,7 +104,7 @@ router.post(
 	catchErrors(changeEventRegistrationOpen)
 );
 router.put(
-	"/update_event/:id",
+	"/update_event/:eid",
 	catchErrors(coreAuth),
 	multer.any(),
 	eventValidation,
@@ -112,7 +112,7 @@ router.put(
 	catchErrors(updateEvent)
 );
 router.delete(
-	"/delete_event/:id",
+	"/delete_event/:eid",
 	catchErrors(leadAuth),
 	catchErrors(deleteEvent)
 );
@@ -146,7 +146,7 @@ router.post(
 	catchErrors(submitFeedback)
 );
 router.get(
-	"/feedback/:id",
+	"/feedback/:eid",
 	catchErrors(coreAuth),
 	catchErrors(getFeedbackReport)
 );
@@ -160,14 +160,14 @@ router.post(
 	catchErrors(previewCerti)
 );
 router.post(
-	"/certificate/add/:id",
+	"/certificate/add/:eid",
 	catchErrors(coreAuth),
 	multer.any(),
 	certiFileFilter,
 	catchErrors(addCerti)
 );
 router.get(
-	"/certificate/generate/:id",
+	"/certificate/generate/:eid",
 	catchErrors(participantAuth),
 	catchErrors(generateCerti)
 );

@@ -26,10 +26,10 @@ const {
 const { uploadImage, deleteImage } = require("../config/imageService");
 
 module.exports.users = async (req, res) => {
-	let { id, sortBy, sortType } = req.query;
+	let { uid, sortBy, sortType } = req.query;
 	let users;
-	if (id) {
-		users = await User.findById(id);
+	if (uid) {
+		users = await User.findById(uid);
 	} else {
 		let role = ["core", "member"];
 		sortBy ? sortBy : "name";
@@ -117,8 +117,8 @@ module.exports.login = async (req, res) => {
 };
 
 module.exports.toggleShowOnWeb = async (req, res) => {
-	let { id } = req.params;
-	let user = await User.findById(id);
+	let { uid } = req.params;
+	let user = await User.findById(uid);
 	if (!user) {
 		return sendError(res, "Invalid User", BAD_REQUEST);
 	}
@@ -128,8 +128,8 @@ module.exports.toggleShowOnWeb = async (req, res) => {
 };
 
 module.exports.toggleRevoke = async (req, res) => {
-	let { id } = req.params;
-	let user = await User.findById(id);
+	let { uid } = req.params;
+	let user = await User.findById(uid);
 	if (!user) {
 		return sendError(res, "Invalid User", BAD_REQUEST);
 	}
@@ -137,16 +137,16 @@ module.exports.toggleRevoke = async (req, res) => {
 	user.isRevoked = user.isRevoked ? false : true;
 
 	//change token status
-	user.isRevoked ? setToken(id, "revoke") : setToken(id, "revalidate");
+	user.isRevoked ? setToken(uid, "revoke") : setToken(id, "revalidate");
 
 	user = await user.save();
 	sendSuccess(res, user);
 };
 
 module.exports.deleteUser = async (req, res) => {
-	let { id } = req.params;
+	let { uid } = req.params;
 
-	let user = await User.findById(id);
+	let user = await User.findById(uid);
 	if (req.user.role === "core" && user.role !== "member") {
 		sendError(
 			res,
@@ -159,15 +159,15 @@ module.exports.deleteUser = async (req, res) => {
 			await deleteImage(key);
 		}
 		await user.delete();
-		setToken(id, "delete");
+		setToken(uid, "delete");
 		sendSuccess(res, null);
 	}
 };
 
 module.exports.profile = async (req, res) => {
 	let profile;
-	if (req.query.id) {
-		profile = await User.findById(req.query.id);
+	if (req.query.uid) {
+		profile = await User.findById(req.query.uid);
 	} else {
 		profile = await User.findById(req.user.id);
 	}
@@ -186,17 +186,17 @@ module.exports.updateProfile = async (req, res) => {
 		dob
 	} = req.body;
 
-	let profile = await User.findById(req.query.id);
+	let profile = await User.findById(req.user.id);
 	if (!profile) {
 		return sendError(res, "No Profile Found", BAD_REQUEST);
 	}
 
 	if (name && name !== profile.name) {
-		setToken(req.query.id, "revalidate");
+		setToken(req.user.id, "revalidate");
 	}
 
 	if (email && email !== profile.email) {
-		setToken(req.query.id, "revalidate");
+		setToken(req.user.id, "revalidate");
 	}
 
 	if (req.files && req.files.length !== 0) {
@@ -209,7 +209,6 @@ module.exports.updateProfile = async (req, res) => {
 		let file = req.files[0];
 		let key = getImageKey(req.originalUrl);
 		let uploaded = await uploadImage(file, key);
-		console.log(uploaded);
 		if (uploaded) {
 			req.body.image = uploaded;
 		}
@@ -225,7 +224,7 @@ module.exports.updateProfile = async (req, res) => {
 	}
 
 	profile = await User.findByIdAndUpdate(
-		req.query.id,
+		req.user.id,
 		{ $set: req.body },
 		{ new: true }
 	);

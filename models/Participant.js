@@ -13,15 +13,15 @@ const ParticipantSchema = new mongoose.Schema(
 		phone: { type: Number, required: true },
 		password: { type: String, required: true },
 		isVerified: { type: Boolean, default: false },
-		isRevoked: {type:Boolean,default:false},
+		isRevoked: { type: Boolean, default: false },
 		image: { type: String },
 		events: [
 			{
-				event: {
+				eid: {
 					type: mongoose.Schema.Types.ObjectId,
 					ref: "Event"
 				},
-				attendance: {
+				aid: {
 					type: mongoose.Schema.Types.ObjectId,
 					ref: "Attendance"
 				},
@@ -37,7 +37,7 @@ const ParticipantSchema = new mongoose.Schema(
 	{ timestamps: true }
 );
 
-ParticipantSchema.pre("save", async function(next) {
+ParticipantSchema.pre("save", async function (next) {
 	this.name = toTitleCase(String(this.name));
 	this.email = String(this.email).toLowerCase();
 	if (!this.isModified("password")) return next();
@@ -47,12 +47,12 @@ ParticipantSchema.pre("save", async function(next) {
 	next();
 });
 
-ParticipantSchema.methods.isValidPwd = async function(password) {
+ParticipantSchema.methods.isValidPwd = async function (password) {
 	let isMatchPwd = await bcrypt.compare(password, this.password);
 	return isMatchPwd;
 };
 
-ParticipantSchema.methods.generateAuthToken = function() {
+ParticipantSchema.methods.generateAuthToken = function () {
 	const token = jwt.sign(
 		{
 			id: this._id,

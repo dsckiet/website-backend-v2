@@ -27,26 +27,26 @@ Queue.process("sendSystemEmailJob", async (job, done) => {
 
 Queue.process("deleteEvent", async (job, done) => {
 	let { data } = job;
-	let id = data.eventId;
-	let log = `Event Deletion scheduled for: ${id}`;
+	let { eid } = data;
+	let log = `Event Deletion scheduled for: ${eid}`;
 	logger("info", "scheduler", log);
 	console.log(log);
 
 	let promises = [
-		Event.findByIdAndDelete(id),
-		Attendance.deleteMany({ event: new ObjectId(id) }),
-		Feedback.deleteMany({ event: new ObjectId(id) })
+		Event.findByIdAndDelete(eid),
+		Attendance.deleteMany({ eid: new ObjectId(eid) }),
+		Feedback.deleteMany({ eid: new ObjectId(eid) })
 	];
 
 	let participants = await Participant.find({
-		"events.event": new ObjectId(id)
+		"events.eid": new ObjectId(eid)
 	});
 	participants.map(part => {
 		let eventInd = part.events
 			.map(evnt => {
-				return String(evnt.event);
+				return String(evnt.eid);
 			})
-			.indexOf(String(id));
+			.indexOf(String(eid));
 		part.events.splice(eventInd, 1);
 		promises.push(part.save());
 	});

@@ -2,11 +2,11 @@ const mongoose = require("mongoose");
 
 const FeedbackSchema = new mongoose.Schema(
 	{
-		event: {
+		eid: {
 			type: mongoose.Schema.Types.ObjectId,
 			ref: "Event"
 		},
-		participant: {
+		pid: {
 			type: mongoose.Schema.Types.ObjectId,
 			ref: "Participant"
 		},

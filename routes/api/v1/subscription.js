@@ -18,7 +18,7 @@ const { emailValidation } = require("../../../middlewares/validations");
 // routes
 router.get("/", catchErrors(leadAuth), catchErrors(subscribers));
 router.post("/", emailValidation, catchErrors(subscribe));
-router.delete("/:id", catchErrors(unsubscribe));
+router.delete("/:sid", catchErrors(unsubscribe));
 router.get("/mail", catchErrors(leadAuth), catchErrors(subscriptions));
 router.post("/mail", catchErrors(leadAuth), catchErrors(sendSubscription));
 
