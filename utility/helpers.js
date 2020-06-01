@@ -3,6 +3,7 @@ const redis = require("redis");
 const client = redis.createClient();
 const { promisify } = require("util");
 const getAsync = promisify(client.get).bind(client);
+const { SENTRY_DSN } = require("../config/index");
 
 client.on("error", function (error) {
 	console.error(error);
@@ -35,7 +36,7 @@ logger.level = "debug";
 
 const Sentry = require("@sentry/node");
 Sentry.init({
-	dsn: process.env.SENTRY_DSN,
+	dsn: SENTRY_DSN,
 	attachStacktrace: true,
 	debug: true,
 	environment: "production"
