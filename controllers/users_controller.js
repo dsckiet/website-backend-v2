@@ -309,10 +309,10 @@ module.exports.temp = async (req, res) => {
 		return sendError(res, "Unavailable!!", BAD_REQUEST);
 	}
 
-	// flush users collection
+	// // flush users collection
 	// await User.remove();
 
-	// create root lead user
+	// // create root lead user
 	// let user = await new User({
 	// 	name: "root",
 	// 	email: "root@dsckiet.tech",

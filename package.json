@@ -19,6 +19,7 @@
     "homepage": "https://github.com/dsckiet/dsc-kiet-portal#readme",
     "dependencies": {
         "@pdf-lib/fontkit": "^1.0.0",
+        "@sentry/node": "^5.15.5",
         "aws-sdk": "^2.640.0",
         "bcryptjs": "^2.4.3",
         "body-parser": "^1.19.0",
