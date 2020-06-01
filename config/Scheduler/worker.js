@@ -6,22 +6,21 @@ const Queue = kue.createQueue({
 	redis: process.env.REDIS_URL
 });
 const { logger } = require("../../utility/helpers");
-const { sendLoginCredsMail } = require("../emailService");
+const { sendSystemEmail, sendGeneralEmail } = require("../emailService");
 
-Queue.process("sendLoginCreds", async (job, done) => {
+Queue.process("sendSystemEmailJob", async (job, done) => {
 	let { data } = job;
-	let log =
-		"Login Details sent to: " + data.email + " at " + Date(Date.now());
+	let log = `${data.mailType} email sent to ${data.email} at ${Date(
+		Date.now()
+	)}`;
 	logger("info", "scheduler", log);
 	console.log(log);
 	try {
-		await sendLoginCredsMail(data.email, {
-			name: data.name,
-			password: data.password,
-			role: data.role
-		});
+		await sendSystemEmail(data.email, data, data.mailType);
 		done();
 	} catch (err) {
+		console.log(err);
+		logger("error", "scheduler", err);
 		done(err);
 	}
 });
@@ -54,4 +53,26 @@ Queue.process("deleteEvent", async (job, done) => {
 
 	await Promise.all(promises);
 	done();
+});
+
+Queue.process("sendGeneralEmailJob", async (job, done) => {
+	let { data } = job;
+	let log = `${data.mailType} email sent to ${data.email} at ${Date(
+		Date.now()
+	)}`;
+	logger("info", "scheduler", log);
+	console.log(log);
+	try {
+		await sendGeneralEmail(
+			data.email,
+			data.subject,
+			data.content,
+			data.name
+		);
+		done();
+	} catch (err) {
+		console.log(err);
+		logger("error", "scheduler", err);
+		done(err);
+	}
 });

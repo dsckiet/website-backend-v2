@@ -4,7 +4,7 @@ const bcrypt = require("bcryptjs");
 
 const ObjectId = require("mongoose").Types.ObjectId;
 
-const { ENV, AVATAR_URL } = require("../config/index");
+const { NODE_ENV, AVATAR_URL, FRONTEND_URL } = require("../config/index");
 
 // import http status codes
 const {
@@ -67,21 +67,23 @@ module.exports.addUser = async (req, res) => {
 				role,
 				designation,
 				password,
-				image: `${AVATAR_URL}${Math.floor(Math.random() * 10000) +
-					9999}.svg`
+				image: `${AVATAR_URL}${
+					Math.floor(Math.random() * 10000) + 9999
+				}.svg`
 			});
 			user = await user.save();
 
 			const token = user.generateAuthToken();
 			setToken(String(user._id), token);
 			let args = {
-				jobName: "sendLoginCreds",
+				jobName: "sendSystemEmailJob",
 				time: Date.now(),
 				params: {
 					email,
 					password,
 					name,
-					role
+					role,
+					mailType: "login-creds"
 				}
 			};
 			kue.scheduleJob(args);
@@ -173,7 +175,17 @@ module.exports.profile = async (req, res) => {
 };
 
 module.exports.updateProfile = async (req, res) => {
-	let { name, email } = req.body;
+	let {
+		name,
+		email,
+		// contact,
+		// github,
+		// linkedin,
+		// twitter,
+		// portfolio,
+		dob
+	} = req.body;
+
 	let profile = await User.findById(req.query.id);
 	if (!profile) {
 		return sendError(res, "No Profile Found", BAD_REQUEST);
@@ -208,6 +220,10 @@ module.exports.updateProfile = async (req, res) => {
 		req.body.password = await bcrypt.hash(req.body.password, salt);
 	}
 
+	if (dob) {
+		req.body.dob = formatHtmlDate(dob);
+	}
+
 	profile = await User.findByIdAndUpdate(
 		req.query.id,
 		{ $set: req.body },
@@ -216,8 +232,80 @@ module.exports.updateProfile = async (req, res) => {
 	sendSuccess(res, profile);
 };
 
+module.exports.forgotPassword = async (req, res) => {
+	let { email } = req.body;
+	email = String(email).trim().toLowerCase();
+	let [user, resetToken] = await Promise.all([
+		User.findOne({ email }),
+		ResetToken.findOne({ email })
+	]);
+	if (!user) {
+		return sendError(res, "No Profile Found", BAD_REQUEST);
+	}
+	let promises = [];
+	if (resetToken) {
+		promises.push(resetToken.delete());
+	}
+
+	let newResetToken = new ResetToken({
+		email,
+		id: user._id,
+		token: `${generateHash(3)}${Date.now()}${generateHash(3)}`,
+		expires: Date.now() + 3600000
+	});
+
+	promises.push(newResetToken.save());
+	let args = {
+		jobName: "sendSystemEmailJob",
+		time: Date.now(),
+		params: {
+			email,
+			name: user.name,
+			link: `${FRONTEND_URL}/reset/${user._id}/${newResetToken.token}`,
+			mailType: "reset-pwd-link"
+		}
+	};
+	kue.scheduleJob(args);
+	await Promise.all(promises);
+	return sendSuccess(res, null);
+};
+
+module.exports.resetPassword = async (req, res) => {
+	let { token, id, pwd } = req.body;
+
+	let [user, resetToken] = await Promise.all([
+		User.findById(id),
+		ResetToken.findOne({
+			$and: [{ id }, { token }, { expires: { $gte: Date.now() } }]
+		})
+	]);
+	if (!user || !resetToken) {
+		return sendError(
+			res,
+			"Reset link is not valid or expired.",
+			BAD_REQUEST
+		);
+	}
+
+	user.password = String(pwd).trim();
+
+	let args = {
+		jobName: "sendSystemEmailJob",
+		time: Date.now(),
+		params: {
+			email: user.email,
+			name: user.name,
+			mailType: "reset-pwd-success"
+		}
+	};
+	kue.scheduleJob(args);
+	await Promise.all([user.save(), resetToken.delete()]);
+
+	return sendSuccess(res, null);
+};
+
 module.exports.temp = async (req, res) => {
-	if (ENV === "prod") {
+	if (NODE_ENV === "production") {
 		return sendError(res, "Unavailable!!", BAD_REQUEST);
 	}
 

@@ -1,5 +1,6 @@
 const kue = require("../config/Scheduler/kue");
 const worker = require("../config/Scheduler/worker");
+const bcrypt = require("bcryptjs");
 const path = require("path");
 const { PDFDocument, rgb } = require("pdf-lib");
 const fontkit = require("@pdf-lib/fontkit");
@@ -15,7 +16,11 @@ const { AVATAR_URL } = require("../config/index");
 // import http status codes
 const { BAD_REQUEST, FORBIDDEN } = require("../utility/statusCodes");
 // import constants
-const { USER_HASH_LENGTH, EVENT_HASH_LENGTH } = require("../config/index");
+const {
+	USER_HASH_LENGTH,
+	EVENT_HASH_LENGTH,
+	FRONTEND_URL
+} = require("../config/index");
 // import helper functions
 const {
 	sendError,
@@ -40,6 +45,33 @@ getPushObject = (part, attendInd) => {
 		email: part.email,
 		attendance: part.attend[attendInd].attend
 	};
+};
+
+const scheduleMailsInBatches = (users, jobName, props) => {
+	let batchSize = 20;
+	let initial = 0,
+		i = 0;
+	while (initial < users.length) {
+		let currentBatch = users.slice(initial, initial + batchSize);
+		let start_time = Date.now() + i * 2 * 1000;
+		//do stuff with currentbatch
+		currentBatch.map((user, index) => {
+			let args = {
+				jobName,
+				time: start_time + index,
+				params: {
+					...props,
+					name: user.name,
+					email: user.email
+				}
+			};
+			kue.scheduleJob(args);
+		});
+
+		i = i + 1;
+		initial = initial + batchSize;
+	}
+	return;
 };
 
 module.exports.getParticipants = async (req, res) => {
@@ -128,13 +160,14 @@ module.exports.registerParticipant = async (req, res) => {
 		const token = participant.generateAuthToken();
 		setToken(String(participant._id), token);
 		let args = {
-			jobName: "sendLoginCreds",
+			jobName: "sendSystemEmailJob",
 			time: Date.now(),
 			params: {
 				email,
 				password,
 				name,
-				role: "Participant"
+				role: "Participant",
+				mailType: "login-creds"
 			}
 		};
 		kue.scheduleJob(args);
@@ -158,6 +191,11 @@ module.exports.updateParticipant = async (req, res) => {
 		setToken(req.query.id, "revalidate");
 	}
 
+	if (req.body.password) {
+		let salt = await bcrypt.genSalt(10);
+		req.body.password = await bcrypt.hash(req.body.password, salt);
+	}
+
 	participant = await Participant.findByIdAndUpdate(
 		req.params.id,
 		{ $set: req.body },
@@ -165,6 +203,78 @@ module.exports.updateParticipant = async (req, res) => {
 	);
 
 	sendSuccess(res, participant);
+};
+
+module.exports.forgotPassword = async (req, res) => {
+	let { email } = req.body;
+	email = String(email).trim().toLowerCase();
+	let [participant, resetToken] = await Promise.all([
+		Participant.findOne({ email }),
+		ResetToken.findOne({ email })
+	]);
+	if (!participant) {
+		return sendError(res, "No Profile Found", BAD_REQUEST);
+	}
+	let promises = [];
+	if (resetToken) {
+		promises.push(resetToken.delete());
+	}
+
+	let newResetToken = new ResetToken({
+		email: participant.email,
+		id: participant._id,
+		token: `${generateHash(3)}${Date.now()}${generateHash(3)}`,
+		expires: Date.now() + 3600000
+	});
+
+	promises.push(newResetToken.save());
+	let args = {
+		jobName: "sendSystemEmailJob",
+		time: Date.now(),
+		params: {
+			email,
+			name: participant.name,
+			link: `${FRONTEND_URL}/reset/${participant._id}/${newResetToken.token}`,
+			mailType: "pwd-reset-link"
+		}
+	};
+	kue.scheduleJob(args);
+	await Promise.all(promises);
+	return sendSuccess(res, null);
+};
+
+module.exports.resetPassword = async (req, res) => {
+	let { token, id, pwd } = req.body;
+
+	let [participant, resetToken] = await Promise.all([
+		Participant.findById(id),
+		ResetToken.findOne({
+			$and: [{ id }, { token }, { expires: { $gte: Date.now() } }]
+		})
+	]);
+	if (!participant || !resetToken) {
+		return sendError(
+			res,
+			"Reset link is not valid or expired.",
+			BAD_REQUEST
+		);
+	}
+
+	participant.password = String(pwd).trim();
+
+	let args = {
+		jobName: "sendSystemEmailJob",
+		time: Date.now(),
+		params: {
+			email: participant.email,
+			name: participant.name,
+			mailType: "reset-pwd-success"
+		}
+	};
+	kue.scheduleJob(args);
+	await Promise.all([participant.save(), resetToken.delete()]);
+
+	return sendSuccess(res, null);
 };
 
 module.exports.participantLogin = async (req, res) => {
@@ -263,6 +373,19 @@ module.exports.registerForEvent = async (req, res) => {
 		attendance.save(),
 		event.save()
 	]);
+
+	let args = {
+		jobName: "sendSystemEmailJob",
+		time: Date.now(),
+		params: {
+			email: participant.email,
+			name: participant.name,
+			event,
+			mailType: "event-registered"
+		}
+	};
+	kue.scheduleJob(args);
+
 	sendSuccess(res, event);
 };
 
@@ -293,7 +416,7 @@ module.exports.participantData = async (req, res) => {
 			$project: {
 				"eventsList.title": 1,
 				"eventsList.description": 1,
-				"eventsList.img": 1,
+				"eventsList.image": 1,
 				"eventsList.days": 1,
 				"eventsList.startDate": 1,
 				"eventsList.endDate": 1,
@@ -307,7 +430,8 @@ module.exports.participantData = async (req, res) => {
 				email: 1,
 				branch: 1,
 				year: 1,
-				phone: 1
+				phone: 1,
+				image: 1
 			}
 		}
 	]);
@@ -891,7 +1015,7 @@ module.exports.getFeedbackReport = async (req, res) => {
 			$project: {
 				"events.title": 1,
 				"events.description": 1,
-				"events.img": 1,
+				"events.image": 1,
 				"events.days": 1,
 				"events.startDate": 1,
 				"events.endDate": 1,
@@ -905,6 +1029,7 @@ module.exports.getFeedbackReport = async (req, res) => {
 				"participant.branch": 1,
 				"participant.year": 1,
 				"participant.phone": 1,
+				"participant.image": 1,
 				feedback: 1
 			}
 		}
@@ -1105,4 +1230,37 @@ module.exports.generateCerti = async (req, res) => {
 	} else {
 		sendError(res, "Not eligible for certificate", BAD_REQUEST);
 	}
+};
+
+module.exports.sendEventMails = async (req, res) => {
+	let { type, users, event, subject, content } = req.body;
+	// type: event-reminder, event-followup, event-thanks
+	// users: [{ name, email }]
+	// event: event id
+
+	let evnt;
+	if (!subject && !content) {
+		evnt = await Event.findById(event);
+		if (!evnt) {
+			return sendError(res, "Invalid Event!!", BAD_REQUEST);
+		}
+	}
+
+	let params = {
+			mailType: type
+		},
+		jobname;
+
+	if (evnt) {
+		jobname = "sendSystemEmailJob";
+		params.event = evnt;
+	} else {
+		jobname = "sendGeneralEmailJob";
+		params.subject = subject;
+		params.content = content;
+	}
+
+	scheduleMailsInBatches(users, jobname, params);
+
+	return sendSuccess(res, null);
 };

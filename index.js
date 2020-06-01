@@ -4,6 +4,7 @@ const compression = require("compression");
 const morgan = require("morgan");
 const path = require("path");
 const helmet = require("helmet");
+const { NODE_ENV, PORT } = require("./config/index");
 const { notFound, sendErrors } = require("./config/errorHandler");
 const kue = require("kue");
 const app = express();
@@ -33,17 +34,25 @@ app.use(
 );
 app.use("/kue-cli", kue.app);
 
+if (NODE_ENV === "production") {
+	console.log = console.warn = console.error = () => {};
+}
+
 //load Schemas
 const User = require("./models/User");
 const Participant = require("./models/Participant");
 const Event = require("./models/Event");
 const Attendance = require("./models/Attendance");
 const Feedback = require("./models/Feedback");
+const ResetToken = require("./models/ResetToken");
+const Subscriber = require("./models/Subscriber");
+const Subscription = require("./models/Subscription");
 
 //Routes
 app.use("/api/v1", require("./routes/api/v1/index"));
 app.use("/api/v1/users", require("./routes/api/v1/users"));
 app.use("/api/v1/events", require("./routes/api/v1/events"));
+app.use("/api/v1/subscription", require("./routes/api/v1/subscription"));
 
 app.use("*", notFound);
 
@@ -62,17 +71,14 @@ app.use((req, res, next) => {
 	next();
 });
 
-const { ENV, PORT } = require("./config/index");
 //Setting up server
-(startServer = async () => {
+(async () => {
 	try {
 		await app.listen(PORT);
-		console.log(
-			`ENV: ${
-				ENV == "dev" ? "Development" : "Production"
-			}\nServer is up and running on Port ${PORT}`
+		console.info(
+			`NODE_ENV: ${NODE_ENV}\nServer is up and running on Port ${PORT}`
 		);
 	} catch (err) {
-		console.error("Error in running server.", err);
+		console.info("Error in running server.", err);
 	}
 })();

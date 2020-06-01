@@ -6,6 +6,8 @@ const {
 	getParticipants,
 	registerParticipant,
 	updateParticipant,
+	forgotPassword,
+	resetPassword,
 	participantLogin,
 	toggleRevoke,
 	registerForEvent,
@@ -25,7 +27,8 @@ const {
 	getFeedbackReport,
 	previewCerti,
 	addCerti,
-	generateCerti
+	generateCerti,
+	sendEventMails
 } = require("../../../controllers/events_controller");
 
 // middlewares
@@ -38,7 +41,8 @@ const {
 } = require("../../../middlewares/auth");
 const {
 	participantValidation,
-	eventValidation
+	eventValidation,
+	emailValidation
 } = require("../../../middlewares/validations");
 const {
 	multer,
@@ -59,7 +63,8 @@ router.put(
 	participantValidation,
 	catchErrors(updateParticipant)
 );
-
+router.post("/forgot", emailValidation, catchErrors(forgotPassword));
+router.post("/reset", catchErrors(resetPassword));
 router.post("/part_login", catchErrors(participantLogin));
 router.put(
 	"/revoke_part/:id",
@@ -77,6 +82,7 @@ router.delete(
 	catchErrors(leadAuth),
 	catchErrors(deleteParticipant)
 );
+
 // routes for event details and operations
 router.get("/get_events", catchErrors(getEvents));
 router.post(
@@ -110,6 +116,7 @@ router.delete(
 	catchErrors(leadAuth),
 	catchErrors(deleteEvent)
 );
+
 // routes for event attendance
 router.get(
 	"/get_attend_report",
@@ -131,7 +138,7 @@ router.post(
 	catchErrors(participantAuth),
 	catchErrors(markUserAttendance)
 );
-// routes for event certificates
+
 // routes for event feedbacks
 router.post(
 	"/feedback",
@@ -143,6 +150,8 @@ router.get(
 	catchErrors(coreAuth),
 	catchErrors(getFeedbackReport)
 );
+
+// routes for event certificates
 router.post(
 	"/certificate/preview",
 	catchErrors(coreAuth),
@@ -162,6 +171,9 @@ router.get(
 	catchErrors(participantAuth),
 	catchErrors(generateCerti)
 );
+
+// send emails regarding event route
+router.post("/email", catchErrors(leadAuth), catchErrors(sendEventMails));
 
 // export router
 module.exports = router;
