@@ -88,7 +88,7 @@ const getFullHTML = (content, name) => {
             </table>
         </div>
     </body>
-    
+
     </html>`;
 };
 
@@ -123,8 +123,8 @@ module.exports.getMailTemplate = (data, type, content) => {
 		"reset-pwd-success": {
 			subject: "[PASSWORD RESET] Success | DSC KIET",
 			html: getFullHTML(
-				`Your password has been successfully reset. 
-                If you did not triggered this action, please contact us at 
+				`Your password has been successfully reset.
+                If you did not triggered this action, please contact us at
                 <a href="mailto:dsckiet@gmail.com">dsckiet@gmail.com</a></a>`,
 				data.name
 			)
@@ -134,7 +134,7 @@ module.exports.getMailTemplate = (data, type, content) => {
 			html: getFullHTML(
 				`Thank you for registering in the event ${
 					data.event ? data.event.title : ""
-				} to be held on details... 
+				} to be held on details...
                 please, content writer wale content de de:)`,
 				data.name
 			)
@@ -144,7 +144,7 @@ module.exports.getMailTemplate = (data, type, content) => {
 			html: getFullHTML(
 				`Thank you for registering in the event ${
 					data.event ? data.event.title : ""
-				} to be held on details... 
+				} to be held on details...
                 please, content writer wale content de de:)`,
 				data.name
 			)
@@ -154,7 +154,7 @@ module.exports.getMailTemplate = (data, type, content) => {
 			html: getFullHTML(
 				`Thank you for registering in the event ${
 					data.event ? data.event.title : ""
-				} to be held on details... 
+				} to be held on details...
                 Please visit the portal and feedback form if eligible, certificate could be downloaded!:)`,
 				data.name
 			)
@@ -164,7 +164,7 @@ module.exports.getMailTemplate = (data, type, content) => {
 			html: getFullHTML(
 				`Thank you for registering in the event ${
 					data.event ? data.event.title : ""
-				} to be held on details... 
+				} to be held on details...
                 please, content writer wale content de de:)`,
 				data.name
 			)
