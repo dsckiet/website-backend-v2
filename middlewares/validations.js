@@ -36,41 +36,14 @@ module.exports.participantValidation = (req, res, next) => {
 };
 
 module.exports.eventValidation = (req, res, next) => {
-	let {
-		title,
-		description,
-		days,
-		startDate,
-		endDate,
-		time,
-		venue
-	} = req.body;
+	let { title, description, startDate, endDate, time, venue } = req.body;
 
-	if (
-		!title ||
-		!description ||
-		!days ||
-		!startDate ||
-		!endDate ||
-		!time ||
-		!venue
-	) {
+	if (!title || !description || !startDate || !endDate || !time || !venue) {
 		return sendError(res, "All fields are mandatory!!", BAD_REQUEST);
 	} else if (
 		formatHtmlDate(startDate).toISOString() >
-			formatHtmlDate(endDate).toISOString() ||
-		(formatHtmlDate(endDate) - formatHtmlDate(startDate)) /
-			(1000 * 3600 * 24) !==
-			Number(days) - 1
+		formatHtmlDate(endDate).toISOString()
 	) {
-		console.log(
-			formatHtmlDate(startDate).toISOString() >
-				formatHtmlDate(endDate).toISOString()
-		);
-		console.log(
-			(formatHtmlDate(endDate) - formatHtmlDate(startDate)) /
-				(1000 * 3600 * 24)
-		);
 		return sendError(res, "Invalid dates", BAD_REQUEST);
 	} else {
 		return next();

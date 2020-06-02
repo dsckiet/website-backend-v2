@@ -531,7 +531,6 @@ module.exports.addEvent = async (req, res) => {
 	let {
 		title,
 		description,
-		days,
 		startDate,
 		endDate,
 		time,
@@ -542,7 +541,10 @@ module.exports.addEvent = async (req, res) => {
 	} = req.body;
 
 	let code = generateHash(EVENT_HASH_LENGTH);
-
+	let days =
+		(formatHtmlDate(endDate) - formatHtmlDate(startDate)) /
+			(1000 * 3600 * 24) +
+		1;
 	let event = new Event({
 		title,
 		description,
@@ -618,7 +620,6 @@ module.exports.updateEvent = async (req, res) => {
 		let {
 			title,
 			description,
-			days,
 			startDate,
 			endDate,
 			time,
@@ -627,6 +628,11 @@ module.exports.updateEvent = async (req, res) => {
 			isRegistrationOpened,
 			maxRegister
 		} = req.body;
+
+		let days =
+			(formatHtmlDate(endDate) - formatHtmlDate(startDate)) /
+				(1000 * 3600 * 24) +
+			1;
 
 		if (Number(maxRegister) < Number(event.registrations)) {
 			return sendError(
