@@ -39,7 +39,7 @@ Sentry.init({
 	dsn: SENTRY_DSN,
 	attachStacktrace: true,
 	debug: true,
-	environment: "production"
+	environment: NODE_ENV
 });
 
 module.exports.sendError = (res, message, status) => {
