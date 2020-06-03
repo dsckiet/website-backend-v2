@@ -101,9 +101,10 @@ module.exports.getMailTemplate = (data, type, content) => {
 			subject: "[CREDS] DSCKIET Portal Credentials | DSC KIET",
 			html: getFullHTML(
 				`
+            <br/>
             You have been registered as a ${data.role} on DSC KIET
             Portal. Here are your login
-            credentials:<br /><b>${data.email}</b><br /><b>${data.password}</b>`,
+            credentials:<br /><b>${data.email}</b><br /><b>${data.password}</b><br/>`,
 				data.name
 			)
 		},
