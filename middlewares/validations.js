@@ -19,6 +19,30 @@ module.exports.userValidation = (req, res, next) => {
 	}
 };
 
+module.exports.userUpdateValidation = (req, res, next) => {
+	let fields = Object.keys(req.body);
+	let restrictedFields = [
+			"role",
+			"designation",
+			"showOnWebsite",
+			"lastLogin"
+		],
+		canUpdate = true;
+
+	restrictedFields.map(restrictedField => {
+		if (fields.includes(restrictedField)) canUpdate = false;
+	});
+
+	if (!canUpdate) {
+		return sendError(res, "Cannot update a restricted field", BAD_REQUEST);
+	} else if (req.body.email) {
+		if (!emailRegex.test(String(req.body.email)))
+			return sendError(res, "Email not Valid!!", BAD_REQUEST);
+	}
+
+	return next();
+};
+
 module.exports.participantValidation = (req, res, next) => {
 	let { name, email, branch, year, phone } = req.body;
 	if (!name || !email || !branch || !year || !phone) {
@@ -33,6 +57,28 @@ module.exports.participantValidation = (req, res, next) => {
 	} else {
 		return sendError(res, "Email not Valid!!", BAD_REQUEST);
 	}
+};
+
+module.exports.participantUpdateValidation = (req, res, next) => {
+	let fields = Object.keys(req.body);
+	let restrictedFields = ["isVerified", "isRevoked", "events", "lastLogin"],
+		canUpdate = true;
+
+	restrictedFields.map(restrictedField => {
+		if (fields.includes(restrictedField)) canUpdate = false;
+	});
+
+	if (!canUpdate) {
+		return sendError(res, "Cannot update a restricted field", BAD_REQUEST);
+	} else if (req.body.email) {
+		if (!emailRegex.test(String(req.body.email)))
+			return sendError(res, "Email not valid", BAD_REQUEST);
+	} else if (req.body.phone) {
+		if (!phoneRegex.test(Number(req.body.phone)))
+			return sendError(res, "Phone not valid", BAD_REQUEST);
+	}
+
+	return next();
 };
 
 module.exports.eventValidation = (req, res, next) => {

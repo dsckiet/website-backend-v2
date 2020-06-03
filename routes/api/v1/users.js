@@ -21,6 +21,7 @@ const { catchErrors } = require("../../../config/errorHandler");
 const { allAuth, coreAuth, leadAuth } = require("../../../middlewares/auth");
 const {
 	userValidation,
+	userUpdateValidation,
 	emailValidation
 } = require("../../../middlewares/validations");
 const { multer, fileFilter } = require("../../../middlewares/imageValidations");
@@ -40,6 +41,7 @@ router.get("/profile", catchErrors(allAuth), catchErrors(profile));
 router.post(
 	"/profile",
 	catchErrors(allAuth),
+	userUpdateValidation,
 	multer.any(),
 	fileFilter,
 	catchErrors(updateProfile)
