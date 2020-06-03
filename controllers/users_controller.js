@@ -104,7 +104,7 @@ module.exports.login = async (req, res) => {
 	await user.save();
 	let token = await checkToken(String(user._id));
 	if (token) {
-		if (token === "revoked") {
+		if (token === "revoke") {
 			return sendError(res, "Account Revoked, Logout!", FORBIDDEN);
 		} else if (token === "revalidate") {
 			token = user.generateAuthToken();
@@ -137,7 +137,7 @@ module.exports.toggleRevoke = async (req, res) => {
 	user.isRevoked = user.isRevoked ? false : true;
 
 	//change token status
-	user.isRevoked ? setToken(uid, "revoke") : setToken(id, "revalidate");
+	user.isRevoked ? setToken(uid, "revoke") : setToken(uid, "revalidate");
 
 	user = await user.save();
 	sendSuccess(res, user);

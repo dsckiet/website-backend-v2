@@ -289,7 +289,7 @@ module.exports.participantLogin = async (req, res) => {
 	await participant.save();
 	let token = await checkToken(String(participant._id));
 	if (token) {
-		if (token === "revoked") {
+		if (token === "revoke") {
 			return sendError(res, "Account Revoked, Logout!", FORBIDDEN);
 		} else if (token === "revalidate") {
 			token = participant.generateAuthToken();
