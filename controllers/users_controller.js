@@ -5,6 +5,7 @@ const bcrypt = require("bcryptjs");
 const ObjectId = require("mongoose").Types.ObjectId;
 
 const { NODE_ENV, AVATAR_URL, FRONTEND_URL } = require("../config/index");
+const { formatHtmlDate } = require("../utility/helpers");
 
 // import http status codes
 const {
@@ -130,8 +131,11 @@ module.exports.toggleShowOnWeb = async (req, res) => {
 module.exports.toggleRevoke = async (req, res) => {
 	let { uid } = req.params;
 	let user = await User.findById(uid);
+
 	if (!user) {
 		return sendError(res, "Invalid User", BAD_REQUEST);
+	} else if (user.role === "lead") {
+		return sendError(res, "Cannot revoke lead token", BAD_REQUEST);
 	}
 	//toggle the revoke status of user
 	user.isRevoked = user.isRevoked ? false : true;
@@ -147,6 +151,9 @@ module.exports.deleteUser = async (req, res) => {
 	let { uid } = req.params;
 
 	let user = await User.findById(uid);
+	if (!user) {
+		return sendError(res, "Invalid User", BAD_REQUEST);
+	}
 	if (req.user.role === "core" && user.role !== "member") {
 		sendError(
 			res,
@@ -168,6 +175,9 @@ module.exports.profile = async (req, res) => {
 	let profile;
 	if (req.query.uid) {
 		profile = await User.findById(req.query.uid);
+		if (!profile) {
+			return sendError(res, "Invalid User", BAD_REQUEST);
+		}
 	} else {
 		profile = await User.findById(req.user.id);
 	}

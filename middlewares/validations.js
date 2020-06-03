@@ -19,6 +19,27 @@ module.exports.userValidation = (req, res, next) => {
 	}
 };
 
+module.exports.userUpdateValidation = (req, res, next) => {
+	let fields = Object.keys(req.body);
+	let restrictedFields = [
+			"role",
+			"designation",
+			"showOnWebsite",
+			"lastLogin"
+		],
+		canUpdate = true;
+
+	restrictedFields.map(restrictedField => {
+		if (fields.includes(restrictedField)) canUpdate = false;
+	});
+
+	if (!canUpdate) {
+		return sendError(res, "Cannot update a restricted field", BAD_REQUEST);
+	} else {
+		return next();
+	}
+};
+
 module.exports.participantValidation = (req, res, next) => {
 	let { name, email, branch, year, phone } = req.body;
 	if (!name || !email || !branch || !year || !phone) {
