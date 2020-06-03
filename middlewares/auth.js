@@ -16,7 +16,7 @@ module.exports.allAuth = async (req, res, next) => {
 	let prev_token = await checkToken(decodedPayload.id);
 
 	if (prev_token) {
-		if (prev_token === "revoked") {
+		if (prev_token === "revoke") {
 			return sendError(res, "Account Revoked, Logout!", FORBIDDEN);
 		} else if (prev_token === "revalidate" || prev_token !== token) {
 			return sendError(res, "Session Expired, Logout!", FORBIDDEN);
@@ -42,7 +42,7 @@ module.exports.leadAuth = async (req, res, next) => {
 	let prev_token = await checkToken(decodedPayload.id);
 
 	if (prev_token) {
-		if (prev_token === "revoked") {
+		if (prev_token === "revoke") {
 			return sendError(res, "Account Revoked, Logout!", FORBIDDEN);
 		} else if (prev_token === "revalidate" || prev_token !== token) {
 			return sendError(res, "Session Expired, Logout!", FORBIDDEN);
@@ -72,7 +72,7 @@ module.exports.coreAuth = async (req, res, next) => {
 	let prev_token = await checkToken(decodedPayload.id);
 
 	if (prev_token) {
-		if (prev_token === "revoked") {
+		if (prev_token === "revoke") {
 			return sendError(res, "Account Revoked, Logout!", FORBIDDEN);
 		} else if (prev_token === "revalidate" || prev_token !== token) {
 			return sendError(res, "Session Expired, Logout!", FORBIDDEN);
@@ -102,7 +102,7 @@ module.exports.participantAuth = async (req, res, next) => {
 	let prev_token = await checkToken(decodedPayload.id);
 
 	if (prev_token) {
-		if (prev_token === "revoked") {
+		if (prev_token === "revoke") {
 			return sendError(res, "Account Revoked, Logout!", FORBIDDEN);
 		} else if (prev_token === "revalidate" || prev_token !== token) {
 			return sendError(res, "Session Expired, Logout!", FORBIDDEN);
