@@ -41,6 +41,7 @@ const {
 } = require("../../../middlewares/auth");
 const {
 	participantValidation,
+	participantUpdateValidation,
 	eventValidation,
 	emailValidation
 } = require("../../../middlewares/validations");
@@ -64,7 +65,7 @@ router.post(
 router.put(
 	"/participants",
 	catchErrors(participantAuth),
-	participantValidation,
+	participantUpdateValidation,
 	catchErrors(updateParticipant)
 );
 router.delete(

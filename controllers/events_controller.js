@@ -994,6 +994,8 @@ module.exports.submitFeedback = async (req, res) => {
 
 module.exports.getFeedbackReport = async (req, res) => {
 	let { eid } = req.params;
+	if (!eid) return sendError(res, "Invalid event", BAD_REQUEST);
+
 	let feedback = await Feedback.aggregate([
 		{
 			$match: { eid: new ObjectId(eid) }
