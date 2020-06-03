@@ -22,7 +22,9 @@ module.exports.uploadImage = async (file, key) => {
 		Key: key,
 		Body: file.buffer,
 		acl: "public-read",
-		ServerSideEncryption: "AES256"
+		ServerSideEncryption: "AES256",
+		ContentDisposition: "inline",
+        ContentType: "image/jpeg"
 	};
 	try {
 		let resp = await uploadObjectAsync(params);
