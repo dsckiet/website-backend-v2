@@ -690,6 +690,7 @@ module.exports.deleteEvent = async (req, res) => {
 			}`;
 			await deleteImage(key);
 		}
+		await Event.findByIdAndDelete(eid)
 		let args = {
 			jobName: "deleteEvent",
 			time: Date.now(),
