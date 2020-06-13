@@ -659,14 +659,15 @@ module.exports.updateEvent = async (req, res) => {
 		}
 
 		if (req.files && req.files.length !== 0) {
+			let key;
 			if (event.image && event.image.includes("amazonaws")) {
-				let key = `${event.image.split("/")[3]}/${
+				key = `${event.image.split("/")[3]}/${
 					event.image.split("/")[4]
 				}`;
-				await deleteImage(key);
+			} else {
+				key = getImageKey(req.originalUrl);
 			}
 			let file = req.files[0];
-			let key = getImageKey(req.originalUrl);
 			let uploaded = await uploadImage(file, key);
 			if (uploaded) {
 				updateObj.image = uploaded;
@@ -690,7 +691,7 @@ module.exports.deleteEvent = async (req, res) => {
 			}`;
 			await deleteImage(key);
 		}
-		await Event.findByIdAndDelete(eid)
+		await Event.findByIdAndDelete(eid);
 		let args = {
 			jobName: "deleteEvent",
 			time: Date.now(),
