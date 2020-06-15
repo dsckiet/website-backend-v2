@@ -82,7 +82,16 @@ module.exports.participantUpdateValidation = (req, res, next) => {
 };
 
 module.exports.eventValidation = (req, res, next) => {
-	let { title, description, startDate, endDate, time, venue } = req.body;
+	let {
+		title,
+		description,
+		startDate,
+		endDate,
+		time,
+		venue,
+		isRegistrationRequired,
+		maxRegister
+	} = req.body;
 
 	if (!title || !description || !startDate || !endDate || !time || !venue) {
 		return sendError(res, "All fields are mandatory!!", BAD_REQUEST);
@@ -91,9 +100,14 @@ module.exports.eventValidation = (req, res, next) => {
 		formatHtmlDate(endDate).toISOString()
 	) {
 		return sendError(res, "Invalid dates", BAD_REQUEST);
-	} else {
-		return next();
+	} else if (isRegistrationRequired && !maxRegister) {
+		return sendError(
+			res,
+			"Maximum registerations value required",
+			BAD_REQUEST
+		);
 	}
+	return next();
 };
 
 module.exports.emailValidation = (req, res, next) => {

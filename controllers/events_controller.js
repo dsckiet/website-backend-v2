@@ -594,19 +594,27 @@ module.exports.changeEventRegistrationOpen = async (req, res) => {
 				BAD_REQUEST
 			);
 		} else {
-			let isRegistrationOpened = event.isRegistrationOpened
-				? false
-				: true;
-			event = await Event.findByIdAndUpdate(
-				eid,
-				{
-					$set: {
-						isRegistrationOpened: Boolean(isRegistrationOpened)
-					}
-				},
-				{ new: true }
-			);
-			sendSuccess(res, event);
+			if (event.isRegistrationRequired) {
+				let isRegistrationOpened = event.isRegistrationOpened
+					? false
+					: true;
+				event = await Event.findByIdAndUpdate(
+					eid,
+					{
+						$set: {
+							isRegistrationOpened: Boolean(isRegistrationOpened)
+						}
+					},
+					{ new: true }
+				);
+				sendSuccess(res, event);
+			} else {
+				return sendError(
+					res,
+					"Cannot open registration for this event!",
+					BAD_REQUEST
+				);
+			}
 		}
 	} else {
 		sendError(res, "Invalid Event!!", BAD_REQUEST);
@@ -691,15 +699,26 @@ module.exports.deleteEvent = async (req, res) => {
 			}`;
 			await deleteImage(key);
 		}
-		await Event.findByIdAndDelete(eid);
-		let args = {
-			jobName: "deleteEvent",
-			time: Date.now(),
-			params: {
-				eid: new ObjectId(event._id)
-			}
-		};
-		kue.scheduleJob(args);
+
+		let promises = [
+			Event.findByIdAndDelete(eid),
+			Attendance.deleteMany({ eid: new ObjectId(eid) }),
+			Feedback.deleteMany({ eid: new ObjectId(eid) })
+		];
+
+		let participants = await Participant.find({
+			"events.eid": new ObjectId(eid)
+		});
+		participants.map(part => {
+			let eventInd = part.events
+				.map(evnt => {
+					return String(evnt.eid);
+				})
+				.indexOf(String(eid));
+			part.events.splice(eventInd, 1);
+			promises.push(part.save());
+		});
+		await Promise.all(promises);
 		sendSuccess(res, null);
 	} else {
 		sendError(res, "Invalid Event!!", BAD_REQUEST);
