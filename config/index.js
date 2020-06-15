@@ -12,7 +12,7 @@ module.exports = {
 	REDIS_URL: process.env.REDIS_URL,
 	EMAIL_USER: process.env.EMAIL_USER,
 	EMAIL_PASS: process.env.EMAIL_PASS,
-	EVENT_HASH_LENGTH: 20,
+	EVENT_HASH_LENGTH: 10,
 	USER_HASH_LENGTH: 8,
 	AWS_KEY: process.env.AWS_KEY,
 	AWS_SECRET: process.env.AWS_SECRET,
