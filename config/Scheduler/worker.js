@@ -25,35 +25,6 @@ Queue.process("sendSystemEmailJob", async (job, done) => {
 	}
 });
 
-Queue.process("deleteEvent", async (job, done) => {
-	let { data } = job;
-	let { eid } = data;
-	let log = `Event Deletion scheduled for: ${eid}`;
-	logger("info", "scheduler", log);
-	console.log(log);
-
-	let promises = [
-		Attendance.deleteMany({ eid: new ObjectId(eid) }),
-		Feedback.deleteMany({ eid: new ObjectId(eid) })
-	];
-
-	let participants = await Participant.find({
-		"events.eid": new ObjectId(eid)
-	});
-	participants.map(part => {
-		let eventInd = part.events
-			.map(evnt => {
-				return String(evnt.eid);
-			})
-			.indexOf(String(eid));
-		part.events.splice(eventInd, 1);
-		promises.push(part.save());
-	});
-
-	await Promise.all(promises);
-	done();
-});
-
 Queue.process("sendGeneralEmailJob", async (job, done) => {
 	let { data } = job;
 	let log = `${data.mailType} email sent to ${data.email} at ${Date(
