@@ -210,14 +210,15 @@ module.exports.updateProfile = async (req, res) => {
 	}
 
 	if (req.files && req.files.length !== 0) {
+		let key;
 		if (profile.image && profile.image.includes("amazonaws")) {
-			let key = `${profile.image.split("/")[3]}/${
+			key = `${profile.image.split("/")[3]}/${
 				profile.image.split("/")[4]
 			}`;
-			await deleteImage(key);
+		} else {
+			key = getImageKey(req.originalUrl);
 		}
 		let file = req.files[0];
-		let key = getImageKey(req.originalUrl);
 		let uploaded = await uploadImage(file, key);
 		if (uploaded) {
 			req.body.image = uploaded;

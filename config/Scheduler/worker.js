@@ -33,7 +33,6 @@ Queue.process("deleteEvent", async (job, done) => {
 	console.log(log);
 
 	let promises = [
-		Event.findByIdAndDelete(eid),
 		Attendance.deleteMany({ eid: new ObjectId(eid) }),
 		Feedback.deleteMany({ eid: new ObjectId(eid) })
 	];
