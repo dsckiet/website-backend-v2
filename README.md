@@ -6,8 +6,8 @@
 
 ---
 
-[![DOCS](https://img.shields.io/badge/Documentation-see%20docs-green?style=for-the-badge&logo=appveyor)](https://documenter.getpostman.com/view/7254507/SWE56Jkg)
-[![UI ](https://img.shields.io/badge/User%20Interface-Link%20to%20UI-orange?style=for-the-badge&logo=appveyor)](INSERT_UI_LINK_HERE)
+[![DOCS](https://img.shields.io/badge/Documentation-see%20docs-green?style=for-the-badge&logo=appveyor)](https://documenter.getpostman.com/view/6749988/SztD46p7?version=latest)
+[![UI ](https://img.shields.io/badge/User%20Interface-Link%20to%20UI-orange?style=for-the-badge&logo=appveyor)](https://admin.dsckiet.com)
 
 ## Functionalities
 
@@ -43,14 +43,15 @@ $ npm i
 -   Directions to execute
 
 ```bash
-$ npm start
+$ npm run dev
 ```
 
 <br>
 
 ## Contributors
 
--   [ < ADD YOUR NAME > ](ADD_PROFILE_URL_HERE)
+- [Ritik Srivastava](https://ritiksr25.tech)
+- [Rohan Mehta](https://rhnmht30.dev)
 
 <br>
 <br>
