@@ -215,9 +215,10 @@ module.exports.updateProfile = async (req, res) => {
 			key = `${profile.image.split("/")[3]}/${
 				profile.image.split("/")[4]
 			}`;
-		} else {
-			key = getImageKey(req.originalUrl);
+			await deleteImage(key);
 		}
+
+		key = getImageKey(req.originalUrl);
 		let file = req.files[0];
 		let uploaded = await uploadImage(file, key);
 		if (uploaded) {

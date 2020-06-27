@@ -672,9 +672,10 @@ module.exports.updateEvent = async (req, res) => {
 				key = `${event.image.split("/")[3]}/${
 					event.image.split("/")[4]
 				}`;
-			} else {
-				key = getImageKey(req.originalUrl);
+				await deleteImage(key);
 			}
+
+			key = getImageKey(req.originalUrl);
 			let file = req.files[0];
 			let uploaded = await uploadImage(file, key);
 			if (uploaded) {
