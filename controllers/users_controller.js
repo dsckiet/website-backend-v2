@@ -25,7 +25,7 @@ const {
 	getImageKey
 } = require("../utility/helpers");
 const { uploadImage, deleteImage } = require("../config/imageService");
-const { sendSystemEmail } = require("../config/emailService");
+
 module.exports.users = async (req, res) => {
 	let { uid, sortBy, sortType } = req.query;
 	let users;
@@ -39,15 +39,6 @@ module.exports.users = async (req, res) => {
 			[sortBy]: sortType
 		});
 	}
-	let data = {
-		              email: "ritiksr25@gmail.com",
-		               name: "Ritik",
-		               link: `https://portal.dsckiet.com`,
-		               mailType: "reset-pwd-link"
-		       }
-		       await sendSystemEmail(data.email, data, data.mailType)
-		       console.log("system email sent");
-		
 	sendSuccess(res, users);
 };
 
