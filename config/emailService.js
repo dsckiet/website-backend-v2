@@ -1,13 +1,16 @@
 const nodemailer = require("nodemailer");
+var htmlToText = require("nodemailer-html-to-text").htmlToText;
 
-let { EMAIL_USER, EMAIL_PASS } = require("./index");
+let { EMAIL_USER, EMAIL_PASS, EMAIL_HOST, SENDER_EMAIL } = require("./index");
 let { getMailTemplate } = require("../utility/emailTemplates");
 const { logger } = require("../utility/helpers");
 
 const transporter = nodemailer.createTransport({
-	service: "gmail",
 	type: "SMTP",
-	host: "smtp.gmail.com",
+	host: EMAIL_HOST,
+	secure: true,
+	debug: true,
+	port: 465,
 	auth: {
 		user: EMAIL_USER,
 		pass: EMAIL_PASS
@@ -17,17 +20,16 @@ const transporter = nodemailer.createTransport({
 module.exports.sendSystemEmail = async (email, data, type) => {
 	let { subject, html } = getMailTemplate(data, type);
 	let mailOptions = {
-		from: `DSCKIET <${EMAIL_USER}>`,
+		from: `DSCKIET <${SENDER_EMAIL}>`,
 		to: email,
 		subject,
-		text: "",
 		html,
 		headers: {
 			"x-priority": "1",
-			"x-msmail-priority": "High",
 			importance: "high"
 		}
 	};
+	transporter.use("compile", htmlToText());
 	try {
 		await transporter.sendMail(mailOptions);
 	} catch (err) {
@@ -39,17 +41,16 @@ module.exports.sendSystemEmail = async (email, data, type) => {
 module.exports.sendGeneralEmail = async (email, subject, content, name) => {
 	let html = getMailTemplate({ name }, "other", content);
 	let mailOptions = {
-		from: `DSCKIET <${EMAIL_USER}>`,
+		from: `DSCKIET <${SENDER_EMAIL}>`,
 		to: email,
 		subject,
-		text: "",
 		html,
 		headers: {
 			"x-priority": "1",
-			"x-msmail-priority": "High",
 			importance: "high"
 		}
 	};
+	transporter.use("compile", htmlToText());
 	try {
 		await transporter.sendMail(mailOptions);
 	} catch (err) {

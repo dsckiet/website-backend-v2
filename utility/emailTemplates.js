@@ -34,6 +34,7 @@ const getFullHTML = (content, name) => {
                                             <td style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,Cantarell,'Fira Sans','Droid Sans','Helvetica Neue',sans-serif;box-sizing:border-box;font-size:16px;vertical-align:top;font-weight:500;margin:0;padding:40px 40px 0 40px"
                                                 valign="top"><img align="none"
                                                     src="https://raw.githubusercontent.com/goelaakash79/goelaakash79.github.io/master/images/dsckiet-logo.png"
+                                                    alt="DSC Logo"
                                                     style="widows:212px;height:40px;margin:0" width="212" height="40"
                                                     class="CToWUd"></td>
                                         </tr>
