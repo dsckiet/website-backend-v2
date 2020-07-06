@@ -1145,7 +1145,7 @@ module.exports.addCerti = async (req, res) => {
 		await mkdirAsync(`public/certificates/${eid}`, { recursive: true });
 	}
 
-	if (event.certificateMeta !== undefined) {
+	if (event.certificateMeta.pdfFileName !== undefined) {
 		if (event.certificateMeta.pdfFileName !== pdfFile.originalname) {
 			//DELETE prev pdf
 			await unlinkAsync(
