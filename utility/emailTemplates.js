@@ -93,10 +93,7 @@ const getFullHTML = (content, name) => {
     </html>`;
 };
 
-module.exports.getMailTemplate = (data, type, content) => {
-	if (type === "other" && content) {
-		return getFullHTML(content, data.name);
-	}
+module.exports.getMailTemplate = (data, type) => {
 	let templates = {
 		"login-creds": {
 			subject: "[CREDS] DSCKIET Portal Credentials | DSC KIET",
@@ -111,7 +108,7 @@ module.exports.getMailTemplate = (data, type, content) => {
 		},
 		"reset-pwd-link": {
 			subject:
-				"[FORGOT PWD] DSCKIET Portal Password reset link | DSC KIET",
+				"[FORGOT PWD] DSCKIET Password reset link | DSC KIET",
 			html: getFullHTML(
 				`Someone (hopefully you) has requested a password reset for
                 this account on DSC KIET Portal. Here is the reset
@@ -140,37 +137,7 @@ module.exports.getMailTemplate = (data, type, content) => {
                 please, content writer wale content de de:)`,
 				data.name
 			)
-		},
-		"event-reminder": {
-			subject: "[REMINDER] Event Reminder | DSC KIET",
-			html: getFullHTML(
-				`Thank you for registering in the event ${
-					data.event ? data.event.title : ""
-				} to be held on details...
-                please, content writer wale content de de:)`,
-				data.name
-			)
-		},
-		"event-followup": {
-			subject: "[FOLLOWUP] Event completed | DSC KIET",
-			html: getFullHTML(
-				`Thank you for registering in the event ${
-					data.event ? data.event.title : ""
-				} to be held on details...
-                Please visit the portal and feedback form if eligible, certificate could be downloaded!:)`,
-				data.name
-			)
-		},
-		"event-thanks": {
-			subject: "[EVENt] Registration success | DSC KIET",
-			html: getFullHTML(
-				`Thank you for registering in the event ${
-					data.event ? data.event.title : ""
-				} to be held on details...
-                please, content writer wale content de de:)`,
-				data.name
-			)
-		},
+        },
 		"subscriber-welcome": {
 			subject: "[SUBSCRIBED] Registration success | DSC KIET",
 			html: getFullHTML(

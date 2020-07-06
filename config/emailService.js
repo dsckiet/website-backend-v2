@@ -38,13 +38,12 @@ module.exports.sendSystemEmail = async (email, data, type) => {
 	}
 };
 
-module.exports.sendGeneralEmail = async (email, subject, content, name) => {
-	let html = getMailTemplate({ name }, "other", content);
+module.exports.sendGeneralEmail = async (email, subject, content) => {
 	let mailOptions = {
 		from: `DSCKIET <${SENDER_EMAIL}>`,
 		to: email,
 		subject,
-		html,
+		html: content,
 		headers: {
 			"x-priority": "1",
 			importance: "high"

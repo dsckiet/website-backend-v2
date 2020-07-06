@@ -5,32 +5,6 @@ const worker = require("../config/Scheduler/worker");
 const { sendError, sendSuccess } = require("../utility/helpers");
 const { BAD_REQUEST } = require("../utility/statusCodes");
 
-const scheduleMailsInBatches = (users, jobName, props) => {
-	let batchSize = 20;
-	let initial = 0,
-		i = 0;
-	while (initial < users.length) {
-		let currentBatch = users.slice(initial, initial + batchSize);
-		let start_time = Date.now() + i * 2 * 1000;
-		//do stuff with currentbatch
-		currentBatch.map((user, index) => {
-			let args = {
-				jobName,
-				time: start_time + index,
-				params: {
-					email: user.email,
-					...props
-				}
-			};
-			kue.scheduleJob(args);
-		});
-
-		i = i + 1;
-		initial = initial + batchSize;
-	}
-	return;
-};
-
 module.exports.subscribers = async (req, res) => {
 	let subscribers = await Subscriber.find().sort({ createdAt: "desc" });
 	return sendSuccess(res, subscribers);
@@ -85,13 +59,31 @@ module.exports.sendSubscription = async (req, res) => {
 		subscription.save()
 	]);
 
-	let params = {
-			mailType: "subscription",
-			subject,
-			content
-		},
-		jobname = "sendGeneralEmailJob";
+	let batchSize = 50;
+	let initial = 0,
+		i = 0;
+	while (initial < subscribers.length) {
+		let currentBatch = subscribers.slice(initial, initial + batchSize);
+		let start_time = Date.now() + i * 1 * 1000;
+		//do stuff with currentbatch
+		currentBatch.map((user, index) => {
+			content = content.replace(/{{NAME}}/g, user.name);
+			content = content.replace(/{{SUBSCRIBER_ID}}/g, user._id);
+			let args = {
+				jobName: "sendGeneralEmailJob",
+				time: start_time + index,
+				params: {
+					mailType: type,
+					email: user.email,
+					subject,
+					content
+				}
+			};
+			kue.scheduleJob(args);
+		});
 
-	scheduleMailsInBatches(subscribers, jobname, params);
+		i = i + 1;
+		initial = initial + batchSize;
+	}
 	return sendSuccess(res, null);
 };

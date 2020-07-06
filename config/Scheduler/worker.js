@@ -33,12 +33,7 @@ Queue.process("sendGeneralEmailJob", async (job, done) => {
 	logger("info", "scheduler", log);
 	console.log(log);
 	try {
-		await sendGeneralEmail(
-			data.email,
-			data.subject,
-			data.content,
-			data.name
-		);
+		await sendGeneralEmail(data.email, data.subject, data.content);
 		done();
 	} catch (err) {
 		console.log(err);
