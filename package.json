@@ -1,7 +1,7 @@
 {
-	"name": "dsc-kiet-portal",
-	"version": "1.0.0",
-	"description": "DSC-KIET portal",
+	"name": "dsc-website-backend-v2",
+	"version": "1.1.2",
+	"description": "Scalable backend with async job scheduling to manage everything @dsckiet",
 	"main": "index.js",
 	"scripts": {
 		"dev": "nodemon index.js",
@@ -9,14 +9,39 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/dsckiet/dsc-kiet-portal.git"
+		"url": "https://github.com/dsckiet/website-backend-v2.git"
 	},
-	"author": "DSC-KIET",
-	"license": "ISC",
+	"author": {
+		"name": "DSC KIET",
+		"email": "dsckiet@gmail.com",
+		"url": "https://dsckiet.com"
+	},
+	"contributors": [
+		{
+			"name": "Ritik Srivastava",
+			"email": "ritiksr25@gmail.com",
+			"url": "https://ritiksr25.tech"
+		},
+		{
+			"name": "Rohan Mehta",
+			"email": "rhnmht30@gmail.com",
+			"url": "https://rhnmht30.dev"
+		}
+	],
+	"license": "MIT",
 	"bugs": {
-		"url": "https://github.com/dsckiet/dsc-kiet-portal/issues"
+		"url": "https://github.com/dsckiet/website-backend-v2/issues"
 	},
-	"homepage": "https://github.com/dsckiet/dsc-kiet-portal#readme",
+	"homepage": "https://github.com/dsckiet/website-backend-v2#readme",
+	"keywords": [
+		"portal",
+		"nodejs",
+		"redis",
+		"kue",
+		"management-system",
+		"mongodb",
+		"sentry"
+	],
 	"dependencies": {
 		"@pdf-lib/fontkit": "^1.0.0",
 		"@sentry/node": "^5.15.5",
@@ -33,12 +58,12 @@
 		"kue": "^0.11.6",
 		"log4js": "^6.1.2",
 		"mongoose": "^5.7.3",
-		"morgan": "^1.9.1",
+		"morgan": "^1.10.0",
 		"multer": "^1.4.2",
 		"multer-s3": "^2.9.0",
 		"nodemailer": "^6.4.5",
 		"nodemailer-html-to-text": "^3.1.0",
-		"nodemon": "^1.19.3",
+		"nodemon": "^2.0.4",
 		"path": "^0.12.7",
 		"pdf-lib": "^1.7.0",
 		"redis": "^3.0.2"
