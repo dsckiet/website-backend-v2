@@ -47,33 +47,6 @@ getPushObject = (part, attendInd) => {
 	};
 };
 
-const scheduleMailsInBatches = (users, jobName, props) => {
-	let batchSize = 20;
-	let initial = 0,
-		i = 0;
-	while (initial < users.length) {
-		let currentBatch = users.slice(initial, initial + batchSize);
-		let start_time = Date.now() + i * 2 * 1000;
-		//do stuff with currentbatch
-		currentBatch.map((user, index) => {
-			let args = {
-				jobName,
-				time: start_time + index,
-				params: {
-					...props,
-					name: user.name,
-					email: user.email
-				}
-			};
-			kue.scheduleJob(args);
-		});
-
-		i = i + 1;
-		initial = initial + batchSize;
-	}
-	return;
-};
-
 module.exports.getParticipants = async (req, res) => {
 	let { eid, query, branch, year, sortBy } = req.query;
 	let filters = {};
@@ -1260,42 +1233,33 @@ module.exports.generateCerti = async (req, res) => {
 };
 
 module.exports.sendEventMails = async (req, res) => {
-	let { type, users, eid, subject, content } = req.body;
-	// type: event-reminder, event-followup, event-thanks
-	// users: [{ name, email }]
-	// eid
+	let { users, subject, content, type } = req.body;
 
-	// for:
-	// - event-reminder, event-followup, event-thanks:
-	// 	pass type among these, event: event id
+	let batchSize = 50;
+	let initial = 0,
+		i = 0;
+	while (initial < users.length) {
+		let currentBatch = users.slice(initial, initial + batchSize);
+		let start_time = Date.now() + i * 1 * 1000;
+		//do stuff with currentbatch
+		currentBatch.map((user, index) => {
+			content = content.replace(/{{NAME}}/g, user.name);
+			let args = {
+				jobName: "sendGeneralEmailJob",
+				time: start_time + index,
+				params: {
+					mailType: type,
+					email: user.email,
+					subject,
+					content
+				}
+			};
+			kue.scheduleJob(args);
+		});
 
-	// - other (example updates, etc):
-	// 	pass type can be anything, (subject, content) are mandatory
-
-	let event;
-	let systemMailTypes = ["event-reminder", "event-followup", "event-thanks"];
-	if (!subject && !content && systemMailTypes.indexOf(type) !== -1) {
-		event = await Event.findById(eid);
-		if (!event) {
-			return sendError(res, "Invalid Event!!", BAD_REQUEST);
-		}
+		i = i + 1;
+		initial = initial + batchSize;
 	}
-
-	let params = {
-			mailType: type
-		},
-		jobname;
-
-	if (event) {
-		jobname = "sendSystemEmailJob";
-		params.event = event;
-	} else {
-		jobname = "sendGeneralEmailJob";
-		params.subject = subject;
-		params.content = content;
-	}
-
-	scheduleMailsInBatches(users, jobname, params);
 
 	return sendSuccess(res, null);
 };

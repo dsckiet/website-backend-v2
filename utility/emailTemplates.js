@@ -34,6 +34,7 @@ const getFullHTML = (content, name) => {
                                             <td style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,Cantarell,'Fira Sans','Droid Sans','Helvetica Neue',sans-serif;box-sizing:border-box;font-size:16px;vertical-align:top;font-weight:500;margin:0;padding:40px 40px 0 40px"
                                                 valign="top"><img align="none"
                                                     src="https://raw.githubusercontent.com/goelaakash79/goelaakash79.github.io/master/images/dsckiet-logo.png"
+                                                    alt="DSC Logo"
                                                     style="widows:212px;height:40px;margin:0" width="212" height="40"
                                                     class="CToWUd"></td>
                                         </tr>
@@ -92,10 +93,7 @@ const getFullHTML = (content, name) => {
     </html>`;
 };
 
-module.exports.getMailTemplate = (data, type, content) => {
-	if (type === "other" && content) {
-		return getFullHTML(content, data.name);
-	}
+module.exports.getMailTemplate = (data, type) => {
 	let templates = {
 		"login-creds": {
 			subject: "[CREDS] DSCKIET Portal Credentials | DSC KIET",
@@ -110,7 +108,7 @@ module.exports.getMailTemplate = (data, type, content) => {
 		},
 		"reset-pwd-link": {
 			subject:
-				"[FORGOT PWD] DSCKIET Portal Password reset link | DSC KIET",
+				"[FORGOT PWD] DSCKIET Password reset link | DSC KIET",
 			html: getFullHTML(
 				`Someone (hopefully you) has requested a password reset for
                 this account on DSC KIET Portal. Here is the reset
@@ -139,37 +137,7 @@ module.exports.getMailTemplate = (data, type, content) => {
                 please, content writer wale content de de:)`,
 				data.name
 			)
-		},
-		"event-reminder": {
-			subject: "[REMINDER] Event Reminder | DSC KIET",
-			html: getFullHTML(
-				`Thank you for registering in the event ${
-					data.event ? data.event.title : ""
-				} to be held on details...
-                please, content writer wale content de de:)`,
-				data.name
-			)
-		},
-		"event-followup": {
-			subject: "[FOLLOWUP] Event completed | DSC KIET",
-			html: getFullHTML(
-				`Thank you for registering in the event ${
-					data.event ? data.event.title : ""
-				} to be held on details...
-                Please visit the portal and feedback form if eligible, certificate could be downloaded!:)`,
-				data.name
-			)
-		},
-		"event-thanks": {
-			subject: "[EVENt] Registration success | DSC KIET",
-			html: getFullHTML(
-				`Thank you for registering in the event ${
-					data.event ? data.event.title : ""
-				} to be held on details...
-                please, content writer wale content de de:)`,
-				data.name
-			)
-		},
+        },
 		"subscriber-welcome": {
 			subject: "[SUBSCRIBED] Registration success | DSC KIET",
 			html: getFullHTML(

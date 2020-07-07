@@ -1,7 +1,7 @@
 <p align="left">
 	<img width="240" src="https://raw.githubusercontent.com/dsckiet/resources/master/dsckiet-logo.png" />
 	<h2 align="left"> DSC KIET PORTAL </h2>
-	<h4 align="left"> A full-fledged web portal for the community to manage members, events, attendance, feedback, and other community tools. <h4>
+	<h4 align="left"> Scalable backend with async job scheduling to manage everything @dsckiet <h4>
 </p>
 
 ---
@@ -11,8 +11,15 @@
 
 ## Functionalities
 
--   [ ] < ADD FUNCTIONALITY >
--   [ ] < ADD FUNCTIONALITY >
+-   [X] Users auth and role based dashboard
+-   [X] Participants auth and dashboard
+-   [X] CRUD Events
+-   [X] Event Participation
+-   [X] Event Attendance
+-   [X] Event Certificates
+-   [X] Event Feedback
+-   [ ] Event Emails
+
 
 <br>
 
