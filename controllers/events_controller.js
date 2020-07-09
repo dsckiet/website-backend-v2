@@ -208,7 +208,7 @@ module.exports.forgotPassword = async (req, res) => {
 			email,
 			name: participant.name,
 			link: `${FRONTEND_URL}/reset/${participant._id}/${newResetToken.token}`,
-			mailType: "pwd-reset-link"
+			mailType: "reset-pwd-link"
 		}
 	};
 	kue.scheduleJob(args);
