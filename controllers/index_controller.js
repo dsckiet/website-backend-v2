@@ -15,16 +15,6 @@ module.exports.index = (req, res) => {
 };
 
 module.exports.getTodayBirthdays = async (req, res) => {
-	// - for local (IST):
-	// dob in schema is in UTC (1 day before @ 0:0)
-	// so actually will fetch in UTC timezone, one day earlier;
-	// - for production (UTC)
-	// dob is in UTC,
-	// today will be same @0:0
-	// accurate results will be fetched
-
-	// [IMPORTANT] for production: handle as per server timezone
-
 	let secret = req.headers["x-access-token"];
 	if (
 		!secret ||
@@ -33,7 +23,13 @@ module.exports.getTodayBirthdays = async (req, res) => {
 		return sendError(res, "Unauthorized: Secret mismatch!", BAD_REQUEST);
 	}
 
+	// current time
 	let today = new Date();
+	// converting local time to UTC
+	let utc = today.getTime() + today.getTimezoneOffset() * 60000;
+	// converting to GMT + 5.5 for timezone of India
+	today = new Date(utc + 3600000 * 5.5);
+	// get date and month
 	let month = today.getMonth() + 1,
 		day = today.getDate();
 
