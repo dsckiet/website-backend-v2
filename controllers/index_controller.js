@@ -46,14 +46,16 @@ module.exports.getTodayBirthdays = async (req, res) => {
 				month: { $month: "$dob" },
 				day: { $dayOfMonth: "$dob" },
 				name: 1,
-				email: 1
+				email: 1,
+				image: 1
 			}
 		},
 		{ $match: { month, day } },
 		{
 			$project: {
 				name: 1,
-				email: 1
+				email: 1,
+				image: 1
 			}
 		}
 	]);
