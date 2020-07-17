@@ -442,7 +442,8 @@ module.exports.participantData = async (req, res) => {
 		email: participant.email,
 		branch: participant.branch,
 		year: participant.year,
-		phone: participant.phone
+		phone: participant.phone,
+		image: participant.image
 	};
 
 	let eventsArray = [];
