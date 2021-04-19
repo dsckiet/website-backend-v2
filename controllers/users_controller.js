@@ -26,6 +26,25 @@ const {
 } = require("../utility/helpers");
 const { uploadImage, deleteImage } = require("../config/imageService");
 
+module.exports.userInfo = async (req, res) => {
+	let { uid, sortBy, sortType } = req.query;
+	let users;
+	if (uid) {
+		users = await User.findById(uid);
+	} else {
+		let role = ["core", "member"];
+		sortBy ? sortBy : "name";
+		sortType ? sortType : "asc";
+		users = await User.find(
+			{ role: { $in: role } },
+			{ name: 1, email: 1, designation: 1, _id: 0 }
+		).sort({
+			[sortBy]: sortType
+		});
+	}
+	sendSuccess(res, users);
+};
+
 module.exports.users = async (req, res) => {
 	let { uid, sortBy, sortType } = req.query;
 	let users;
