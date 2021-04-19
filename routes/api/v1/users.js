@@ -13,6 +13,7 @@ const {
 	updateProfile,
 	forgotPassword,
 	resetPassword,
+	designationUpdate,
 	temp
 } = require("../../../controllers/users_controller");
 
@@ -35,6 +36,11 @@ router.put(
 	catchErrors(toggleShowOnWeb)
 );
 router.put("/revoke/:uid", catchErrors(leadAuth), catchErrors(toggleRevoke));
+router.put(
+	"/designation/:uid",
+	catchErrors(coreAuth),
+	catchErrors(designationUpdate)
+);
 router.delete("/:uid", catchErrors(coreAuth), catchErrors(deleteUser));
 router.post("/login", catchErrors(login));
 router.get("/profile", catchErrors(allAuth), catchErrors(profile));

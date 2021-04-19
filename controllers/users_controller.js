@@ -128,6 +128,21 @@ module.exports.toggleShowOnWeb = async (req, res) => {
 	sendSuccess(res, user);
 };
 
+module.exports.designationUpdate = async (req, res) => {
+	let { uid } = req.params;
+	let { designation } = req.body;
+	let user = await User.findById(uid);
+	if (!user) {
+		return sendError(res, "Invalid User", BAD_REQUEST);
+	}
+	if (!designation) {
+		return sendError(res, "Designation is required", BAD_REQUEST);
+	}
+	user.designation = designation;
+	user = await user.save();
+	sendSuccess(res, user);
+};
+
 module.exports.toggleRevoke = async (req, res) => {
 	let { uid } = req.params;
 	let user = await User.findById(uid);
