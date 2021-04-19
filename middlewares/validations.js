@@ -38,6 +38,22 @@ module.exports.userUpdateValidation = (req, res, next) => {
 	} else if (req.body.email) {
 		if (!emailRegex.test(String(req.body.email)))
 			return sendError(res, "Email not Valid!!", BAD_REQUEST);
+	} else if (req.body.branch) {
+		if (
+			!["CS", "IT", "EC", "EN", "ME", "CE", "CO", "CSI", "MCA"].includes(
+				req.body.branch
+			)
+		) {
+			return sendError(res, "Branch not Valid!!", BAD_REQUEST);
+		}
+	} else if (req.body.year) {
+		if (![1, 2, 3, 4].includes(req.body.year)) {
+			return sendError(res, "Year not valid!!", BAD_REQUEST);
+		}
+	} else if (req.body.contact) {
+		if (!phoneRegex.test(String(req.body.contact))) {
+			return sendError(res, "Contact number not Valid!!", BAD_REQUEST);
+		}
 	}
 
 	return next();

@@ -188,7 +188,9 @@ module.exports.updateProfile = async (req, res) => {
 	let {
 		name,
 		email,
-		// contact,
+		contact,
+		year,
+		branch,
 		// github,
 		// linkedin,
 		// twitter,
