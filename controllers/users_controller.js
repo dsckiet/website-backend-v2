@@ -36,8 +36,19 @@ module.exports.userInfo = async (req, res) => {
 		sortBy ? sortBy : "name";
 		sortType ? sortType : "asc";
 		users = await User.find(
-			{ role: { $in: role } },
-			{ name: 1, email: 1, designation: 1, _id: 0 }
+			{ role: { $in: role }, showOnWebsite: true },
+			{
+				name: 1,
+				email: 1,
+				designation: 1,
+				role: 1,
+				github: 1,
+				linkedin: 1,
+				twitter: 1,
+				portfolio: 1,
+				image: 1,
+				_id: 0
+			}
 		).sort({
 			[sortBy]: sortType
 		});
@@ -51,10 +62,9 @@ module.exports.users = async (req, res) => {
 	if (uid) {
 		users = await User.findById(uid);
 	} else {
-		let role = ["core", "member"];
 		sortBy ? sortBy : "name";
 		sortType ? sortType : "asc";
-		users = await User.find({ role: { $in: role } }).sort({
+		users = await User.find().sort({
 			[sortBy]: sortType
 		});
 	}
