@@ -1,5 +1,9 @@
-const { sendSuccess } = require("../utility/helpers");
-const { FORBIDDEN } = require("../utility/statusCodes");
+const {
+	sendSuccess,
+	formatHtmlDate,
+	sendError
+} = require("../utility/helpers");
+const { FORBIDDEN, NOT_FOUND } = require("../utility/statusCodes");
 
 module.exports.getTodo = async (req, res) => {
 	let todo = await Todo.find({ uid: req.user.id }).sort({
@@ -9,10 +13,14 @@ module.exports.getTodo = async (req, res) => {
 };
 
 module.exports.addTodo = async (req, res) => {
-	let { title, description } = req.body;
+	let { title, description, dueDate } = req.body;
+	if (dueDate) {
+		dueDate = formatHtmlDate(dueDate);
+	}
 	todo = new Todo({
 		title,
 		description,
+		dueDate,
 		uid: req.user.id,
 		status: "pending"
 	});
@@ -22,7 +30,11 @@ module.exports.addTodo = async (req, res) => {
 
 module.exports.updateTodo = async (req, res) => {
 	let { tid } = req.params;
+	let { dueDate } = req.body;
 	let todo = await Todo.findById(tid);
+	if (!todo) {
+		return sendError(res, "Todo not found!!", NOT_FOUND);
+	}
 	if (!todo.uid.equals(req.user.id)) {
 		return sendError(
 			res,
@@ -30,13 +42,19 @@ module.exports.updateTodo = async (req, res) => {
 			FORBIDDEN
 		);
 	}
-	todo = await todo.update({ $set: req.body }, { new: true });
-	sendSuccess(res, todo);
+	if (dueDate) {
+		req.body.dueDate = formatHtmlDate(dueDate);
+	}
+	await todo.update({ $set: req.body }, { new: true });
+	sendSuccess(res, null);
 };
 
 module.exports.deleteTodo = async (req, res) => {
 	let { tid } = req.params;
 	let todo = await Todo.findById(tid);
+	if (!todo) {
+		return sendError(res, "Todo not found!!", NOT_FOUND);
+	}
 	if (!todo.uid.equals(req.user.id)) {
 		return sendError(
 			res,

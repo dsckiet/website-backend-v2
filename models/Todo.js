@@ -14,7 +14,8 @@ const TodoSchema = new mongoose.Schema(
 			required: true,
 			default: "pending",
 			enum: ["pending", "complete"]
-		}
+		},
+		dueDate: { type: Date }
 	},
 	{ timestamps: true }
 );
