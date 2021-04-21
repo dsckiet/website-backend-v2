@@ -32,11 +32,10 @@ module.exports.userInfo = async (req, res) => {
 	if (uid) {
 		users = await User.findById(uid);
 	} else {
-		let role = ["core", "member"];
 		sortBy ? sortBy : "name";
 		sortType ? sortType : "asc";
 		users = await User.find(
-			{ role: { $in: role }, showOnWebsite: true },
+			{ showOnWebsite: true },
 			{
 				name: 1,
 				email: 1,
