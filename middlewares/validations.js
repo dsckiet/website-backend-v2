@@ -118,3 +118,14 @@ module.exports.emailValidation = (req, res, next) => {
 
 	return next();
 };
+
+module.exports.updateTodo = (req, res, next) => {
+	let { status } = req.body;
+	if (req.body.uid) {
+		return sendError(res, "Restricted field!!", BAD_REQUEST);
+	}
+	if (!["pending", "complete"].includes(status)) {
+		return sendError(res, "Invalid status!!", BAD_REQUEST);
+	}
+	return next();
+};
