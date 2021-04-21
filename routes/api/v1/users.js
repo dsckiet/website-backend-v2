@@ -4,6 +4,7 @@ const router = express.Router();
 // load controller
 const {
 	users,
+	userInfo,
 	addUser,
 	toggleShowOnWeb,
 	toggleRevoke,
@@ -27,7 +28,8 @@ const {
 const { multer, fileFilter } = require("../../../middlewares/imageValidations");
 
 // routes
-router.get("/", catchErrors(users));
+router.get("/", catchErrors(allAuth), catchErrors(users));
+router.get("/info", catchErrors(userInfo));
 router.post("/", catchErrors(coreAuth), userValidation, catchErrors(addUser));
 router.put(
 	"/approve/:uid",
