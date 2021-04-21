@@ -187,6 +187,7 @@ module.exports.profile = async (req, res) => {
 module.exports.updateProfile = async (req, res) => {
 	let { name, email, dob } = req.body;
 
+
 	let profile = await User.findById(req.user.id);
 	if (!profile) {
 		return sendError(res, "No Profile Found", BAD_REQUEST);
