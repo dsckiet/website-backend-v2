@@ -3,7 +3,8 @@ const { BAD_REQUEST } = require("../utility/statusCodes");
 
 let emailRegex = /^\S+@\S+\.\S+/,
 	passwordRegex = /^[\S]{8,}/,
-	phoneRegex = /(^[6-9]{1}[0-9]{9}$)/;
+	phoneRegex = /(^[6-9]{1}[0-9]{9}$)/,
+	urlRegex = /^(http:\/\/www\.|https:\/\/www\.|http:\/\/|https:\/\/)?[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,5}(:[0-9]{1,5})?(\/.*)?$/;
 
 module.exports.userValidation = (req, res, next) => {
 	let { name, email, role, designation } = req.body;
@@ -35,27 +36,63 @@ module.exports.userUpdateValidation = (req, res, next) => {
 
 	if (!canUpdate) {
 		return sendError(res, "Cannot update a restricted field", BAD_REQUEST);
-	} else if (req.body.email) {
-		if (!emailRegex.test(String(req.body.email)))
-			return sendError(res, "Email not Valid!!", BAD_REQUEST);
-	} else if (req.body.branch) {
-		if (
-			!["CS", "IT", "EC", "EN", "ME", "CE", "CO", "CSI", "MCA"].includes(
-				req.body.branch
-			)
-		) {
-			return sendError(res, "Branch not Valid!!", BAD_REQUEST);
+	} else {
+		if (req.body.email) {
+			if (!emailRegex.test(String(req.body.email)))
+				return sendError(res, "Email not Valid!!", BAD_REQUEST);
 		}
-	} else if (req.body.year) {
-		if (![1, 2, 3, 4].includes(req.body.year)) {
-			return sendError(res, "Year not valid!!", BAD_REQUEST);
+		if (req.body.branch) {
+			if (
+				![
+					"CS",
+					"IT",
+					"EC",
+					"EN",
+					"ME",
+					"CE",
+					"CO",
+					"CSI",
+					"MCA"
+				].includes(req.body.branch)
+			) {
+				return sendError(res, "Branch not Valid!!", BAD_REQUEST);
+			}
 		}
-	} else if (req.body.contact) {
-		if (!phoneRegex.test(String(req.body.contact))) {
-			return sendError(res, "Contact number not Valid!!", BAD_REQUEST);
+		if (req.body.year) {
+			if (![1, 2, 3, 4].includes(req.body.year)) {
+				return sendError(res, "Year not valid!!", BAD_REQUEST);
+			}
+		}
+		if (req.body.contact) {
+			if (!phoneRegex.test(String(req.body.contact))) {
+				return sendError(
+					res,
+					"Contact number not Valid!!",
+					BAD_REQUEST
+				);
+			}
+		}
+		if (req.body.linkedin) {
+			if (!urlRegex.test(String(req.body.linkedin))) {
+				return sendError(res, "Linkedin url invalid", BAD_REQUEST);
+			}
+		}
+		if (req.body.github) {
+			if (!urlRegex.test(String(req.body.github))) {
+				return sendError(res, "Github url invalid", BAD_REQUEST);
+			}
+		}
+		if (req.body.twitter) {
+			if (!urlRegex.test(String(req.body.linkedin))) {
+				return sendError(res, "Twitter url invalid", BAD_REQUEST);
+			}
+		}
+		if (req.body.portfolio) {
+			if (!urlRegex.test(String(req.body.portfolio))) {
+				return sendError(res, "Portfolio url invalid", BAD_REQUEST);
+			}
 		}
 	}
-
 	return next();
 };
 
