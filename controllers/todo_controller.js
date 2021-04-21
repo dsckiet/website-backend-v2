@@ -1,3 +1,4 @@
+const Todo = require("../models/Todo");
 const {
 	sendSuccess,
 	formatHtmlDate,
@@ -31,38 +32,29 @@ module.exports.addTodo = async (req, res) => {
 module.exports.updateTodo = async (req, res) => {
 	let { tid } = req.params;
 	let { dueDate } = req.body;
-	let todo = await Todo.findById(tid);
-	if (!todo) {
-		return sendError(res, "Todo not found!!", NOT_FOUND);
-	}
-	if (!todo.uid.equals(req.user.id)) {
-		return sendError(
-			res,
-			"You cannot delete someone else's todo",
-			FORBIDDEN
-		);
-	}
 	if (dueDate) {
 		req.body.dueDate = formatHtmlDate(dueDate);
 	}
-	await todo.update({ $set: req.body }, { new: true });
-	sendSuccess(res, null);
+	let todo = await Todo.findOneAndUpdate(
+		{ _id: tid, uid: req.user.id },
+		{ $set: req.body },
+		{ new: true }
+	);
+	if (!todo) {
+		return sendError(res, "Todo not found!!", NOT_FOUND);
+	}
+	sendSuccess(res, todo);
 };
 
 module.exports.deleteTodo = async (req, res) => {
 	let { tid } = req.params;
-	let todo = await Todo.findById(tid);
+	let todo = await Todo.findOneAndDelete({
+		_id: tid,
+		uid: req.user.id
+	}).lean();
 	if (!todo) {
 		return sendError(res, "Todo not found!!", NOT_FOUND);
 	}
-	if (!todo.uid.equals(req.user.id)) {
-		return sendError(
-			res,
-			"You cannot delete someone else's todo",
-			FORBIDDEN
-		);
-	}
-	await todo.delete();
 	sendSuccess(res, null);
 };
 
