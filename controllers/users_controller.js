@@ -185,18 +185,8 @@ module.exports.profile = async (req, res) => {
 };
 
 module.exports.updateProfile = async (req, res) => {
-	let {
-		name,
-		email,
-		contact,
-		year,
-		branch,
-		// github,
-		// linkedin,
-		// twitter,
-		// portfolio,
-		dob
-	} = req.body;
+	let { name, email, dob } = req.body;
+
 
 	let profile = await User.findById(req.user.id);
 	if (!profile) {
