@@ -18,7 +18,7 @@ module.exports.addTodo = async (req, res) => {
 	if (dueDate) {
 		dueDate = formatHtmlDate(dueDate);
 	}
-	todo = new Todo({
+	let todo = new Todo({
 		title,
 		description,
 		dueDate,

@@ -1,5 +1,6 @@
 const { sendError, formatHtmlDate } = require("../utility/helpers");
 const { BAD_REQUEST } = require("../utility/statusCodes");
+const ObjectId = require("mongoose").Types.ObjectId;
 
 let emailRegex = /^\S+@\S+\.\S+/,
 	passwordRegex = /^[\S]{8,}/,
@@ -172,7 +173,7 @@ module.exports.emailValidation = (req, res, next) => {
 	return next();
 };
 
-module.exports.updateTodo = (req, res, next) => {
+module.exports.updateTodoValidation = (req, res, next) => {
 	let { status } = req.body;
 	if (req.body.uid) {
 		return sendError(res, "Restricted field!!", BAD_REQUEST);
@@ -180,5 +181,31 @@ module.exports.updateTodo = (req, res, next) => {
 	if (!["pending", "complete"].includes(status)) {
 		return sendError(res, "Invalid status!!", BAD_REQUEST);
 	}
+	return next();
+};
+
+module.exports.addGroupValidation = (req, res, next) => {
+	let { name, heads, members } = req.body;
+	if (!name || !heads || !members) {
+		return sendError(res, "Invalid Data !!", BAD_REQUEST);
+	}
+	if (!Array.isArray(heads) || !Array.isArray(members)) {
+		return sendError(res, "Invalid Data!!", BAD_REQUEST);
+	}
+	if (!heads.length || !members.length)
+		return sendError(res, "Invalid Data!!", BAD_REQUEST);
+	for (head of heads) {
+		if (members.includes(head)) {
+			return sendError(
+				res,
+				"A user can have only one role inside a group",
+				BAD_REQUEST
+			);
+		}
+	}
+	/*
+	 * Validation - Check if elements of heads,members are valid ObjectIds
+	 * Controller - Check if object ids of heads,members are valid User Ids
+	 */
 	return next();
 };

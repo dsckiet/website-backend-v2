@@ -2,8 +2,6 @@ const kue = require("../config/Scheduler/kue");
 const worker = require("../config/Scheduler/worker");
 const bcrypt = require("bcryptjs");
 
-const ObjectId = require("mongoose").Types.ObjectId;
-
 const { NODE_ENV, AVATAR_URL, FRONTEND_URL } = require("../config/index");
 const { formatHtmlDate } = require("../utility/helpers");
 
@@ -182,6 +180,8 @@ module.exports.deleteUser = async (req, res) => {
 	if (!user) {
 		return sendError(res, "Invalid User", BAD_REQUEST);
 	}
+	if (req.user.id === user._id)
+		return sendError(res, "Cannot delete yourself", BAD_REQUEST);
 	if (req.user.role === "core" && user.role !== "member") {
 		sendError(
 			res,
@@ -214,7 +214,6 @@ module.exports.profile = async (req, res) => {
 
 module.exports.updateProfile = async (req, res) => {
 	let { name, email, dob } = req.body;
-
 
 	let profile = await User.findById(req.user.id);
 	if (!profile) {

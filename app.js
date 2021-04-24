@@ -49,6 +49,9 @@ module.exports = () => {
 	const Subscriber = require("./models/Subscriber");
 	const Subscription = require("./models/Subscription");
 	const Todo = require("./models/Todo");
+	const Group = require("./models/Group");
+	const Task = require("./models/Task");
+	const TaskAssignee = require("./models/TaskAssignee");
 
 	//Routes
 	app.use("/api/v1", require("./routes/api/v1/index"));
@@ -56,6 +59,8 @@ module.exports = () => {
 	app.use("/api/v1/events", require("./routes/api/v1/events"));
 	app.use("/api/v1/subscription", require("./routes/api/v1/subscription"));
 	app.use("/api/v1/todo", require("./routes/api/v1/todo"));
+	app.use("/api/v1/group", require("./routes/api/v1/groups"));
+	app.use("/api/v1/task", require("./routes/api/v1/task"));
 
 	app.use("*", notFound);
 
