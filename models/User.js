@@ -24,8 +24,14 @@ const UserSchema = new mongoose.Schema(
 		showOnWebsite: { type: Boolean, default: false },
 		image: { type: String },
 		dob: { type: Date },
+		bio: { type: String },
 		isRevoked: { type: Boolean, default: false },
-		lastLogin: { type: Date, default: Date.now }
+		lastLogin: { type: Date, default: Date.now },
+		year: { type: Number, enum: [1, 2, 3, 4] },
+		branch: {
+			type: String,
+			enum: ["CS", "IT", "EC", "EN", "ME", "CE", "CO", "CSI", "MCA"]
+		}
 	},
 	{ timestamps: true }
 );

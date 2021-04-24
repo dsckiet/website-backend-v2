@@ -4,6 +4,7 @@ const router = express.Router();
 // load controller
 const {
 	users,
+	userInfo,
 	addUser,
 	toggleShowOnWeb,
 	toggleRevoke,
@@ -14,7 +15,8 @@ const {
 	forgotPassword,
 	resetPassword,
 	userUpdate,
-	temp
+	temp,
+	changePassword
 } = require("../../../controllers/users_controller");
 
 // middlewares
@@ -29,7 +31,8 @@ const {
 const { multer, fileFilter } = require("../../../middlewares/imageValidations");
 
 // routes
-router.get("/", catchErrors(users));
+router.get("/", catchErrors(allAuth), catchErrors(users));
+router.get("/info", catchErrors(userInfo));
 router.post("/", catchErrors(coreAuth), userValidation, catchErrors(addUser));
 router.put(
 	"/approve/:uid",
@@ -56,6 +59,7 @@ router.post(
 );
 router.post("/forgot", emailValidation, catchErrors(forgotPassword));
 router.post("/reset", catchErrors(resetPassword));
+router.post("/change", catchErrors(allAuth), catchErrors(changePassword));
 router.post("/temp", catchErrors(temp)); // for dev purpose only
 
 // export router

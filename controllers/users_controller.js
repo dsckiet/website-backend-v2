@@ -26,16 +26,44 @@ const {
 } = require("../utility/helpers");
 const { uploadImage, deleteImage } = require("../config/imageService");
 
+module.exports.userInfo = async (req, res) => {
+	let { uid, sortBy, sortType } = req.query;
+	let users;
+	if (uid) {
+		users = await User.findById(uid);
+	} else {
+		sortBy ? sortBy : "name";
+		sortType ? sortType : "asc";
+		users = await User.find(
+			{ showOnWebsite: true },
+			{
+				name: 1,
+				email: 1,
+				designation: 1,
+				role: 1,
+				github: 1,
+				linkedin: 1,
+				twitter: 1,
+				portfolio: 1,
+				image: 1,
+				_id: 0
+			}
+		).sort({
+			[sortBy]: sortType
+		});
+	}
+	sendSuccess(res, users);
+};
+
 module.exports.users = async (req, res) => {
 	let { uid, sortBy, sortType } = req.query;
 	let users;
 	if (uid) {
 		users = await User.findById(uid);
 	} else {
-		let role = ["core", "member"];
 		sortBy ? sortBy : "name";
 		sortType ? sortType : "asc";
-		users = await User.find({ role: { $in: role } }).sort({
+		users = await User.find().sort({
 			[sortBy]: sortType
 		});
 	}
@@ -202,28 +230,11 @@ module.exports.profile = async (req, res) => {
 };
 
 module.exports.updateProfile = async (req, res) => {
-	let {
-		name,
-		email,
-		// contact,
-		// github,
-		// linkedin,
-		// twitter,
-		// portfolio,
-		dob
-	} = req.body;
+	let { dob } = req.body;
 
 	let profile = await User.findById(req.user.id);
 	if (!profile) {
 		return sendError(res, "No Profile Found", BAD_REQUEST);
-	}
-
-	if (name && name !== profile.name) {
-		setToken(req.user.id, "revalidate");
-	}
-
-	if (email && email !== profile.email) {
-		setToken(req.user.id, "revalidate");
 	}
 
 	if (req.files && req.files.length !== 0) {
@@ -241,11 +252,6 @@ module.exports.updateProfile = async (req, res) => {
 		if (uploaded) {
 			req.body.image = uploaded;
 		}
-	}
-
-	if (req.body.password) {
-		let salt = await bcrypt.genSalt(10);
-		req.body.password = await bcrypt.hash(req.body.password, salt);
 	}
 
 	if (dob) {
@@ -330,6 +336,19 @@ module.exports.resetPassword = async (req, res) => {
 	await Promise.all([user.save(), resetToken.delete()]);
 
 	return sendSuccess(res, null);
+};
+
+module.exports.changePassword = async (req, res) => {
+	let { oldPassword, newPassword } = req.body;
+	let user = await User.findById(req.user.id);
+	const validPassword = await user.isValidPwd(String(oldPassword).trim());
+	if (!validPassword) {
+		return sendError(res, "Invalid Password", BAD_REQUEST);
+	}
+	user.password = newPassword;
+	await user.save();
+	setToken(req.user.id, "revalidate");
+	return sendSuccess(res, "Password Successfully changed");
 };
 
 module.exports.temp = async (req, res) => {

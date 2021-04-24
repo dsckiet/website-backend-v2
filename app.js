@@ -48,12 +48,14 @@ module.exports = () => {
 	const ResetToken = require("./models/ResetToken");
 	const Subscriber = require("./models/Subscriber");
 	const Subscription = require("./models/Subscription");
+	const Todo = require("./models/Todo");
 
 	//Routes
 	app.use("/api/v1", require("./routes/api/v1/index"));
 	app.use("/api/v1/users", require("./routes/api/v1/users"));
 	app.use("/api/v1/events", require("./routes/api/v1/events"));
 	app.use("/api/v1/subscription", require("./routes/api/v1/subscription"));
+	app.use("/api/v1/todo", require("./routes/api/v1/todo"));
 
 	app.use("*", notFound);
 
