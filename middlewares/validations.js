@@ -26,7 +26,10 @@ module.exports.userUpdateValidation = (req, res, next) => {
 			"role",
 			"designation",
 			"showOnWebsite",
-			"lastLogin"
+			"lastLogin",
+			"name",
+			"email",
+			"password"
 		],
 		canUpdate = true;
 
@@ -37,10 +40,6 @@ module.exports.userUpdateValidation = (req, res, next) => {
 	if (!canUpdate) {
 		return sendError(res, "Cannot update a restricted field", BAD_REQUEST);
 	} else {
-		if (req.body.email) {
-			if (!emailRegex.test(String(req.body.email)))
-				return sendError(res, "Email not Valid!!", BAD_REQUEST);
-		}
 		if (req.body.branch) {
 			if (
 				![
@@ -181,4 +180,18 @@ module.exports.updateTodo = (req, res, next) => {
 		return sendError(res, "Invalid status!!", BAD_REQUEST);
 	}
 	return next();
+};
+
+module.exports.changePasswordValidation = (req, res, next) => {
+	let { oldPassword, newPassword } = req.body;
+	if (!oldPassword || !newPassword) {
+		return sendError(res, "Required fields not sent!!", BAD_REQUEST);
+	}
+
+	if (oldPassword === newPassword)
+		return sendError(
+			res,
+			"New Password cannot be same as old password",
+			BAD_REQUEST
+		);
 };
