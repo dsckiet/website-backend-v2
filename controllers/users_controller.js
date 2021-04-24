@@ -156,6 +156,23 @@ module.exports.toggleShowOnWeb = async (req, res) => {
 	sendSuccess(res, user);
 };
 
+module.exports.userUpdate = async (req, res) => {
+	let { uid } = req.params;
+	let { designation, role } = req.body;
+	let user = await User.findById(uid);
+	if (!user) {
+		return sendError(res, "Invalid User", BAD_REQUEST);
+	}
+	if (designation) {
+		user.designation = designation;
+	}
+	if (role) {
+		user.role = role;
+	}
+	user = await user.save();
+	sendSuccess(res, user);
+};
+
 module.exports.toggleRevoke = async (req, res) => {
 	let { uid } = req.params;
 	let user = await User.findById(uid);

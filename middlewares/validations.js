@@ -20,7 +20,7 @@ module.exports.userValidation = (req, res, next) => {
 	}
 };
 
-module.exports.userUpdateValidation = (req, res, next) => {
+module.exports.profileUpdateValidation = (req, res, next) => {
 	let fields = Object.keys(req.body);
 	let restrictedFields = [
 			"role",
@@ -171,6 +171,13 @@ module.exports.emailValidation = (req, res, next) => {
 	return next();
 };
 
+module.exports.updateUserValidation = (req, res, next) => {
+	if (req.body.role)
+		if (!["core", "member"].includes(req.body.role)) {
+			return sendError(res, "Role not valid", BAD_REQUEST);
+		}
+	return next();
+};
 module.exports.updateTodo = (req, res, next) => {
 	let { status } = req.body;
 	if (req.body.uid) {
