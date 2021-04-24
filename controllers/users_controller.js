@@ -213,20 +213,11 @@ module.exports.profile = async (req, res) => {
 };
 
 module.exports.updateProfile = async (req, res) => {
-	let { name, email, dob } = req.body;
-
+	let { dob } = req.body;
 
 	let profile = await User.findById(req.user.id);
 	if (!profile) {
 		return sendError(res, "No Profile Found", BAD_REQUEST);
-	}
-
-	if (name && name !== profile.name) {
-		setToken(req.user.id, "revalidate");
-	}
-
-	if (email && email !== profile.email) {
-		setToken(req.user.id, "revalidate");
 	}
 
 	if (req.files && req.files.length !== 0) {
@@ -244,11 +235,6 @@ module.exports.updateProfile = async (req, res) => {
 		if (uploaded) {
 			req.body.image = uploaded;
 		}
-	}
-
-	if (req.body.password) {
-		let salt = await bcrypt.genSalt(10);
-		req.body.password = await bcrypt.hash(req.body.password, salt);
 	}
 
 	if (dob) {
@@ -333,6 +319,19 @@ module.exports.resetPassword = async (req, res) => {
 	await Promise.all([user.save(), resetToken.delete()]);
 
 	return sendSuccess(res, null);
+};
+
+module.exports.changePassword = async (req, res) => {
+	let { oldPassword, newPassword } = req.body;
+	let user = await User.findById(req.user.id);
+	const validPassword = await user.isValidPwd(String(oldPassword).trim());
+	if (!validPassword) {
+		return sendError(res, "Invalid Password", BAD_REQUEST);
+	}
+	user.password = newPassword;
+	await user.save();
+	setToken(req.user.id, "revalidate");
+	return sendSuccess(res, "Password Successfully changed");
 };
 
 module.exports.temp = async (req, res) => {

@@ -14,7 +14,8 @@ const {
 	updateProfile,
 	forgotPassword,
 	resetPassword,
-	temp
+	temp,
+	changePassword
 } = require("../../../controllers/users_controller");
 
 // middlewares
@@ -50,6 +51,7 @@ router.post(
 );
 router.post("/forgot", emailValidation, catchErrors(forgotPassword));
 router.post("/reset", catchErrors(resetPassword));
+router.post("/change", catchErrors(allAuth), catchErrors(changePassword));
 router.post("/temp", catchErrors(temp)); // for dev purpose only
 
 // export router
