@@ -13,7 +13,7 @@ const {
 	updateProfile,
 	forgotPassword,
 	resetPassword,
-	designationUpdate,
+	userUpdate,
 	temp
 } = require("../../../controllers/users_controller");
 
@@ -22,8 +22,9 @@ const { catchErrors } = require("../../../config/errorHandler");
 const { allAuth, coreAuth, leadAuth } = require("../../../middlewares/auth");
 const {
 	userValidation,
-	userUpdateValidation,
-	emailValidation
+	updateUserValidation,
+	emailValidation,
+	profileUpdateValidation
 } = require("../../../middlewares/validations");
 const { multer, fileFilter } = require("../../../middlewares/imageValidations");
 
@@ -37,9 +38,10 @@ router.put(
 );
 router.put("/revoke/:uid", catchErrors(leadAuth), catchErrors(toggleRevoke));
 router.put(
-	"/designation/:uid",
-	catchErrors(coreAuth),
-	catchErrors(designationUpdate)
+	"/:uid",
+	catchErrors(leadAuth),
+	catchErrors(updateUserValidation),
+	catchErrors(userUpdate)
 );
 router.delete("/:uid", catchErrors(coreAuth), catchErrors(deleteUser));
 router.post("/login", catchErrors(login));
@@ -47,7 +49,7 @@ router.get("/profile", catchErrors(allAuth), catchErrors(profile));
 router.post(
 	"/profile",
 	catchErrors(allAuth),
-	userUpdateValidation,
+	profileUpdateValidation,
 	multer.any(),
 	fileFilter,
 	catchErrors(updateProfile)
