@@ -33,11 +33,10 @@ module.exports.uploadImage = async (file, key) => {
 	};
 	try {
 		let resp = await uploadObjectAsync(params);
-		console.log(`Upload succeed: ${result}`);
+		console.log(`Upload succeed: ${resp}`);
 		logger("error", "storage", {
 			type: "success",
-			key,
-			folder
+			key
 		});
 		return resp.Location;
 	} catch (err) {
