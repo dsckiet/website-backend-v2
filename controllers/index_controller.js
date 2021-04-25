@@ -1,11 +1,5 @@
 // import http status codes
-const {
-	BAD_REQUEST,
-	NOT_AUTHORIZED,
-	FORBIDDEN,
-	NOT_FOUND,
-	NOT_ACCEPTABLE
-} = require("../utility/statusCodes");
+const { BAD_REQUEST } = require("../utility/statusCodes");
 // import helper functions
 const { sendError, sendSuccess } = require("../utility/helpers");
 const { GET_BIRTHDAYS_PROCESS_SECRET } = require("../config/index");
@@ -19,21 +13,20 @@ module.exports.getTodayBirthdays = async (req, res) => {
 	if (
 		!secret ||
 		String(secret).trim() !== String(GET_BIRTHDAYS_PROCESS_SECRET)
-	) {
+	)
 		return sendError(res, "Unauthorized: Secret mismatch!", BAD_REQUEST);
-	}
 
 	// current time
 	let today = new Date();
 	// converting local time to UTC
-	let utc = today.getTime() + today.getTimezoneOffset() * 60000;
+	const utc = today.getTime() + today.getTimezoneOffset() * 60000;
 	// converting to GMT + 5.5 for timezone of India
 	today = new Date(utc + 3600000 * 5.5);
 	// get date and month
-	let month = today.getMonth() + 1,
+	const month = today.getMonth() + 1,
 		day = today.getDate();
 
-	let users = await User.aggregate([
+	const users = await User.aggregate([
 		{
 			$match: { dob: { $exists: true } }
 		},

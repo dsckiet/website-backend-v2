@@ -1,97 +1,69 @@
-const { sendError, formatHtmlDate } = require("../utility/helpers");
+const {
+	sendError,
+	formatHtmlDate,
+	getMissingFieldError,
+	toTitleCase
+} = require("../utility/helpers");
 const { BAD_REQUEST } = require("../utility/statusCodes");
 
-let emailRegex = /^\S+@\S+\.\S+/,
+const emailRegex = /^\S+@\S+\.\S+/,
 	passwordRegex = /^[\S]{8,}/,
 	phoneRegex = /(^[6-9]{1}[0-9]{9}$)/,
-	urlRegex = /^(http:\/\/www\.|https:\/\/www\.|http:\/\/|https:\/\/)?[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,5}(:[0-9]{1,5})?(\/.*)?$/;
-
+	urlRegex = /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()!@:%_\+.~#?&\/\/=]*)$/,
+	githubUrlRegex = /^https?:\/\/(www\.)?github.com\b([-a-zA-Z0-9()!@:%_\+.~#?&\/=]*)$/,
+	linkedinUrlRegex = /^https?:\/\/(www\.)?linkedin.com\/in\b([-a-zA-Z0-9()!@:%_\+.~#?&\/=]*)$/,
+	twitterUrlRegex = /^https?:\/\/(www\.)?twitter.com\b([-a-zA-Z0-9()!@:%_\+.~#?&\/=]*)$/;
+const branchesArray = ["CS", "IT", "EC", "EN", "ME", "CE", "CO", "CSI", "MCA"],
+	yearsArray = [1, 2, 3, 4];
 module.exports.userValidation = (req, res, next) => {
-	let { name, email, role, designation } = req.body;
-	if (!name || !email || !role || !designation) {
-		return sendError(res, "All field are mandatory!!", BAD_REQUEST);
-	}
-	if (!emailRegex.test(String(email))) {
-		return sendError(res, "Email not Valid!!", BAD_REQUEST);
-	} else if (!["core", "member"].includes(role)) {
-		return sendError(res, "Role not valid", BAD_REQUEST);
-	} else {
-		return next();
-	}
+	const { name, email, role, designation } = req.body;
+	if (!name) return sendError(res, getMissingFieldError("name"));
+	if (!email || !emailRegex.test(String(email).trim()))
+		return sendError(res, getMissingFieldError("email"));
+	if (!role || !["core", "member"].includes(role))
+		return sendError(res, getMissingFieldError("role"));
+	if (!designation)
+		return sendError(res, getMissingFieldError("designation"));
+	req.body.name = toTitleCase(String(name).trim());
+	req.body.email = String(email).trim().toLowerCase();
+	req.body.role = String(role).trim().toLowerCase();
+	req.body.designation = toTitleCase(String(designation).trim());
+	return next();
 };
 
 module.exports.profileUpdateValidation = (req, res, next) => {
-	let fields = Object.keys(req.body);
-	let restrictedFields = [
-			"role",
-			"designation",
-			"showOnWebsite",
-			"lastLogin",
-			"name",
-			"email",
-			"password"
-		],
-		canUpdate = true;
-
-	restrictedFields.map(restrictedField => {
-		if (fields.includes(restrictedField)) canUpdate = false;
-	});
-
-	if (!canUpdate) {
-		return sendError(res, "Cannot update a restricted field", BAD_REQUEST);
-	} else {
-		if (req.body.branch) {
-			if (
-				![
-					"CS",
-					"IT",
-					"EC",
-					"EN",
-					"ME",
-					"CE",
-					"CO",
-					"CSI",
-					"MCA"
-				].includes(req.body.branch)
-			) {
-				return sendError(res, "Branch not Valid!!", BAD_REQUEST);
-			}
-		}
-		if (req.body.year) {
-			if (![1, 2, 3, 4].includes(req.body.year)) {
-				return sendError(res, "Year not valid!!", BAD_REQUEST);
-			}
-		}
-		if (req.body.contact) {
-			if (!phoneRegex.test(String(req.body.contact))) {
-				return sendError(
-					res,
-					"Contact number not Valid!!",
-					BAD_REQUEST
-				);
-			}
-		}
-		if (req.body.linkedin) {
-			if (!urlRegex.test(String(req.body.linkedin))) {
-				return sendError(res, "Linkedin url invalid", BAD_REQUEST);
-			}
-		}
-		if (req.body.github) {
-			if (!urlRegex.test(String(req.body.github))) {
-				return sendError(res, "Github url invalid", BAD_REQUEST);
-			}
-		}
-		if (req.body.twitter) {
-			if (!urlRegex.test(String(req.body.linkedin))) {
-				return sendError(res, "Twitter url invalid", BAD_REQUEST);
-			}
-		}
-		if (req.body.portfolio) {
-			if (!urlRegex.test(String(req.body.portfolio))) {
-				return sendError(res, "Portfolio url invalid", BAD_REQUEST);
-			}
-		}
-	}
+	debugger;
+	const {
+		branch,
+		year,
+		github,
+		linkedin,
+		twitter,
+		portfolio,
+		contact
+	} = req.body;
+	if (branch && !branchesArray.includes(branch))
+		return sendError(res, getMissingFieldError("branch"), BAD_REQUEST);
+	if (year && !yearsArray.includes(Number(year)))
+		return sendError(res, getMissingFieldError("year"), BAD_REQUEST);
+	if (contact && !phoneRegex.test(String(contact)))
+		return sendError(res, getMissingFieldError("contact"), BAD_REQUEST);
+	if (linkedin && !linkedinUrlRegex.test(String(req.body.linkedin)))
+		return sendError(
+			res,
+			getMissingFieldError("linkedin url"),
+			BAD_REQUEST
+		);
+	if (twitter && !twitterUrlRegex.test(String(req.body.twitter)))
+		return sendError(res, getMissingFieldError("twitter url"), BAD_REQUEST);
+	if (github && !githubUrlRegex.test(String(req.body.github)))
+		return sendError(res, getMissingFieldError("github url"), BAD_REQUEST);
+	if (portfolio && !urlRegex.test(String(req.body.portfolio)))
+		return sendError(
+			res,
+			getMissingFieldError("portfolio url"),
+			BAD_REQUEST
+		);
 	return next();
 };
 
@@ -172,33 +144,44 @@ module.exports.emailValidation = (req, res, next) => {
 };
 
 module.exports.updateUserValidation = (req, res, next) => {
-	if (req.body.role)
-		if (!["core", "member"].includes(req.body.role)) {
-			return sendError(res, "Role not valid", BAD_REQUEST);
-		}
+	const { role, designation } = req.body;
+	if (role && !["core", "member"].includes(req.body.role))
+		return sendError(res, getMissingFieldError("role"), BAD_REQUEST);
+	if (designation)
+		req.body.designation = toTitleCase(String(designation).trim());
 	return next();
 };
 module.exports.updateTodo = (req, res, next) => {
-	let { status } = req.body;
-	if (req.body.uid) {
-		return sendError(res, "Restricted field!!", BAD_REQUEST);
-	}
-	if (!["pending", "complete"].includes(status)) {
-		return sendError(res, "Invalid status!!", BAD_REQUEST);
-	}
+	const { status, title, description, dueDate } = req.body;
+	if (status && !["pending", "complete"].includes(status))
+		return sendError(res, getMissingFieldError("status"), BAD_REQUEST);
+	if (title) req.body.title = String(title).trim();
+	if (description) req.body.description = String(description).trim();
+	if (dueDate) req.body.dueDate = formatHtmlDate(dueDate);
 	return next();
 };
 
 module.exports.changePasswordValidation = (req, res, next) => {
-	let { oldPassword, newPassword } = req.body;
-	if (!oldPassword || !newPassword) {
-		return sendError(res, "Required fields not sent!!", BAD_REQUEST);
-	}
-
+	const { oldPassword, newPassword } = req.body;
+	if (!oldPassword || !passwordRegex.test(String(oldPassword).trim()))
+		return sendError(
+			res,
+			getMissingFieldError("old password"),
+			BAD_REQUEST
+		);
+	if (!newPassword || !passwordRegex.test(String(newPassword).trim()))
+		return sendError(
+			res,
+			getMissingFieldError("new password"),
+			BAD_REQUEST
+		);
 	if (oldPassword === newPassword)
 		return sendError(
 			res,
 			"New Password cannot be same as old password",
 			BAD_REQUEST
 		);
+	req.body.oldPassword = String(oldPassword).trim();
+	req.body.newPassword = String(newPassword).trim();
+	return next();
 };

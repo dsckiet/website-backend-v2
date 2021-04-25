@@ -1,18 +1,19 @@
 {
 	"name": "dsc-website-backend-v2",
-	"version": "1.1.3",
+	"version": "1.1.4",
 	"description": "Scalable backend with async job scheduling to manage everything @dsckiet",
 	"main": "index.js",
 	"scripts": {
 		"dev": "nodemon index.js",
-		"prod": "node index.js"
+		"prod": "node index.js",
+		"lint": "prettier \"**/*.{js, json, md, html, css, yml}\" --write"
 	},
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/dsckiet/website-backend-v2.git"
 	},
 	"author": {
-		"name": "DSC KIET",
+		"name": "Developer Student Clubs KIET",
 		"email": "dsckiet@gmail.com",
 		"url": "https://dsckiet.com"
 	},
@@ -26,13 +27,18 @@
 			"name": "Rohan Mehta",
 			"email": "rhnmht30@gmail.com",
 			"url": "https://rhnmht30.dev"
+		},
+		{
+			"name": "Priyanshu Sharma",
+			"email": "priyanshus.edu@gmail.com",
+			"url": "https://priyanshusharma.com"
 		}
 	],
 	"license": "MIT",
 	"bugs": {
 		"url": "https://github.com/dsckiet/website-backend-v2/issues"
 	},
-	"homepage": "https://github.com/dsckiet/website-backend-v2#readme",
+	"homepage": "https://portal.dsckiet.com",
 	"keywords": [
 		"portal",
 		"nodejs",
@@ -48,6 +54,7 @@
 		"aws-sdk": "^2.640.0",
 		"bcryptjs": "^2.4.3",
 		"body-parser": "^1.19.0",
+		"chalk": "^4.1.1",
 		"compression": "^1.7.4",
 		"cors": "^2.8.5",
 		"dotenv": "^8.1.0",
@@ -58,7 +65,6 @@
 		"kue": "^0.11.6",
 		"log4js": "^6.1.2",
 		"mongoose": "^5.7.3",
-		"morgan": "^1.10.0",
 		"multer": "^1.4.2",
 		"multer-s3": "^2.9.0",
 		"nodemailer": "^6.4.5",
@@ -66,6 +72,22 @@
 		"nodemon": "^2.0.4",
 		"path": "^0.12.7",
 		"pdf-lib": "^1.7.0",
-		"redis": "^3.0.2"
+		"redis": "^3.0.2",
+		"uuidv4": "^6.2.7"
+	},
+	"devDependencies": {
+		"husky": "4.3.0",
+		"lint-staged": "10.4.2",
+		"prettier": "^2.1.2"
+	},
+	"lint-staged": {
+		"*.{js, jsx, json, md, html, css, yml}": [
+			"prettier --write"
+		]
+	},
+	"husky": {
+		"hooks": {
+			"pre-commit": "lint-staged"
+		}
 	}
 }

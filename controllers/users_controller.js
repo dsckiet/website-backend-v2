@@ -1,18 +1,12 @@
+const { uuid } = require("uuidv4");
 const kue = require("../config/Scheduler/kue");
 const worker = require("../config/Scheduler/worker");
-const bcrypt = require("bcryptjs");
-
-const ObjectId = require("mongoose").Types.ObjectId;
 
 const { NODE_ENV, AVATAR_URL, FRONTEND_URL } = require("../config/index");
 const { formatHtmlDate } = require("../utility/helpers");
 
 // import http status codes
-const {
-	BAD_REQUEST,
-	NOT_AUTHORIZED,
-	FORBIDDEN
-} = require("../utility/statusCodes");
+const { BAD_REQUEST, FORBIDDEN } = require("../utility/statusCodes");
 // import constants
 const { USER_HASH_LENGTH } = require("../config/index");
 // import helper functions
@@ -24,219 +18,221 @@ const {
 	setToken,
 	getImageKey
 } = require("../utility/helpers");
-const { uploadImage, deleteImage } = require("../config/imageService");
+const { uploadImage, deleteImage } = require("../services/imageService");
 
-module.exports.userInfo = async (req, res) => {
-	let { uid, sortBy, sortType } = req.query;
+module.exports.publicUsersList = async (req, res) => {
+	const { uid, sortBy = "name", sortType = "asc" } = req.query;
 	let users;
 	if (uid) {
-		users = await User.findById(uid);
-	} else {
-		sortBy ? sortBy : "name";
-		sortType ? sortType : "asc";
-		users = await User.find(
-			{ showOnWebsite: true },
-			{
-				name: 1,
-				email: 1,
-				designation: 1,
-				role: 1,
-				github: 1,
-				linkedin: 1,
-				twitter: 1,
-				portfolio: 1,
-				image: 1,
-				_id: 0
-			}
-		).sort({
-			[sortBy]: sortType
-		});
+		users = await User.findById(uid).lean();
+		return sendSuccess(res, users);
 	}
-	sendSuccess(res, users);
+	users = await User.find(
+		{ showOnWebsite: true },
+		{
+			name: 1,
+			email: 1,
+			designation: 1,
+			role: 1,
+			github: 1,
+			linkedin: 1,
+			twitter: 1,
+			portfolio: 1,
+			image: 1,
+			_id: 0
+		}
+	)
+		.sort({
+			[sortBy]: sortType
+		})
+		.lean();
+	return sendSuccess(users);
 };
 
 module.exports.users = async (req, res) => {
-	let { uid, sortBy, sortType } = req.query;
+	const { uid, sortBy = "name", sortType = "asc" } = req.query;
 	let users;
 	if (uid) {
-		users = await User.findById(uid);
-	} else {
-		sortBy ? sortBy : "name";
-		sortType ? sortType : "asc";
-		users = await User.find().sort({
-			[sortBy]: sortType
-		});
+		users = await User.findById(uid).lean();
+		return sendSuccess(res, users);
 	}
-	sendSuccess(res, users);
+	users = await User.find()
+		.sort({
+			[sortBy]: sortType
+		})
+		.lean();
+	return sendSuccess(res, users);
 };
 
 module.exports.addUser = async (req, res) => {
-	let { name, email, role, designation } = req.body;
+	const { name, email, role, designation } = req.body;
 	let user = await User.findOne({ email });
-	if (user) {
-		sendError(res, "Already exist!!", BAD_REQUEST);
-	} else {
-		if (req.user.role === "core" && (role === "lead" || role === "core")) {
-			sendError(
-				res,
-				"Forbidden: Core members cannot add lead/core members",
-				NOT_AUTHORIZED
-			);
-		} else if (req.user.role === "lead" && role === "lead") {
-			sendError(
-				res,
-				"Forbidden: A lead cannot add another lead",
-				NOT_AUTHORIZED
-			);
-		} else {
-			let password = generateHash(USER_HASH_LENGTH);
-			user = new User({
-				name,
-				email,
-				role,
-				designation,
-				password,
-				image: `${AVATAR_URL}${
-					Math.floor(Math.random() * 10000) + 9999
-				}.svg`
-			});
-			user = await user.save();
-
-			const token = user.generateAuthToken();
-			setToken(String(user._id), token);
-			let args = {
-				jobName: "sendSystemEmailJob",
-				time: Date.now(),
-				params: {
-					email,
-					password,
-					name,
-					role,
-					mailType: "login-creds"
-				}
-			};
-			kue.scheduleJob(args);
-			sendSuccess(res, user);
+	if (user) return sendError(res, "User already registered.", BAD_REQUEST);
+	if (req.user.role === "core" && (role === "lead" || role === "core"))
+		return sendError(
+			res,
+			"Forbidden: Core members cannot add lead/core members",
+			FORBIDDEN
+		);
+	if (req.user.role === "lead" && role === "lead")
+		return sendError(
+			res,
+			"Forbidden: A lead cannot add another lead",
+			FORBIDDEN
+		);
+	const password = generateHash(USER_HASH_LENGTH);
+	user = new User({
+		name,
+		email,
+		role,
+		designation,
+		password,
+		image: `${AVATAR_URL}${Math.floor(Math.random() * 10000) + 9999}.svg`
+	});
+	user = await user.save();
+	const token = user.generateAuthToken();
+	setToken(String(user._id), token);
+	const args = {
+		jobName: "sendSystemEmailJob",
+		time: Date.now(),
+		params: {
+			email,
+			password,
+			name,
+			role,
+			mailType: "login-creds"
 		}
-	}
+	};
+	kue.scheduleJob(args);
+	return sendSuccess(res, user);
 };
 
 module.exports.login = async (req, res) => {
-	let { email, password } = req.body;
-	let user = await User.findOne({
+	const { email, password } = req.body;
+	const user = await User.findOne({
 		email: { $regex: `^${email}$`, $options: "i" }
 	});
-	if (!user) return sendError(res, "Invalid User", BAD_REQUEST);
+	if (!user)
+		return sendError(
+			res,
+			"You have entered an invalid email or password.",
+			BAD_REQUEST
+		);
 	const validPassword = await user.isValidPwd(String(password).trim());
-	if (!validPassword) return sendError(res, "Invalid Password", BAD_REQUEST);
-	user.lastLogin = new Date(Date.now()).toISOString();
-	await user.save();
+	if (!validPassword)
+		return sendError(
+			res,
+			"You have entered an invalid email or password.",
+			BAD_REQUEST
+		);
+	await User.updateOne(
+		{ _id: user.id },
+		{ $set: { lastLogin: new Date(Date.now()).toISOString() } }
+	);
 	let token = await checkToken(String(user._id));
-	if (token) {
-		if (token === "revoke") {
-			return sendError(res, "Account Revoked, Logout!", FORBIDDEN);
-		} else if (token === "revalidate") {
-			token = user.generateAuthToken();
-			setToken(String(user._id), token);
-		}
-	} else {
-		return sendError(res, "Account Suspended, Logout!", FORBIDDEN);
+	if (!token)
+		return sendError(
+			res,
+			"Account suspended or deleted, Logout!",
+			FORBIDDEN
+		);
+	if (token === "revoke")
+		return sendError(res, "Account revoked, Logout!", FORBIDDEN);
+	if (token === "revalidate") {
+		token = user.generateAuthToken();
+		setToken(String(user._id), token);
 	}
-	sendSuccess(res, user, token);
+	return sendSuccess(res, user, token);
 };
 
 module.exports.toggleShowOnWeb = async (req, res) => {
-	let { uid } = req.params;
-	let user = await User.findById(uid);
-	if (!user) {
-		return sendError(res, "Invalid User", BAD_REQUEST);
-	}
-	user.showOnWebsite = user.showOnWebsite ? false : true;
-	user = await user.save();
-	sendSuccess(res, user);
+	const { uid } = req.params;
+	const user = await User.findById(uid).lean();
+	if (!user) return sendError(res, "Invalid User", BAD_REQUEST);
+	let _user = await User.updateOne(
+		{ _id: uid },
+		{ $set: { showOnWebsite: Boolean(!user.showOnWebsite) } }
+	);
+	_user["showOnWebsite"] = Boolean(!user.showOnWebsite);
+	return sendSuccess(res, _user);
 };
 
 module.exports.userUpdate = async (req, res) => {
-	let { uid } = req.params;
-	let { designation, role } = req.body;
-	let user = await User.findById(uid);
-	if (!user) {
-		return sendError(res, "Invalid User", BAD_REQUEST);
-	}
-	if (designation) {
-		user.designation = designation;
-	}
+	const { uid } = req.params;
+	const { designation, role } = req.body;
+	const user = await User.findById(uid).lean();
+	if (!user) return sendError(res, "Invalid User", BAD_REQUEST);
+	const updateObj = {};
+	if (designation) updateObj["designation"] = designation;
 	if (role) {
-		user.role = role;
+		updateObj["role"] = role;
+		setToken(String(uid), "revalidate");
 	}
-	user = await user.save();
-	sendSuccess(res, user);
+	const _user = await User.findOneAndUpdate(
+		{ _id: uid },
+		{ $set: updateObj },
+		{ $new: true }
+	);
+	return sendSuccess(res, _user);
 };
 
 module.exports.toggleRevoke = async (req, res) => {
-	let { uid } = req.params;
-	let user = await User.findById(uid);
+	const { uid } = req.params;
+	const user = await User.findById(uid).lean();
 
-	if (!user) {
-		return sendError(res, "Invalid User", BAD_REQUEST);
-	} else if (user.role === "lead") {
+	if (!user) return sendError(res, "Invalid User", BAD_REQUEST);
+	if (user.role === "lead")
 		return sendError(res, "Cannot revoke lead token", BAD_REQUEST);
-	}
 	//toggle the revoke status of user
-	user.isRevoked = user.isRevoked ? false : true;
-
+	let _user = await User.updateOne(
+		{ _id: uid },
+		{ $set: { isRevoked: Boolean(!user.isRevoked) } }
+	);
+	_user["isRevoked"] = Boolean(!user.isRevoked);
 	//change token status
-	user.isRevoked ? setToken(uid, "revoke") : setToken(uid, "revalidate");
-
-	user = await user.save();
-	sendSuccess(res, user);
+	_user.isRevoked ? setToken(uid, "revoke") : setToken(uid, "revalidate");
+	return sendSuccess(res, _user);
 };
 
 module.exports.deleteUser = async (req, res) => {
-	let { uid } = req.params;
-
-	let user = await User.findById(uid);
-	if (!user) {
-		return sendError(res, "Invalid User", BAD_REQUEST);
-	}
-	if (req.user.role === "core" && user.role !== "member") {
-		sendError(
+	const { uid } = req.params;
+	const user = await User.findByIdAndDelete(uid).lean();
+	if (!user) return sendError(res, "Invalid User", BAD_REQUEST);
+	if (user.role === "lead")
+		return sendError(
 			res,
-			"Forbidden: Core members cannot delete lead/core members",
-			NOT_AUTHORIZED
+			"Forbidden: Cannot delete lead account",
+			FORBIDDEN
 		);
-	} else {
-		if (user.image && user.image.includes("amazonaws")) {
-			let key = `${user.image.split("/")[3]}/${user.image.split("/")[4]}`;
-			await deleteImage(key);
-		}
-		await user.delete();
-		setToken(uid, "delete");
-		sendSuccess(res, null);
+	if (user.image && user.image.includes("amazonaws")) {
+		let key = `${user.image.split("/")[3]}/${user.image.split("/")[4]}`;
+		await deleteImage(key);
 	}
+	setToken(uid, "delete");
+	return sendSuccess(res, null);
 };
 
 module.exports.profile = async (req, res) => {
-	let profile;
-	if (req.query.uid) {
-		profile = await User.findById(req.query.uid);
-		if (!profile) {
-			return sendError(res, "Invalid User", BAD_REQUEST);
-		}
-	} else {
-		profile = await User.findById(req.user.id);
-	}
-	sendSuccess(res, profile);
+	const pid = req.query.uid || req.user.id;
+	const profile = await User.findById(pid).lean();
+	if (!profile) return sendError(res, "Invalid User", BAD_REQUEST);
+	return sendSuccess(res, profile);
 };
 
 module.exports.updateProfile = async (req, res) => {
-	let { dob } = req.body;
-
-	let profile = await User.findById(req.user.id);
-	if (!profile) {
-		return sendError(res, "No Profile Found", BAD_REQUEST);
-	}
-
+	const {
+		dob,
+		branch,
+		year,
+		github,
+		linkedin,
+		twitter,
+		portfolio,
+		contact
+	} = req.body;
+	const profile = await User.findById(req.user.id).lean();
+	if (!profile) return sendError(res, "Invalid user", BAD_REQUEST);
+	const updateObj = {};
 	if (req.files && req.files.length !== 0) {
 		let key;
 		if (profile.image && profile.image.includes("amazonaws")) {
@@ -247,49 +243,41 @@ module.exports.updateProfile = async (req, res) => {
 		}
 
 		key = getImageKey(req.originalUrl);
-		let file = req.files[0];
-		let uploaded = await uploadImage(file, key);
-		if (uploaded) {
-			req.body.image = uploaded;
-		}
+		const file = req.files[0];
+		const uploaded = await uploadImage(file, key);
+		if (uploaded) updateObj["image"] = uploaded;
 	}
 
-	if (dob) {
-		req.body.dob = formatHtmlDate(dob);
-	}
-
-	profile = await User.findByIdAndUpdate(
+	if (dob) updateObj["dob"] = formatHtmlDate(dob);
+	if (branch) updateObj["branch"] = branch;
+	if (year) updateObj["year"] = year;
+	if (github) updateObj["github"] = github;
+	if (linkedin) updateObj["linkedin"] = linkedin;
+	if (twitter) updateObj["twitter"] = twitter;
+	if (portfolio) updateObj["portfolio"] = portfolio;
+	if (contact) updateObj["contact"] = Number(contact);
+	const _profile = await User.findByIdAndUpdate(
 		req.user.id,
-		{ $set: req.body },
+		{ $set: updateObj },
 		{ new: true }
-	);
-	sendSuccess(res, profile);
+	).lean();
+	return sendSuccess(res, _profile);
 };
 
 module.exports.forgotPassword = async (req, res) => {
-	let { email } = req.body;
-	email = String(email).trim().toLowerCase();
-	let [user, resetToken] = await Promise.all([
-		User.findOne({ email }),
-		ResetToken.findOne({ email })
-	]);
-	if (!user) {
-		return sendError(res, "No Profile Found", BAD_REQUEST);
-	}
-	let promises = [];
-	if (resetToken) {
-		promises.push(resetToken.delete());
-	}
-
-	let newResetToken = new ResetToken({
+	const { email } = req.body;
+	const user = await User.findOne({ email }).lean();
+	const resetToken = await ResetToken.findOne({ email }).lean();
+	if (!user) return sendError(res, "Invalid user", BAD_REQUEST);
+	if (resetToken) await ResetToken.deleteOne({ _id: resetToken._id });
+	const newResetToken = new ResetToken({
 		email,
 		id: user._id,
-		token: `${generateHash(3)}${Date.now()}${generateHash(3)}`,
+		token: uuid(),
 		expires: Date.now() + 3600000
 	});
-
-	promises.push(newResetToken.save());
-	let args = {
+	await newResetToken.save();
+	const args = {
 		jobName: "sendSystemEmailJob",
 		time: Date.now(),
 		params: {
@@ -300,29 +288,23 @@ module.exports.forgotPassword = async (req, res) => {
 		}
 	};
 	kue.scheduleJob(args);
-	await Promise.all(promises);
 	return sendSuccess(res, null);
 };
 
 module.exports.resetPassword = async (req, res) => {
-	let { token, id, pwd } = req.body;
-
-	let [user, resetToken] = await Promise.all([
-		User.findById(id),
-		ResetToken.findOne({
-			$and: [{ id }, { token }, { expires: { $gte: Date.now() } }]
-		})
-	]);
-	if (!user || !resetToken) {
+	const { token, id, pwd } = req.body;
+	const user = await User.findById(id);
+	const resetToken = await ResetToken.findOne({
+		$and: [{ id }, { token }, { expires: { $gte: Date.now() } }]
+	}).lean();
+	if (!user || !resetToken)
 		return sendError(
 			res,
 			"Reset link is not valid or expired.",
 			BAD_REQUEST
 		);
-	}
 
 	user.password = String(pwd).trim();
-
 	let args = {
 		jobName: "sendSystemEmailJob",
 		time: Date.now(),
@@ -333,22 +315,32 @@ module.exports.resetPassword = async (req, res) => {
 		}
 	};
 	kue.scheduleJob(args);
-	await Promise.all([user.save(), resetToken.delete()]);
-
+	await user.save();
+	await ResetToken.deleteOne({ _id: resetToken._id });
+	setToken(id, "revalidate");
 	return sendSuccess(res, null);
 };
 
 module.exports.changePassword = async (req, res) => {
-	let { oldPassword, newPassword } = req.body;
-	let user = await User.findById(req.user.id);
+	const { oldPassword, newPassword } = req.body;
+	const user = await User.findById(req.user.id);
 	const validPassword = await user.isValidPwd(String(oldPassword).trim());
-	if (!validPassword) {
-		return sendError(res, "Invalid Password", BAD_REQUEST);
-	}
+	if (!validPassword)
+		return sendError(res, "Invalid old password", BAD_REQUEST);
 	user.password = newPassword;
 	await user.save();
 	setToken(req.user.id, "revalidate");
-	return sendSuccess(res, "Password Successfully changed");
+	let args = {
+		jobName: "sendSystemEmailJob",
+		time: Date.now(),
+		params: {
+			email: user.email,
+			name: user.name,
+			mailType: "change-pwd-success"
+		}
+	};
+	kue.scheduleJob(args);
+	return sendSuccess(res, null);
 };
 
 module.exports.temp = async (req, res) => {
@@ -361,11 +353,12 @@ module.exports.temp = async (req, res) => {
 
 	// // create root lead user
 	// let user = await new User({
-	// 	name: "root",
-	// 	email: "root@dsckiet.tech",
+	// 	name: "Admin User",
+	// 	email: "lead@dsckiet.com",
 	// 	password: "root@dsckiet123",
 	// 	role: "lead",
-	// 	designation: "lead"
+	// 	designation: "lead",
+	// 	image: "https://avatars.dicebear.com/v2/identicon/12718.svg"
 	// });
 	// const token = user.generateAuthToken();
 	// setToken(String(user._id), token);

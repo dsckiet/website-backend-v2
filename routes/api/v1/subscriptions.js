@@ -8,7 +8,7 @@ const {
 	unsubscribe,
 	subscriptions,
 	sendSubscription
-} = require("../../../controllers/subscription_controller");
+} = require("../../../controllers/subscriptions_controller");
 
 // middlewares
 const { catchErrors } = require("../../../config/errorHandler");

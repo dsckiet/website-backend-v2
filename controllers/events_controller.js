@@ -33,7 +33,7 @@ const {
 	getImageKey
 } = require("../utility/helpers");
 
-const { uploadImage, deleteImage } = require("../config/imageService");
+const { uploadImage, deleteImage } = require("../services/imageService");
 
 getPushObject = (part, attendInd) => {
 	return {
