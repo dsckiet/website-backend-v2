@@ -31,11 +31,12 @@ module.exports.addTodo = async (req, res) => {
 
 module.exports.updateTodo = async (req, res) => {
 	const { tid } = req.params;
-	const { dueDate, title, description } = req.body;
+	const { dueDate, title, description, status } = req.body;
 	const updateObj = {};
 	if (dueDate) updateObj["dueDate"] = dueDate;
 	if (title) updateObj["title"] = title;
 	if (description) updateObj["description"] = description;
+	if (status) updateObj["status"] = status;
 	const todo = await Todo.findOneAndUpdate(
 		{ _id: tid, uid: req.user.id },
 		{ $set: updateObj },
