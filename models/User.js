@@ -17,7 +17,7 @@ const UserSchema = new mongoose.Schema(
 		role: {
 			type: String,
 			default: "member",
-			enum: ["member", "core", "lead"],
+			enum: ["member", "core", "lead", "graduate"],
 			required: true
 		},
 		contact: { type: Number },
@@ -33,7 +33,7 @@ const UserSchema = new mongoose.Schema(
 		isRevoked: { type: Boolean, default: false },
 		lastLogin: { type: Date, default: Date.now },
 		lastActiveAt: { type: Date },
-		year: { type: Number, enum: [1, 2, 3, 4] },
+		year: { type: Number },
 		branch: {
 			type: String,
 			enum: ["CS", "IT", "EC", "EN", "ME", "CE", "CO", "CSI", "MCA"]

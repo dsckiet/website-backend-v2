@@ -29,7 +29,7 @@ module.exports.publicUsersList = async (req, res) => {
 		return sendSuccess(res, users);
 	}
 	users = await User.find(
-		{ showOnWebsite: true },
+		{ showOnWebsite: true, isRevoked: false },
 		{
 			name: 1,
 			email: 1,
@@ -57,7 +57,7 @@ module.exports.users = async (req, res) => {
 		users = await User.findById(uid).lean();
 		return sendSuccess(res, users);
 	}
-	users = await User.find()
+	users = await User.find({ role: { $in: ["lead", "core", "member"] } })
 		.sort({
 			[sortBy]: sortType
 		})
@@ -88,6 +88,7 @@ module.exports.addUser = async (req, res) => {
 		role,
 		designation,
 		password,
+		showOnWebsite: ["lead", "graduate"].includes(role) ? true : false,
 		image: `${AVATAR_URL}${Math.floor(Math.random() * 10000) + 9999}.svg`
 	});
 	user = await user.save();
@@ -118,7 +119,7 @@ module.exports.addUsers = async (req, res) => {
 		let { name, email, role, designation, branch, year, contact } = user;
 		let checkUserValid = checkAddUser(user);
 		if (checkUserValid !== "success") {
-			invalidAmbulances.push({
+			invalidUsers.push({
 				index: i,
 				user: email,
 				error: checkUserValid
@@ -147,9 +148,10 @@ module.exports.addUsers = async (req, res) => {
 			role,
 			designation,
 			password,
-			branch,
-			year,
+			branch: branch || undefined,
+			year: year ? Number(year) : undefined,
 			contact,
+			showOnWebsite: ["lead", "graduate"].includes(role) ? true : false,
 			image: `${AVATAR_URL}${
 				Math.floor(Math.random() * 10000) + 9999
 			}.svg`
@@ -157,7 +159,6 @@ module.exports.addUsers = async (req, res) => {
 		user = await user.save();
 		const token = user.generateAuthToken();
 		setToken(String(user._id), token);
-		console.log(user);
 		const args = {
 			jobName: "sendSystemEmailJob",
 			time: Date.now(),
@@ -172,7 +173,7 @@ module.exports.addUsers = async (req, res) => {
 		kue.scheduleJob(args);
 	}
 	return sendSuccess(res, {
-		totalAdded: entries.length - invalidUsers.length,
+		totalAdded: users.length - invalidUsers.length,
 		totalFailed: invalidUsers.length,
 		invalidUsers
 	});
@@ -236,6 +237,12 @@ module.exports.userUpdate = async (req, res) => {
 	const updateObj = {};
 	if (designation) updateObj["designation"] = designation;
 	if (role) {
+		if (
+			role === "graduate" &&
+			(user.year !== new Date().getFullYear() ||
+				new Date().getMonth() < 4)
+		)
+			return sendError(res, "Operation not permitted.", BAD_REQUEST);
 		updateObj["role"] = role;
 		setToken(String(uid), "revalidate");
 	}
@@ -299,7 +306,8 @@ module.exports.updateProfile = async (req, res) => {
 		linkedin,
 		twitter,
 		portfolio,
-		contact
+		contact,
+		bio
 	} = req.body;
 	const profile = await User.findById(req.user.id).lean();
 	if (!profile) return sendError(res, "Invalid user", BAD_REQUEST);
@@ -327,6 +335,7 @@ module.exports.updateProfile = async (req, res) => {
 	if (twitter) updateObj["twitter"] = twitter;
 	if (portfolio) updateObj["portfolio"] = portfolio;
 	if (contact) updateObj["contact"] = Number(contact);
+	if (bio) updateObj["bio"] = bio;
 	const _profile = await User.findByIdAndUpdate(
 		req.user.id,
 		{ $set: updateObj },

@@ -13,14 +13,13 @@ const emailRegex = /^\S+@\S+\.\S+/,
 	githubUrlRegex = /^https?:\/\/(www\.)?github.com\b([-a-zA-Z0-9()!@:%_\+.~#?&\/=]*)$/,
 	linkedinUrlRegex = /^https?:\/\/(www\.)?linkedin.com\/in\b([-a-zA-Z0-9()!@:%_\+.~#?&\/=]*)$/,
 	twitterUrlRegex = /^https?:\/\/(www\.)?twitter.com\b([-a-zA-Z0-9()!@:%_\+.~#?&\/=]*)$/;
-const branchesArray = ["CS", "IT", "EC", "EN", "ME", "CE", "CO", "CSI", "MCA"],
-	yearsArray = [1, 2, 3, 4];
+const branchesArray = ["CS", "IT", "EC", "EN", "ME", "CE", "CO", "CSI", "MCA"];
 module.exports.userValidation = (req, res, next) => {
 	const { name, email, role, designation } = req.body;
 	if (!name) return sendError(res, getMissingFieldError("name"));
 	if (!email || !emailRegex.test(String(email).trim()))
 		return sendError(res, getMissingFieldError("email"));
-	if (!role || !["core", "member"].includes(role))
+	if (!role || !["core", "member", "graduate"].includes(role))
 		return sendError(res, getMissingFieldError("role"));
 	if (!designation)
 		return sendError(res, getMissingFieldError("designation"));
@@ -36,20 +35,23 @@ module.exports.checkAddUser = user => {
 	if (!name) return getMissingFieldError("name");
 	if (!email || !emailRegex.test(String(email).trim()))
 		return getMissingFieldError("email");
-	if (!role || !["core", "member"].includes(role))
+	if (!role || !["core", "member", "graduate"].includes(role))
 		return getMissingFieldError("role");
 	if (!designation) return getMissingFieldError("designation");
-	if (!branch || !branchesArray.includes(branch))
+	if (branch && !branchesArray.includes(branch))
 		return getMissingFieldError("branch");
-	if (!year || !yearsArray.includes(Number(year)))
+	if (
+		year &&
+		(Number(year) < new Date().getFullYear() - 5 ||
+			Number(year) > new Date().getFullYear() + 5)
+	)
 		return getMissingFieldError("year");
-	if (!contact || !phoneRegex.test(String(contact)))
+	if (contact && !phoneRegex.test(String(contact)))
 		return getMissingFieldError("contact");
 	return "success";
 };
 
 module.exports.profileUpdateValidation = (req, res, next) => {
-	debugger;
 	const {
 		branch,
 		year,
@@ -61,7 +63,11 @@ module.exports.profileUpdateValidation = (req, res, next) => {
 	} = req.body;
 	if (branch && !branchesArray.includes(branch))
 		return sendError(res, getMissingFieldError("branch"), BAD_REQUEST);
-	if (year && !yearsArray.includes(Number(year)))
+	if (
+		year &&
+		(Number(year) < new Date().getFullYear() - 5 ||
+			Number(year) > new Date().getFullYear() + 5)
+	)
 		return sendError(res, getMissingFieldError("year"), BAD_REQUEST);
 	if (contact && !phoneRegex.test(String(contact)))
 		return sendError(res, getMissingFieldError("contact"), BAD_REQUEST);
@@ -162,7 +168,7 @@ module.exports.emailValidation = (req, res, next) => {
 
 module.exports.updateUserValidation = (req, res, next) => {
 	const { role, designation } = req.body;
-	if (role && !["core", "member"].includes(req.body.role))
+	if (role && !["core", "member", "graduate"].includes(req.body.role))
 		return sendError(res, getMissingFieldError("role"), BAD_REQUEST);
 	if (designation)
 		req.body.designation = toTitleCase(String(designation).trim());
