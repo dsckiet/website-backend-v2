@@ -36,7 +36,7 @@ const getFullHTML = (content, name) => {
                                                 valign="top"><img align="none"
                                                     src="https://drive.google.com/uc?export=view&id=1XfLhaaUsef3sD7c46TC_ZoaorKg-uBFM"
                                                     alt="DSC Logo"
-                                                    style="widows:212px;height:40px;margin:0" width="300" height="40"
+                                                    style="widows:212px;height:40px;margin:0" width="468.8" height="38.5"
                                                     class="CToWUd"></td>
                                         </tr>
                                         <tr
