@@ -6,6 +6,7 @@ const {
 	users,
 	publicUsersList,
 	addUser,
+	addUsers,
 	toggleShowOnWeb,
 	toggleRevoke,
 	deleteUser,
@@ -29,12 +30,25 @@ const {
 	profileUpdateValidation,
 	changePasswordValidation
 } = require("../../../middlewares/validations");
-const { multer, fileFilter } = require("../../../middlewares/imageValidations");
+const {
+	multer,
+	fileFilter,
+	csvFileFilter
+} = require("../../../middlewares/imageValidations");
+const { getArrayFromCsv } = require("../../../middlewares/convertToJson");
 
 // routes
 router.get("/", catchErrors(allAuth), catchErrors(users));
 router.get("/public", catchErrors(publicUsersList));
 router.post("/", catchErrors(coreAuth), userValidation, catchErrors(addUser));
+router.post(
+	"/bulk",
+	catchErrors(leadAuth),
+	multer.any(),
+	csvFileFilter,
+	getArrayFromCsv,
+	catchErrors(addUsers)
+);
 router.put(
 	"/approve/:uid",
 	catchErrors(leadAuth),

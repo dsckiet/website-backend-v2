@@ -31,6 +31,23 @@ module.exports.userValidation = (req, res, next) => {
 	return next();
 };
 
+module.exports.checkAddUser = user => {
+	const { name, email, role, designation, branch, year, contact } = user;
+	if (!name) return getMissingFieldError("name");
+	if (!email || !emailRegex.test(String(email).trim()))
+		return getMissingFieldError("email");
+	if (!role || !["core", "member"].includes(role))
+		return getMissingFieldError("role");
+	if (!designation) return getMissingFieldError("designation");
+	if (!branch || !branchesArray.includes(branch))
+		return getMissingFieldError("branch");
+	if (!year || !yearsArray.includes(Number(year)))
+		return getMissingFieldError("year");
+	if (!contact || !phoneRegex.test(String(contact)))
+		return getMissingFieldError("contact");
+	return "success";
+};
+
 module.exports.profileUpdateValidation = (req, res, next) => {
 	debugger;
 	const {

@@ -19,6 +19,7 @@ const {
 	getImageKey
 } = require("../utility/helpers");
 const { uploadImage, deleteImage } = require("../services/imageService");
+const { checkAddUser } = require("../middlewares/validations");
 
 module.exports.publicUsersList = async (req, res) => {
 	const { uid, sortBy = "name", sortType = "asc" } = req.query;
@@ -105,6 +106,76 @@ module.exports.addUser = async (req, res) => {
 	};
 	kue.scheduleJob(args);
 	return sendSuccess(res, user);
+};
+
+module.exports.addUsers = async (req, res) => {
+	let invalidUsers = [];
+	let users = req.entries;
+
+	let allUsers = await User.find().lean();
+	for (let i = 0; i < users.length; i++) {
+		let user = users[i];
+		let { name, email, role, designation, branch, year, contact } = user;
+		let checkUserValid = checkAddUser(user);
+		if (checkUserValid !== "success") {
+			invalidAmbulances.push({
+				index: i,
+				user: email,
+				error: checkUserValid
+			});
+			continue;
+		}
+		let alreadyAdded = allUsers.filter(user => {
+			return (
+				String(user.email).trim().toLowerCase() ===
+				String(email).trim().toLowerCase()
+			);
+		});
+
+		if (alreadyAdded.length) {
+			invalidUsers.push({
+				index: i,
+				user: email,
+				error: "user already registered."
+			});
+			continue;
+		}
+		const password = generateHash(USER_HASH_LENGTH);
+		user = new User({
+			name,
+			email,
+			role,
+			designation,
+			password,
+			branch,
+			year,
+			contact,
+			image: `${AVATAR_URL}${
+				Math.floor(Math.random() * 10000) + 9999
+			}.svg`
+		});
+		user = await user.save();
+		const token = user.generateAuthToken();
+		setToken(String(user._id), token);
+		console.log(user);
+		const args = {
+			jobName: "sendSystemEmailJob",
+			time: Date.now(),
+			params: {
+				email,
+				password,
+				name,
+				role,
+				mailType: "login-creds"
+			}
+		};
+		kue.scheduleJob(args);
+	}
+	return sendSuccess(res, {
+		totalAdded: entries.length - invalidUsers.length,
+		totalFailed: invalidUsers.length,
+		invalidUsers
+	});
 };
 
 module.exports.login = async (req, res) => {

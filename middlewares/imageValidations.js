@@ -27,6 +27,23 @@ const fileFilter = (req, res, next) => {
 	return next();
 };
 
+const csvFileFilter = (req, res, next) => {
+	if (req.files && req.files.length !== 0) {
+		let file = req.files[0];
+		let ext = path.extname(file.originalname),
+			type = file.mimetype.split("/");
+		if (ext !== ".csv" && type[0] !== "csv") {
+			return sendError(
+				res,
+				"Please upload a valid csv file",
+				BAD_REQUEST
+			);
+		}
+		return next();
+	}
+	return sendError(res, "Please upload a valid csv file", BAD_REQUEST);
+};
+
 const certiFileFilter = (req, res, next) => {
 	if (req.files && req.files.length === 2) {
 		let file1 = req.files[0],
@@ -56,5 +73,6 @@ const certiFileFilter = (req, res, next) => {
 module.exports = {
 	multer,
 	fileFilter,
+	csvFileFilter,
 	certiFileFilter
 };
