@@ -22,6 +22,7 @@ module.exports.getGroups = async (req, res) => {
 };
 
 module.exports.myGroups = async (req, res) => {
+	// USER Aggregation framework and single query
 	let head_groups = await Group.find({
 		heads: { $in: [req.user.id] }
 	});
@@ -41,7 +42,7 @@ module.exports.addGroup = async (req, res) => {
 	return sendSuccess(res, group);
 };
 
-// module.exports.updateEvent = async (req, res) => {};
+// module.exports.updateGroup = async (req, res) => {};
 
 module.exports.deleteGroup = async (req, res) => {
 	let { gid } = req.params;
