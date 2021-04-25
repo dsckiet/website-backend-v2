@@ -3,7 +3,12 @@ const { promisify } = require("util");
 
 const { logger } = require("../utility/helpers");
 
-const { AWS_KEY, AWS_SECRET, AWS_BUCKET_NAME, AWS_REGION } = require("./index");
+const {
+	AWS_KEY,
+	AWS_SECRET,
+	AWS_BUCKET_NAME,
+	AWS_REGION
+} = require("../config/index");
 
 // aws config
 aws.config.update({
@@ -24,14 +29,30 @@ module.exports.uploadImage = async (file, key) => {
 		acl: "public-read",
 		ServerSideEncryption: "AES256",
 		ContentDisposition: "inline",
-        ContentType: "image/jpeg"
+		ContentType: "image/jpeg"
 	};
 	try {
 		let resp = await uploadObjectAsync(params);
+		console.log(`Upload succeed: ${result}`);
+		logger("error", "storage", {
+			type: "success",
+			key,
+			folder
+		});
 		return resp.Location;
 	} catch (err) {
 		console.log(err);
-		logger("error", "imageService", err);
+		logger(
+			"error",
+			"storage",
+			{
+				type: "failure",
+				message: err.message,
+				status: err.status || SERVER_ERROR,
+				stack: err.stack
+			},
+			err
+		);
 		return;
 	}
 };

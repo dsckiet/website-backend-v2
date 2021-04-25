@@ -2,19 +2,19 @@ const express = require("express");
 const router = express.Router();
 
 const {
-	getTodo,
+	getTodos,
 	addTodo,
 	deleteTodo,
-	deleteAllTodo,
+	deleteAllTodos,
 	updateTodo
-} = require("../../../controllers/todo_controller");
+} = require("../../../controllers/todos_controller");
 const { catchErrors } = require("../../../config/errorHandler");
 const { allAuth } = require("../../../middlewares/auth");
 
-router.get("/", catchErrors(allAuth), catchErrors(getTodo));
+router.get("/", catchErrors(allAuth), catchErrors(getTodos));
 router.post("/", catchErrors(allAuth), catchErrors(addTodo));
 router.put("/:tid", catchErrors(allAuth), catchErrors(updateTodo));
-router.delete("/all", catchErrors(allAuth), catchErrors(deleteAllTodo));
+router.delete("/all", catchErrors(allAuth), catchErrors(deleteAllTodos));
 router.delete("/:tid", catchErrors(allAuth), catchErrors(deleteTodo));
 
 module.exports = router;

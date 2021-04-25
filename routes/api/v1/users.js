@@ -4,7 +4,7 @@ const router = express.Router();
 // load controller
 const {
 	users,
-	userInfo,
+	publicUsersList,
 	addUser,
 	toggleShowOnWeb,
 	toggleRevoke,
@@ -26,13 +26,14 @@ const {
 	userValidation,
 	updateUserValidation,
 	emailValidation,
-	profileUpdateValidation
+	profileUpdateValidation,
+	changePasswordValidation
 } = require("../../../middlewares/validations");
 const { multer, fileFilter } = require("../../../middlewares/imageValidations");
 
 // routes
 router.get("/", catchErrors(allAuth), catchErrors(users));
-router.get("/info", catchErrors(userInfo));
+router.get("/public", catchErrors(publicUsersList));
 router.post("/", catchErrors(coreAuth), userValidation, catchErrors(addUser));
 router.put(
 	"/approve/:uid",
@@ -52,14 +53,19 @@ router.get("/profile", catchErrors(allAuth), catchErrors(profile));
 router.post(
 	"/profile",
 	catchErrors(allAuth),
-	profileUpdateValidation,
 	multer.any(),
+	profileUpdateValidation,
 	fileFilter,
 	catchErrors(updateProfile)
 );
-router.post("/forgot", emailValidation, catchErrors(forgotPassword));
-router.post("/reset", catchErrors(resetPassword));
-router.post("/change", catchErrors(allAuth), catchErrors(changePassword));
+router.post("/forgot-pwd", emailValidation, catchErrors(forgotPassword));
+router.post("/reset-pwd", catchErrors(resetPassword));
+router.post(
+	"/change-pwd",
+	catchErrors(allAuth),
+	catchErrors(changePasswordValidation),
+	catchErrors(changePassword)
+);
 router.post("/temp", catchErrors(temp)); // for dev purpose only
 
 // export router

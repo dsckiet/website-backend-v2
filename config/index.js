@@ -1,7 +1,7 @@
 require("dotenv").config();
 
 module.exports = {
-	FRONTEND_URL: "http://localhost:3000",
+	FRONTEND_URL: "https://portal.dsckiet.com",
 	NODE_ENV: process.env.NODE_ENV,
 	PORT: process.env.PORT,
 	MONGO_URI:
@@ -9,6 +9,9 @@ module.exports = {
 			? process.env.MONGO_URI_PROD
 			: process.env.MONGO_URI_DEV,
 	JWT_PRIVATE_KEY: process.env.JWT_PRIVATE_KEY,
+	JWT_ALGORITHM: process.env.JWT_ALGORITHM,
+	JWT_ISSUER: process.env.JWT_ISSUER,
+	JWT_AUDIENCE: process.env.JWT_AUDIENCE,
 	REDIS_URL: process.env.REDIS_URL,
 	EMAIL_USER: process.env.EMAIL_USER,
 	EMAIL_PASS: process.env.EMAIL_PASS,
@@ -22,5 +25,11 @@ module.exports = {
 	AWS_REGION: process.env.AWS_REGION,
 	AVATAR_URL: process.env.AVATAR_URL,
 	GET_BIRTHDAYS_PROCESS_SECRET: process.env.GET_BIRTHDAYS_PROCESS_SECRET,
-	SENTRY_DSN: process.env.SENTRY_DSN
+	SENTRY_DSN: process.env.SENTRY_DSN,
+	ALLOWED_ORIGINS: [
+		"https://portal.dsckiet.com",
+		"http://localhost:3000",
+		"https://dsckiet-admin.netlify.app",
+		/[^.\s]+deploy\-preview\-([\d]{1,})--dsckiet-admin\.netlify\.app/
+	]
 };

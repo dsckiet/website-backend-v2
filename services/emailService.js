@@ -1,7 +1,12 @@
 const nodemailer = require("nodemailer");
 var htmlToText = require("nodemailer-html-to-text").htmlToText;
 
-let { EMAIL_USER, EMAIL_PASS, EMAIL_HOST, SENDER_EMAIL } = require("./index");
+let {
+	EMAIL_USER,
+	EMAIL_PASS,
+	EMAIL_HOST,
+	SENDER_EMAIL
+} = require("../config/index");
 let { getMailTemplate } = require("../utility/emailTemplates");
 const { logger } = require("../utility/helpers");
 
@@ -20,7 +25,8 @@ const transporter = nodemailer.createTransport({
 module.exports.sendSystemEmail = async (email, data, type) => {
 	let { subject, html } = getMailTemplate(data, type);
 	let mailOptions = {
-		from: `DSCKIET <${SENDER_EMAIL}>`,
+		from: `Developer Student Clubs KIET <${SENDER_EMAIL}>`,
+		replyTo: `Developer Student Clubs KIET <dsckiet@gmail.com>`,
 		to: email,
 		subject,
 		html,
@@ -33,14 +39,14 @@ module.exports.sendSystemEmail = async (email, data, type) => {
 	try {
 		await transporter.sendMail(mailOptions);
 	} catch (err) {
-		logger("error", "emailService", err);
 		throw err;
 	}
 };
 
 module.exports.sendGeneralEmail = async (email, subject, content) => {
 	let mailOptions = {
-		from: `DSCKIET <${SENDER_EMAIL}>`,
+		from: `Developer Student Clubs KIET <${SENDER_EMAIL}>`,
+		replyTo: `Developer Student Clubs KIET <dsckiet@gmail.com>`,
 		to: email,
 		subject,
 		html: content,
@@ -53,7 +59,6 @@ module.exports.sendGeneralEmail = async (email, subject, content) => {
 	try {
 		await transporter.sendMail(mailOptions);
 	} catch (err) {
-		logger("error", "emailService", err);
 		throw err;
 	}
 };
