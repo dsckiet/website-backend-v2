@@ -26,10 +26,12 @@ module.exports = {
 	AVATAR_URL: process.env.AVATAR_URL,
 	GET_BIRTHDAYS_PROCESS_SECRET: process.env.GET_BIRTHDAYS_PROCESS_SECRET,
 	SENTRY_DSN: process.env.SENTRY_DSN,
-	ALLOWED_ORIGINS: [
-		"https://portal.dsckiet.com",
-		"http://localhost:3000",
-		"https://dsckiet-admin.netlify.app",
-		/[^.\s]+deploy\-preview\-([\d]{1,})--dsckiet-admin\.netlify\.app/
-	]
+	ALLOWED_ORIGINS:
+		process.env.NODE_ENV === "production"
+			? ["https://portal.dsckiet.com"]
+			: [
+					"http://localhost:3000",
+					"https://dsckiet-admin.netlify.app",
+					/[^.\s]+deploy\-preview\-([\d]{1,})--dsckiet-admin\.netlify\.app/
+			  ]
 };

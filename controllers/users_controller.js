@@ -286,6 +286,7 @@ module.exports.deleteUser = async (req, res) => {
 		let key = `${user.image.split("/")[3]}/${user.image.split("/")[4]}`;
 		await deleteImage(key);
 	}
+	await Todo.deleteMany({ uid });
 	setToken(uid, "delete");
 	return sendSuccess(res, null);
 };
