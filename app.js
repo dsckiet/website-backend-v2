@@ -15,6 +15,7 @@ const {
 } = require("./config/index");
 const { notFound, sendErrors } = require("./config/errorHandler");
 const { logRequestMiddleware } = require("./middlewares/log");
+const { globalRateLimiter } = require("./config/rateLimit");
 
 const app = express();
 
@@ -32,7 +33,9 @@ module.exports = () => {
 
 	app.use(compression());
 	app.use(helmet());
+	app.set("trust proxy", 1);
 	app.use(cors({ exposedHeaders: "x-auth-token", origin: ALLOWED_ORIGINS }));
+	app.use(globalRateLimiter);
 	app.use(express.static(path.join(__dirname, "public")));
 	app.use(
 		bodyParser.urlencoded({

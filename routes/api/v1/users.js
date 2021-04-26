@@ -36,6 +36,7 @@ const {
 	csvFileFilter
 } = require("../../../middlewares/imageValidations");
 const { getArrayFromCsv } = require("../../../middlewares/convertToJson");
+const { loginRateLimiter } = require("../../../config/rateLimit");
 
 // routes
 router.get("/", catchErrors(allAuth), catchErrors(users));
@@ -62,20 +63,27 @@ router.put(
 	catchErrors(userUpdate)
 );
 router.delete("/:uid", catchErrors(coreAuth), catchErrors(deleteUser));
-router.post("/login", catchErrors(login));
+router.post("/login", loginRateLimiter, catchErrors(login));
 router.get("/profile", catchErrors(allAuth), catchErrors(profile));
 router.post(
 	"/profile",
+	loginRateLimiter,
 	catchErrors(allAuth),
 	multer.any(),
 	profileUpdateValidation,
 	fileFilter,
 	catchErrors(updateProfile)
 );
-router.post("/forgot-pwd", emailValidation, catchErrors(forgotPassword));
-router.post("/reset-pwd", catchErrors(resetPassword));
+router.post(
+	"/forgot-pwd",
+	loginRateLimiter,
+	emailValidation,
+	catchErrors(forgotPassword)
+);
+router.post("/reset-pwd", loginRateLimiter, catchErrors(resetPassword));
 router.post(
 	"/change-pwd",
+	loginRateLimiter,
 	catchErrors(allAuth),
 	catchErrors(changePasswordValidation),
 	catchErrors(changePassword)
