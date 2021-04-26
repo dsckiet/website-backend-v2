@@ -1,6 +1,6 @@
 {
 	"name": "dsc-website-backend-v2",
-	"version": "1.1.4",
+	"version": "1.2.0",
 	"description": "Scalable backend with async job scheduling to manage everything @dsckiet",
 	"main": "index.js",
 	"scripts": {
