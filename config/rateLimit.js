@@ -1,12 +1,6 @@
 const RateLimit = require("express-rate-limit");
 const RedisStore = require("rate-limit-redis");
 
-/*
-since global rate limiter is applied to all routes
-to add route specific rate limiting,
-double the max
-*/
-
 const constructRateLimitObj = (windowMs, max, message, opts) => {
 	return {
 		windowMs,
@@ -19,7 +13,7 @@ const constructRateLimitObj = (windowMs, max, message, opts) => {
 
 const getAuthRateLimitObj = constructRateLimitObj(
 	3600000,
-	10,
+	5,
 	"Too many attempts! Try again in few hours",
 	{ skipSuccessfulRequests: true }
 );
@@ -31,7 +25,7 @@ module.exports.globalRateLimiter = new RateLimit({
 
 module.exports.addTodoRateLimiter = new RateLimit({
 	store: new RedisStore({ prefix: "rl:addTodo" }),
-	...constructRateLimitObj(60000, 40, "Temporarily blocked")
+	...constructRateLimitObj(60000, 20, "Temporarily blocked")
 });
 
 module.exports.loginRateLimiter = new RateLimit({
@@ -58,7 +52,7 @@ module.exports.updateProfileRateLimiter = new RateLimit({
 	store: new RedisStore({ prefix: "rl:updateProfile" }),
 	...constructRateLimitObj(
 		86400000,
-		6,
+		3,
 		"Too many attempts! Try again after 1 day",
 		{ skipSuccessfulRequests: true }
 	)
