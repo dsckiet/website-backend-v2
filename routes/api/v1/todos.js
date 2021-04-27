@@ -15,8 +15,8 @@ const { addTodoRateLimiter } = require("../../../config/rateLimit");
 router.get("/", catchErrors(allAuth), catchErrors(getTodos));
 router.post(
 	"/",
-	addTodoRateLimiter,
 	catchErrors(allAuth),
+	addTodoRateLimiter,
 	catchErrors(addTodo)
 );
 router.put("/:tid", catchErrors(allAuth), catchErrors(updateTodo));

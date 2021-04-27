@@ -73,8 +73,8 @@ router.post("/login", loginRateLimiter, catchErrors(login));
 router.get("/profile", catchErrors(allAuth), catchErrors(profile));
 router.post(
 	"/profile",
-	updateProfileRateLimiter,
 	catchErrors(allAuth),
+	updateProfileRateLimiter,
 	multer.any(),
 	profileUpdateValidation,
 	fileFilter,
