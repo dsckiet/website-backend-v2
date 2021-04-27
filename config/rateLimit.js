@@ -6,7 +6,10 @@ const constructRateLimitObj = (windowMs, max, message, opts) => {
 		windowMs,
 		max,
 		message: { message, error: true, data: null },
-		keyGenerator: req => (req.user ? req.user.id : req.ip),
+		keyGenerator: req =>
+			req.user
+				? req.user.id
+				: req.headers["x-real-ip"] || req.headers["x-forwarded-for"],
 		...opts
 	};
 };

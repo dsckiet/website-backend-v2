@@ -33,7 +33,7 @@ module.exports = () => {
 
 	app.use(compression());
 	app.use(helmet());
-	app.set("trust proxy", 1);
+	app.set("trust proxy", true);
 	app.use(cors({ exposedHeaders: "x-auth-token", origin: ALLOWED_ORIGINS }));
 	app.use(globalRateLimiter);
 	app.use(express.static(path.join(__dirname, "public")));
