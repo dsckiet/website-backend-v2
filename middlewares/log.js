@@ -5,6 +5,7 @@ const {
 	setValueInCache
 } = require("../utility/helpers");
 const User = require("../models/User");
+const { NODE_ENV } = require("../config");
 
 module.exports.logRequestMiddleware = async (req, res, next) => {
 	const startTime = new Date();
@@ -29,7 +30,11 @@ module.exports.logRequestMiddleware = async (req, res, next) => {
 			statusLogColor(statusCode),
 			chalk.yellow(`${Math.round(requestDuration * 100) / 100} ms`)
 		);
-		if (req.body && Object.keys(req.body).length)
+		if (
+			NODE_ENV !== "production" &&
+			req.body &&
+			Object.keys(req.body).length
+		)
 			console.log(chalk.blue(JSON.stringify(req.body, null, 2)));
 
 		const parsedPathName = req.originalUrl.split("?").shift();

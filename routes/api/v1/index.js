@@ -9,7 +9,6 @@ const {
 
 // middlewares
 let { catchErrors } = require("../../../config/errorHandler");
-let { allAuth } = require("../../../middlewares/auth");
 
 // routes
 router.get("/", catchErrors(index));

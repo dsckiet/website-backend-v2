@@ -62,6 +62,14 @@ module.exports.users = async (req, res) => {
 			[sortBy]: sortType
 		})
 		.lean();
+	let leadIndex;
+	users.forEach((user, index) => {
+		if (user.role === "lead") {
+			leadIndex = index;
+			return;
+		}
+	});
+	users.unshift(users.splice(leadIndex, 1)[0]);
 	return sendSuccess(res, users);
 };
 

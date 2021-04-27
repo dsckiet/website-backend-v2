@@ -9,7 +9,7 @@ const { NOT_FOUND } = require("../utility/statusCodes");
 module.exports.getTodos = async (req, res) => {
 	const todos = await Todo.find({ uid: req.user.id })
 		.sort({
-			createdAt: "desc"
+			createdAt: "asc"
 		})
 		.lean();
 	return sendSuccess(res, todos);
