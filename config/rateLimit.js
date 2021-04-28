@@ -56,7 +56,6 @@ module.exports.updateProfileRateLimiter = new RateLimit({
 	...constructRateLimitObj(
 		86400000,
 		3,
-		"Too many attempts! Try again after 1 day",
-		{ skipSuccessfulRequests: true }
+		"Too many attempts! Try again after 1 day"
 	)
 });

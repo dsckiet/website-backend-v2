@@ -44,9 +44,18 @@ module.exports.publicUsersList = async (req, res) => {
 		}
 	)
 		.sort({
+			role: "asc",
 			[sortBy]: sortType
 		})
 		.lean();
+	let leadIndex;
+	users.forEach((user, index) => {
+		if (user.role === "lead") {
+			leadIndex = index;
+			return;
+		}
+	});
+	users.unshift(users.splice(leadIndex, 1)[0]);
 	return sendSuccess(users);
 };
 
@@ -59,6 +68,7 @@ module.exports.users = async (req, res) => {
 	}
 	users = await User.find({ role: { $in: ["lead", "core", "member"] } })
 		.sort({
+			role: "asc",
 			[sortBy]: sortType
 		})
 		.lean();
