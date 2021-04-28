@@ -28,7 +28,7 @@ module.exports = {
 	SENTRY_DSN: process.env.SENTRY_DSN,
 	ALLOWED_ORIGINS:
 		process.env.NODE_ENV === "production"
-			? ["https://portal.dsckiet.com"]
+			? ["https://portal.dsckiet.com", "https://dsckiet.com"]
 			: [
 					"http://localhost:3000",
 					"https://dsckiet-admin.netlify.app",

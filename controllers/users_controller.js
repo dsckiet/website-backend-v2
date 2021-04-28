@@ -56,7 +56,7 @@ module.exports.publicUsersList = async (req, res) => {
 		}
 	});
 	users.unshift(users.splice(leadIndex, 1)[0]);
-	return sendSuccess(users);
+	return sendSuccess(res, users);
 };
 
 module.exports.users = async (req, res) => {
