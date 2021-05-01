@@ -1,4 +1,8 @@
-const { sendError, formatHtmlDate } = require("../utility/helpers");
+const {
+	sendError,
+	formatHtmlDate,
+	isValidObjectId
+} = require("../utility/helpers");
 const { BAD_REQUEST } = require("../utility/statusCodes");
 const ObjectId = require("mongoose").Types.ObjectId;
 
@@ -195,17 +199,52 @@ module.exports.addGroupValidation = (req, res, next) => {
 	if (!heads.length || !members.length)
 		return sendError(res, "Invalid Data!!", BAD_REQUEST);
 	for (head of heads) {
-		if (members.includes(head)) {
-			return sendError(
-				res,
-				"A user can have only one role inside a group",
-				BAD_REQUEST
-			);
+		if (!isValidObjectId(head))
+			return sendError(res, "Invalid Data!!", BAD_REQUEST);
+		for (member of members) {
+			if (!isValidObjectId(member))
+				return sendError(res, "Invalid Data!!", BAD_REQUEST);
+			if (member === head)
+				return sendError(
+					res,
+					"Same user cannot be a head and a member concurrently!!",
+					BAD_REQUEST
+				);
 		}
 	}
-	/*
-	 * Validation - Check if elements of heads,members are valid ObjectIds
-	 * Controller - Check if object ids of heads,members are valid User Ids
-	 */
+	return next();
+};
+
+module.exports.updateTaskValidation = (req, res, next) => {
+	let { assignedBy, taskAssignee, groupId } = req.body;
+	if (assignedBy || taskAssignee || groupId)
+		return sendError(res, "Forbidden fields!!", BAD_REQUEST);
+	return next();
+};
+
+module.exports.addTaskValidation = (req, res, next) => {
+	let { title, dueDate, assignees } = req.body;
+	if (!title || !dueDate || !assignees) {
+		return sendError(res, "Required Fields not sent!!", BAD_REQUEST);
+	}
+
+	if (!Array.isArray(assignees) || !Array.isArray(assignees)) {
+		return sendError(res, "Invalid Data!!", BAD_REQUEST);
+	}
+	if (!assignees.length || !assignees.length)
+		return sendError(res, "Invalid Data!!", BAD_REQUEST);
+	for (assignee of assignees) {
+		if (!isValidObjectId(assignee))
+			return sendError(res, "Invalid Data!!", BAD_REQUEST);
+	}
+	return next();
+};
+
+module.exports.updateTaskAssigneeValidation = (req, res, next) => {
+	let { assigneeId, assignedBy, groupId, status } = req.body;
+	if (assigneeId || assignedBy || groupId)
+		return sendError(res, "Restricted Fields!!", BAD_REQUEST);
+	if (!["pending", "onit", "done", "overdue"].includes(String(status)))
+		return sendError(res, "Invalid status!!", BAD_REQUEST);
 	return next();
 };

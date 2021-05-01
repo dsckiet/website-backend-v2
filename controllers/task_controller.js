@@ -16,28 +16,45 @@ const {
 const ObjectId = require("mongoose").Types.ObjectId;
 
 module.exports.getTasks = async (req, res) => {
-	let { gid, tid } = req.query;
-	console.log(req.query);
-	let groupFilter = {
-		$match: {}
-	};
+	let { tid } = req.query;
+	let { gid } = req.params;
 	let taskIdFilter = {
 		$match: {}
 	};
-	if (gid) {
-		groupFilter["$match"] = { groupId: ObjectId(gid) };
-	}
+	let group = await Group.findById(gid);
+	if (!group) return sendError(res, "Group not found!!", NOT_FOUND);
+
+	if (
+		!group.heads.includes(ObjectId(req.user.id)) &&
+		!["lead", "core"].includes(req.user.role)
+	)
+		return sendError(res, "Not allowed to do that!!", FORBIDDEN);
 	if (tid) {
 		taskIdFilter["$match"] = { _id: ObjectId(tid) };
 	}
 	let tasks = await Task.aggregate([
-		groupFilter,
 		taskIdFilter,
 		{
 			$lookup: {
 				from: "taskassignees",
-				localField: "taskAssignees",
-				foreignField: "_id",
+				let: { taskAssigneesArray: "$taskAssignees" },
+				pipeline: [
+					{
+						$match: {
+							$expr: {
+								$in: ["$_id", "$$taskAssigneesArray"]
+							}
+						}
+					},
+					{
+						$lookup: {
+							from: "users",
+							localField: "assigneeId",
+							foreignField: "_id",
+							as: "userData"
+						}
+					}
+				],
 				as: "taskAssigneeData"
 			}
 		}
@@ -144,18 +161,21 @@ module.exports.addTask = async (req, res) => {
 	let { title, description, dueDate, assignees } = req.body;
 	let { gid } = req.params;
 	let assignedBy = req.user.id;
-	assignedBy = ObjectId(assignedBy);
 	let group = await Group.findById(gid);
 	if (!group) return sendError(res, "Group not found!!", NOT_FOUND);
-	if (!group.heads.includes(assignedBy))
-		return sendError(res, "Not allowed to add tasks", FORBIDDEN);
 	if (
-		!((await User.count({ _id: { $in: assignees } })) === assignees.length)
-	) {
-		return sendError(res, "Invalid Assignees", BAD_REQUEST);
-	}
+		!group.heads.includes(ObjectId(assignedBy)) &&
+		!["lead", "core"].includes(req.user.role)
+	)
+		return sendError(res, "Not allowed to add tasks", FORBIDDEN);
+	assignees = [...new Set(assignees)];
 	let taskAssigneeArray = [];
 	for (assignee of assignees) {
+		if (
+			!group.members.includes(ObjectId(assignee)) &&
+			!group.heads.includes(ObjectId(assignee))
+		)
+			return sendError(res, "Invalid Assignee list!!", BAD_REQUEST);
 		taskAssigneeArray.push({
 			assigneeId: assignee,
 			assignedBy,
@@ -168,8 +188,6 @@ module.exports.addTask = async (req, res) => {
 	for (taskAssignee of taskAssignees) {
 		taskAssigneeIdArray.push(taskAssignee._id);
 	}
-	console.log(taskAssignees);
-	console.log(taskAssigneeIdArray);
 	let task = new Task({
 		taskAssignees: taskAssigneeIdArray,
 		title,
@@ -182,43 +200,76 @@ module.exports.addTask = async (req, res) => {
 	return sendSuccess(res, task);
 };
 
-// module.exports.updateTask = async (req, res) => {
-// 	// make only title,dueDate updatable
-// 	let { tid } = req.params;
-// 	let task = await Task.findById(tid);
-// 	if (!task) return sendError(res, "Task not found!!", NOT_FOUND);
-// 	let group = await Group.findById(task.groupId);
-// 	if (!group.head.includes(req.user.id))
-// 		return sendError(res, "Not allowed to update tasks", FORBIDDEN);
+module.exports.updateTask = async (req, res) => {
+	// make only title,dueDate,description updatable,
+	let { tid } = req.params;
+	let task = await Task.findById(tid);
+	if (!task) return sendError(res, "Task not found!!", NOT_FOUND);
+	let group = await Group.findById(task.groupId);
+	if (
+		!group.heads.includes(ObjectId(req.user.id)) &&
+		!["lead", "core"].includes(req.user.role)
+	)
+		return sendError(res, "Not allowed to update tasks", FORBIDDEN);
 
-// 	task = await task.update({ $set: req.body }, { new: true });
-// 	return sendSuccess(res, task);
-// };
+	if (req.body.dueDate) {
+		req.body.dueDate = formatHtmlDate(dueDate);
+	}
+	task = await task.update({ $set: req.body }, { new: true });
+	return sendSuccess(res, task);
+};
 
-// module.exports.deleteTask = async (req, res) => {
-// 	let { tid } = req.params;
-// 	let task = await Task.findById(tid);
-// 	if (!task) return sendError(res, "Task not found!!", NOT_FOUND);
-// 	let group = await Group.findById(task.groupId);
-// 	if (!group.heads.includes(req.user.id))
-// 		return sendError(res, "Not allowed to delete tasks", FORBIDDEN);
-// 	await task.delete();
-// 	await TaskAssignee.deleteMany({ tid: task._id });
-// 	return sendSuccess(res, null);
-// };
+module.exports.deleteTask = async (req, res) => {
+	let { tid } = req.params;
+	let task = await Task.findById(tid);
+	if (!task) return sendError(res, "Task not found!!", NOT_FOUND);
+	let group = await Group.findById(task.groupId);
+	if (
+		!group.heads.includes(ObjectId(req.user.id)) &&
+		!["lead", "core"].includes(req.user.role)
+	)
+		return sendError(res, "Not allowed to delete tasks", FORBIDDEN);
+	await TaskAssignee.deleteMany({ _id: { $in: task.taskAssignees } });
+	await task.delete();
+
+	return sendSuccess(res, null);
+};
 
 module.exports.getTaskAssignees = async (req, res) => {
-	let { tid } = req.params;
-	let { uid } = req.query;
-	let taskAssignees;
-	if (uid)
-		taskAssignees = await TaskAssignee.findOne({
-			taskId: tid,
-			assignee: uid
-		});
-	else
-		taskAssignees = await TaskAssignee.find({
-			taskId: tid
-		});
-	return sendSuccess(res, taskAssignees);
+	let { taid } = req.params;
+	let taskAssignee = await TaskAssignee.findById(taid);
+	if (!taskAssignee) return sendError(res, "Not Found!!", NOT_FOUND);
+	let group = await Group.findById(taskAssignee.groupId);
+	let userId = ObjectId(req.user.id);
+	if (
+		!group.members.includes(userId) &&
+		!group.heads.includes(userId) &&
+		!["lead", "core"].includes(req.user.role)
+	)
+		return sendError(res, "You cannot access this!!", FORBIDDEN);
+	return sendSuccess(res, taskAssignee);
+};
+
+module.exports.updateTaskAssignee = async (req, res) => {
+	let { taid } = req.params;
+	let taskAssignee = await TaskAssignee.findById(taid);
+	if (!taskAssignee) return sendError(res, "Not Found!!", NOT_FOUND);
+
+	if (!taskAssignee) {
+		return sendError(res, "Not Found!!", NOT_FOUND);
+	}
+	let group = await Group.findById(taskAssignee.groupId);
+	if (
+		!group.heads.includes(ObjectId(req.user.id)) &&
+		!["lead", "core"].includes(req.user.role) &&
+		!taskAssignee.assigneeId === ObjectId(req.user.id)
+	)
+		return sendError(res, "You cannot update this!!", FORBIDDEN);
+	taskAssignee = await taskAssignee.update(
+		{
+			$set: req.body
+		},
+		{ new: true }
+	);
+	return sendSuccess(res, taskAssignee);
 };

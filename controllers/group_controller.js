@@ -8,6 +8,7 @@ const {
 } = require("../utility/statusCodes");
 // import helper functions
 const { sendError, sendSuccess } = require("../utility/helpers");
+const { ObjectId } = require("mongoose").Types.ObjectId;
 
 module.exports.getGroups = async (req, res) => {
 	let { gid } = req.query;
@@ -22,21 +23,33 @@ module.exports.getGroups = async (req, res) => {
 };
 
 module.exports.myGroups = async (req, res) => {
-	// USER Aggregation framework and single query
-	let head_groups = await Group.find({
-		heads: { $in: [req.user.id] }
-	});
-	let member_groups = await Group.find({
-		members: { $in: [req.user.id] }
-	});
-	return sendSuccess(res, {
-		"Head groups": head_groups,
-		"Member groups": member_groups
-	});
+	let groups = await Group.aggregate([
+		{
+			$facet: {
+				"Head Groups": [
+					{
+						$match: { heads: { $in: [ObjectId(req.user.id)] } }
+					}
+				],
+				"Member Groups": [
+					{
+						$match: { members: { $in: [ObjectId(req.user.id)] } }
+					}
+				]
+			}
+		}
+	]);
+	return sendSuccess(res, groups);
 };
 
 module.exports.addGroup = async (req, res) => {
 	let { name, heads, members } = req.body;
+	heads = [...new Set(heads)];
+	members = [...new Set(members)];
+	if ((await User.count({ _id: { $in: heads } })) !== heads.length)
+		return sendError(res, "Heads array invalid!!", BAD_REQUEST);
+	if ((await User.count({ _id: { $in: members } })) !== members.length)
+		return sendError(res, "Members array invalid!!", BAD_REQUEST);
 	let group = new Group({ name, heads, members });
 	await group.save();
 	return sendSuccess(res, group);
@@ -51,7 +64,7 @@ module.exports.deleteGroup = async (req, res) => {
 		return sendError(res, "Group Not found!!", NOT_FOUND);
 	} else {
 		await Task.deleteMany({ groupId: gid });
-		// task assignee udao
+		await TaskAssignee.deleteMany({ groupId: gid });
 		// task assignee comment udao
 	}
 	return sendSuccess(res, null);

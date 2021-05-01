@@ -4,6 +4,7 @@ const client = redis.createClient();
 const { promisify } = require("util");
 const getAsync = promisify(client.get).bind(client);
 const { SENTRY_DSN, NODE_ENV } = require("../config/index");
+const ObjectId = require("mongoose").Types.ObjectId;
 
 client.on("error", function (error) {
 	console.error(error);
@@ -148,4 +149,12 @@ module.exports.getImageKey = url => {
 	return `${folder}/${Date.now()}${
 		Math.floor(Math.random() * 900000) + 99999
 	}.jpeg`;
+};
+
+module.exports.isValidObjectId = id => {
+	if (ObjectId.isValid(id)) {
+		if (String(new ObjectId(id)) === id) return true;
+		return false;
+	}
+	return false;
 };
