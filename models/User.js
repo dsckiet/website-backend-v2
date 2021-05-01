@@ -1,7 +1,12 @@
 const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
-const { JWT_PRIVATE_KEY } = require("../config/index");
-const { toTitleCase } = require("../utility/helpers");
+const {
+	JWT_PRIVATE_KEY,
+	JWT_ISSUER,
+	JWT_AUDIENCE,
+	JWT_ALGORITHM
+} = require("../config/index");
+const { toTitleCase, generateHash } = require("../utility/helpers");
 const bcrypt = require("bcryptjs");
 
 const UserSchema = new mongoose.Schema(
@@ -12,7 +17,7 @@ const UserSchema = new mongoose.Schema(
 		role: {
 			type: String,
 			default: "member",
-			enum: ["member", "core", "lead"],
+			enum: ["member", "core", "lead", "graduate"],
 			required: true
 		},
 		contact: { type: Number },
@@ -27,7 +32,8 @@ const UserSchema = new mongoose.Schema(
 		bio: { type: String },
 		isRevoked: { type: Boolean, default: false },
 		lastLogin: { type: Date, default: Date.now },
-		year: { type: Number, enum: [1, 2, 3, 4] },
+		lastActiveAt: { type: Date },
+		year: { type: Number },
 		branch: {
 			type: String,
 			enum: ["CS", "IT", "EC", "EN", "ME", "CE", "CO", "CSI", "MCA"]
@@ -59,7 +65,13 @@ UserSchema.methods.generateAuthToken = function () {
 			email: this.email,
 			role: this.role
 		},
-		JWT_PRIVATE_KEY
+		JWT_PRIVATE_KEY,
+		{
+			algorithm: JWT_ALGORITHM,
+			issuer: JWT_ISSUER,
+			audience: JWT_AUDIENCE,
+			jwtid: generateHash(10)
+		}
 	);
 	return token;
 };

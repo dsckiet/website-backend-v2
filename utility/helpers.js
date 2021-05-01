@@ -1,47 +1,37 @@
-const { OK } = require("./statusCodes");
-const redis = require("redis");
-const client = redis.createClient();
+const log4js = require("log4js");
 const { promisify } = require("util");
+const redis = require("redis");
+const Sentry = require("@sentry/node");
+const client = redis.createClient();
 const getAsync = promisify(client.get).bind(client);
+
 const { SENTRY_DSN, NODE_ENV } = require("../config/index");
 const ObjectId = require("mongoose").Types.ObjectId;
+const { OK } = require("./statusCodes");
 
 client.on("error", function (error) {
 	console.error(error);
 });
 
-const log4js = require("log4js");
 log4js.configure({
 	appenders: {
-		app: {
-			type: "file",
-			filename: "logs/app.log",
-			maxLogSize: 10485760
-		},
-		errorFile: {
-			type: "file",
-			filename: "logs/errors.log"
-		},
-		errors: {
-			type: "logLevelFilter",
-			level: "ERROR",
-			appender: "errorFile"
-		}
+		server: { type: "file", filename: "logs/server.log" },
+		database: { type: "file", filename: "logs/database.log" },
+		app: { type: "file", filename: "logs/app.log" },
+		email: { type: "file", filename: "logs/email.log" },
+		storage: { type: "file", filename: "logs/storage.log" }
 	},
 	categories: {
-		default: { appenders: ["app", "errors"], level: "DEBUG" }
+		server: { appenders: ["server"], level: "DEBUG" },
+		database: { appenders: ["database"], level: "DEBUG" },
+		app: { appenders: ["app"], level: "DEBUG" },
+		email: { appenders: ["email"], level: "DEBUG" },
+		storage: { appenders: ["storage"], level: "DEBUG" },
+		default: { appenders: ["app"], level: "DEBUG" }
 	}
 });
 let logger = log4js.getLogger();
 logger.level = "debug";
-
-const Sentry = require("@sentry/node");
-Sentry.init({
-	dsn: SENTRY_DSN,
-	attachStacktrace: true,
-	debug: true,
-	environment: NODE_ENV
-});
 
 module.exports.sendError = (res, message, status) => {
 	res.status(status).json({
@@ -89,26 +79,25 @@ module.exports.toTitleCase = str => {
 
 module.exports.formatHtmlDate = date => {
 	let [yr, mn, dt] = date.split("-");
-	return new Date(yr, mn - 1, dt);
+	return new Date(yr, mn - 1, dt).toISOString();
 };
 
-module.exports.logger = (type, funcName, message) => {
-	logger = log4js.getLogger(`Logs from ${funcName} function`);
+Sentry.init({
+	dsn: SENTRY_DSN,
+	attachStacktrace: true,
+	debug: true,
+	environment: NODE_ENV
+});
 
-	if (type === "error") {
-		if (NODE_ENV === "production") {
-			Sentry.captureException(message);
-		}
-		logger.error(message);
-	} else if (type === "fatal") {
-		if (NODE_ENV === "production") {
-			Sentry.captureException(message);
-		}
-		logger.fatal(message);
-	} else if (type === "info") logger.info(message);
-	else if (type === "warn") logger.warn(message);
-	else if (type === "debug") logger.debug(message);
-	else if (type === "trace") logger.trace(message);
+module.exports.logger = (type, category, logObject, err) => {
+	logger = log4js.getLogger(category);
+	if (NODE_ENV !== "development" && err) Sentry.captureException(err);
+	if (type === "error") logger.error(logObject);
+	else if (type === "fatal") logger.fatal(logObject);
+	else if (type === "info") logger.info(logObject);
+	else if (type === "warn") logger.warn(logObject);
+	else if (type === "debug") logger.debug(logObject);
+	else if (type === "trace") logger.trace(logObject);
 };
 
 module.exports.escapeRegex = text => {
@@ -137,6 +126,21 @@ module.exports.setToken = (id, value) => {
 	}
 };
 
+module.exports.getValueFromCache = async key => {
+	let response;
+	try {
+		response = await getAsync(key);
+	} catch (err) {
+		throw err;
+	}
+	return response;
+};
+
+module.exports.setValueInCache = (key, value, exp) => {
+	if (exp) client.setex(key, exp, value);
+	else client.set(key, value);
+};
+
 module.exports.getImageKey = url => {
 	let folder;
 	if (url.includes("profile")) {
@@ -158,3 +162,11 @@ module.exports.isValidObjectId = id => {
 	}
 	return false;
 };
+const NS_PER_SEC = 1e9;
+const NS_TO_MS = 1e6;
+
+module.exports.formatHrTime = hrt => {
+	return (hrt[0] * NS_PER_SEC + hrt[1]) / NS_TO_MS;
+};
+
+module.exports.getMissingFieldError = key => `Please provide a valid ${key}`;

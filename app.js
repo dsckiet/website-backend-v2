@@ -1,23 +1,41 @@
 const express = require("express");
 const bodyParser = require("body-parser");
-const compression = require("compression");
-const morgan = require("morgan");
 const path = require("path");
+const compression = require("compression");
 const helmet = require("helmet");
-const { NODE_ENV, PORT } = require("./config/index");
-const { notFound, sendErrors } = require("./config/errorHandler");
+const cors = require("cors");
+const Sentry = require("@sentry/node");
 const kue = require("kue");
+
+const {
+	NODE_ENV,
+	PORT,
+	SENTRY_DSN,
+	ALLOWED_ORIGINS
+} = require("./config/index");
+const { notFound, sendErrors } = require("./config/errorHandler");
+const { logRequestMiddleware } = require("./middlewares/log");
+const { globalRateLimiter } = require("./config/rateLimit");
+
 const app = express();
 
-const cors = require("cors");
 require("dotenv").config();
 require("./config/dbconnection");
 
 module.exports = () => {
+	Sentry.init({
+		dsn: SENTRY_DSN,
+		attachStacktrace: true,
+		debug: true,
+		environment: NODE_ENV
+	});
+	if (NODE_ENV !== "development") app.use(Sentry.Handlers.requestHandler());
+
 	app.use(compression());
 	app.use(helmet());
-	app.use(morgan("dev"));
-	app.use(cors({ exposedHeaders: "x-auth-token" }));
+	app.set("trust proxy", true);
+	app.use(cors({ exposedHeaders: "x-auth-token", origin: ALLOWED_ORIGINS }));
+	app.use(globalRateLimiter);
 	app.use(express.static(path.join(__dirname, "public")));
 	app.use(
 		bodyParser.urlencoded({
@@ -34,12 +52,10 @@ module.exports = () => {
 		})
 	);
 	app.use("/kue-cli", kue.app);
-
-	if (NODE_ENV === "production") {
-		console.log = console.warn = console.error = () => {};
-	}
+	app.use(logRequestMiddleware);
 
 	//load Schemas
+	const Log = require("./models/Log");
 	const User = require("./models/User");
 	const Participant = require("./models/Participant");
 	const Event = require("./models/Event");
@@ -57,10 +73,10 @@ module.exports = () => {
 	app.use("/api/v1", require("./routes/api/v1/index"));
 	app.use("/api/v1/users", require("./routes/api/v1/users"));
 	app.use("/api/v1/events", require("./routes/api/v1/events"));
-	app.use("/api/v1/subscription", require("./routes/api/v1/subscription"));
-	app.use("/api/v1/todo", require("./routes/api/v1/todo"));
 	app.use("/api/v1/group", require("./routes/api/v1/groups"));
 	app.use("/api/v1/task", require("./routes/api/v1/task"));
+	app.use("/api/v1/subscriptions", require("./routes/api/v1/subscriptions"));
+	app.use("/api/v1/todos", require("./routes/api/v1/todos"));
 
 	app.use("*", notFound);
 
@@ -69,10 +85,15 @@ module.exports = () => {
 
 	// Allowing headers
 	app.use((req, res, next) => {
-		res.header("Access-Control-Allow-Origin", "*");
+		let origin = req.headers.origin;
+		if (
+			ALLOWED_ORIGINS.includes(origin) ||
+			(ALLOWED_ORIGINS[2] && ALLOWED_ORIGINS[2].test(origin))
+		)
+			res.header("Access-Control-Allow-Origin", origin);
 		res.header(
 			"Access-Control-Allow-Headers",
-			"Origin, X-Requested-With, Content-Type, Accept"
+			"Origin, X-Requested-With, Content-Type, Accept, x-auth-token"
 		);
 		res.header("Access-Control-Allow-Credentials", true);
 		res.header(

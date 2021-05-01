@@ -1,3 +1,4 @@
+const { FRONTEND_URL } = require("../config");
 const { toTitleCase } = require("./helpers");
 
 const getReceiver = name => {
@@ -33,9 +34,9 @@ const getFullHTML = (content, name) => {
                                             style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,Cantarell,'Fira Sans','Droid Sans','Helvetica Neue',sans-serif;box-sizing:border-box;font-size:14px;margin:0">
                                             <td style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,Cantarell,'Fira Sans','Droid Sans','Helvetica Neue',sans-serif;box-sizing:border-box;font-size:16px;vertical-align:top;font-weight:500;margin:0;padding:40px 40px 0 40px"
                                                 valign="top"><img align="none"
-                                                    src="https://raw.githubusercontent.com/goelaakash79/goelaakash79.github.io/master/images/dsckiet-logo.png"
+                                                    src="https://drive.google.com/uc?export=view&id=1XfLhaaUsef3sD7c46TC_ZoaorKg-uBFM"
                                                     alt="DSC Logo"
-                                                    style="widows:212px;height:40px;margin:0" width="212" height="40"
+                                                    style="widows:212px;height:40px;margin:0" width="468.8" height="38.5"
                                                     class="CToWUd"></td>
                                         </tr>
                                         <tr
@@ -50,7 +51,7 @@ const getFullHTML = (content, name) => {
                                                             <td style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,Cantarell,'Fira Sans','Droid Sans','Helvetica Neue',sans-serif;box-sizing:border-box;font-size:16px;line-height:24px;vertical-align:top;margin:0;word-wrap:break-word"
                                                                 valign="top">Hi ${getReceiver(
 																	name
-																)}<br>Greetings from DSC KIET!<br>${content}<br />For
+																)}<br>Greetings from Developer Student Clubs KIET!<br>${content}<br /><br/>For
                                                                 more information, please visit <a
                                                                     href="https://dsckiet.com">dsckiet.com</a><br /><br>
                                                             </td>
@@ -96,19 +97,18 @@ const getFullHTML = (content, name) => {
 module.exports.getMailTemplate = (data, type) => {
 	let templates = {
 		"login-creds": {
-			subject: "[CREDS] DSCKIET Portal Credentials | DSC KIET",
+			subject: `Portal Credentials for ${data.name}| DSC KIET`,
 			html: getFullHTML(
 				`
             <br/>
             You have been registered as a ${data.role} on DSC KIET
             Portal. Here are your login
-            credentials:<br /><b>${data.email}</b><br /><b>${data.password}</b><br/>`,
+            credentials:<br /><b>${data.email}</b><br /><b>${data.password}</b><br/><br/>Visit the portal at ${FRONTEND_URL}, Change your password and update your profile details.<br/><br/>Thanks and regards<br/>Team DSCKIET<br/>`,
 				data.name
 			)
 		},
 		"reset-pwd-link": {
-			subject:
-				"[FORGOT PWD] DSCKIET Password reset link | DSC KIET",
+			subject: "Password reset request | DSC KIET",
 			html: getFullHTML(
 				`Someone (hopefully you) has requested a password reset for
                 this account on DSC KIET Portal. Here is the reset
@@ -120,16 +120,25 @@ module.exports.getMailTemplate = (data, type) => {
 			)
 		},
 		"reset-pwd-success": {
-			subject: "[PASSWORD RESET] Success | DSC KIET",
+			subject: "Password reset success | DSC KIET",
 			html: getFullHTML(
 				`Your password has been successfully reset.
                 If you did not triggered this action, please contact us at
-                <a href="mailto:dsckiet@gmail.com">dsckiet@gmail.com</a></a>`,
+                <a href="mailto:dsckiet@gmail.com">dsckiet@gmail.com</a>`,
+				data.name
+			)
+		},
+		"change-pwd-success": {
+			subject: "Password change success | DSC KIET",
+			html: getFullHTML(
+				`Your password has been successfully changed.
+                If you did not triggered this action, please contact us at
+                <a href="mailto:dsckiet@gmail.com">dsckiet@gmail.com</a>`,
 				data.name
 			)
 		},
 		"event-registered": {
-			subject: "[EVENT] Registration success | DSC KIET",
+			subject: "Event registration success | DSC KIET",
 			html: getFullHTML(
 				`Thank you for registering in the event ${
 					data.event ? data.event.title : ""
@@ -137,9 +146,9 @@ module.exports.getMailTemplate = (data, type) => {
                 please, content writer wale content de de:)`,
 				data.name
 			)
-        },
+		},
 		"subscriber-welcome": {
-			subject: "[SUBSCRIBED] Registration success | DSC KIET",
+			subject: "Thanks for subscribing! | DSC KIET",
 			html: getFullHTML(
 				`Thank you for registering subscribing, baaki acha content:)`
 			)
