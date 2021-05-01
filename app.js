@@ -73,8 +73,8 @@ module.exports = () => {
 	app.use("/api/v1", require("./routes/api/v1/index"));
 	app.use("/api/v1/users", require("./routes/api/v1/users"));
 	app.use("/api/v1/events", require("./routes/api/v1/events"));
-	app.use("/api/v1/group", require("./routes/api/v1/groups"));
-	app.use("/api/v1/task", require("./routes/api/v1/task"));
+	app.use("/api/v1/groups", require("./routes/api/v1/groups"));
+	app.use("/api/v1/tasks", require("./routes/api/v1/tasks"));
 	app.use("/api/v1/subscriptions", require("./routes/api/v1/subscriptions"));
 	app.use("/api/v1/todos", require("./routes/api/v1/todos"));
 
