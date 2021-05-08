@@ -16,9 +16,8 @@ const constructRateLimitObj = (windowMs, max, message, opts) => {
 
 const getAuthRateLimitObj = constructRateLimitObj(
 	3600000,
-	5,
-	"Too many attempts! Try again in few hours",
-	{ skipSuccessfulRequests: true }
+	3,
+	"Too many attempts! Try again in few hours"
 );
 
 module.exports.globalRateLimiter = new RateLimit({

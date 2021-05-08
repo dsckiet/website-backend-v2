@@ -1,4 +1,5 @@
 const chalk = require("chalk");
+const _ = require("lodash");
 const {
 	formatHrTime,
 	getValueFromCache,
@@ -11,9 +12,9 @@ module.exports.logRequestMiddleware = async (req, res, next) => {
 	const startTime = new Date();
 	const startTimeHrt = process.hrtime();
 	res.on("finish", async () => {
-		debugger;
 		const requestDuration = formatHrTime(process.hrtime(startTimeHrt));
 		const statusCode = res.statusCode < 400 ? 200 : res.statusCode;
+		let body = {};
 		let statusLogColor;
 		if (statusCode < 400) {
 			statusLogColor = chalk.green;
@@ -30,12 +31,15 @@ module.exports.logRequestMiddleware = async (req, res, next) => {
 			statusLogColor(statusCode),
 			chalk.yellow(`${Math.round(requestDuration * 100) / 100} ms`)
 		);
-		if (
-			NODE_ENV !== "production" &&
-			req.body &&
-			Object.keys(req.body).length
-		)
-			console.log(chalk.blue(JSON.stringify(req.body, null, 2)));
+		if (req.body && Object.keys(req.body).length) {
+			body = _.omit(req.body, [
+				"password",
+				"oldPassword",
+				"newPassword",
+				"pwd"
+			]);
+			console.log(chalk.blue(JSON.stringify(body, null, 2)));
+		}
 
 		const parsedPathName = req.originalUrl.split("?").shift();
 		Log.create({
@@ -47,7 +51,7 @@ module.exports.logRequestMiddleware = async (req, res, next) => {
 			duration: requestDuration,
 			time: startTime,
 			context: {
-				body: req.body,
+				body,
 				query: req.query,
 				user: req.user
 			},
