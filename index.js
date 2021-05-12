@@ -1,5 +1,7 @@
 const cluster = require("cluster");
 const os = require("os");
+require("newrelic");
+
 const runExpressServer = require("./app");
 let { NODE_ENV } = require("./config/index");
 
