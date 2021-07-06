@@ -6,6 +6,7 @@ const client = redis.createClient();
 const getAsync = promisify(client.get).bind(client);
 
 const { SENTRY_DSN, NODE_ENV } = require("../config/index");
+const ObjectId = require("mongoose").Types.ObjectId;
 const { OK } = require("./statusCodes");
 
 client.on("error", function (error) {
@@ -154,6 +155,13 @@ module.exports.getImageKey = url => {
 	}.jpeg`;
 };
 
+module.exports.isValidObjectId = id => {
+	if (ObjectId.isValid(id)) {
+		if (String(new ObjectId(id)) === id) return true;
+		return false;
+	}
+	return false;
+};
 const NS_PER_SEC = 1e9;
 const NS_TO_MS = 1e6;
 

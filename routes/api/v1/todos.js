@@ -10,7 +10,16 @@ const {
 } = require("../../../controllers/todos_controller");
 const { catchErrors } = require("../../../config/errorHandler");
 const { allAuth } = require("../../../middlewares/auth");
+const { updateTodoValidation } = require("../../../middlewares/validations");
 const { addTodoRateLimiter } = require("../../../config/rateLimit");
+
+
+router.put(
+	"/:tid",
+	catchErrors(allAuth),
+	catchErrors(updateTodoValidation),
+	catchErrors(updateTodo)
+);
 
 router.get("/", catchErrors(allAuth), catchErrors(getTodos));
 router.post(

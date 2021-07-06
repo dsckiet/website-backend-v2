@@ -1,10 +1,12 @@
 const {
 	sendError,
 	formatHtmlDate,
+	isValidObjectId,
 	getMissingFieldError,
 	toTitleCase
 } = require("../utility/helpers");
 const { BAD_REQUEST } = require("../utility/statusCodes");
+const ObjectId = require("mongoose").Types.ObjectId;
 
 const emailRegex = /^\S+@\S+\.\S+/,
 	passwordRegex = /^[\S]{8,}/,
@@ -166,6 +168,16 @@ module.exports.emailValidation = (req, res, next) => {
 	return next();
 };
 
+module.exports.updateTodoValidation = (req, res, next) => {
+	let { status } = req.body;
+	if (req.body.uid) {
+		return sendError(res, "Restricted field!!", BAD_REQUEST);
+	}
+	if (!["pending", "complete"].includes(status)) {
+		return sendError(res, "Invalid status!!", BAD_REQUEST);
+	}
+	return next();
+};
 module.exports.updateUserValidation = (req, res, next) => {
 	const { role, designation } = req.body;
 	if (role && !["core", "member", "graduate"].includes(req.body.role))
@@ -206,5 +218,70 @@ module.exports.changePasswordValidation = (req, res, next) => {
 		);
 	req.body.oldPassword = String(oldPassword).trim();
 	req.body.newPassword = String(newPassword).trim();
+	return next();
+};
+
+module.exports.addGroupValidation = (req, res, next) => {
+	let { name, heads, members } = req.body;
+	if (!name || !heads || !members) {
+		return sendError(res, "Invalid Data !!", BAD_REQUEST);
+	}
+	if (!Array.isArray(heads) || !Array.isArray(members)) {
+		return sendError(res, "Invalid Data!!", BAD_REQUEST);
+	}
+	if (!heads.length || !members.length)
+		return sendError(res, "Invalid Data!!", BAD_REQUEST);
+	for (head of heads) {
+		if (!isValidObjectId(head))
+			return sendError(res, "Invalid Data!!", BAD_REQUEST);
+		for (member of members) {
+			if (!isValidObjectId(member))
+				return sendError(res, "Invalid Data!!", BAD_REQUEST);
+			if (member === head)
+				return sendError(
+					res,
+					"Same user cannot be a head and a member concurrently!!",
+					BAD_REQUEST
+				);
+		}
+	}
+	return next();
+};
+
+module.exports.updateTaskValidation = (req, res, next) => {
+	let { assignedBy, taskAssignee, groupId } = req.body;
+	if (assignedBy || taskAssignee || groupId)
+		return sendError(res, "Forbidden fields!!", BAD_REQUEST);
+	return next();
+};
+
+module.exports.addTaskValidation = (req, res, next) => {
+	let { title, dueDate, assignees } = req.body;
+	if (!title || !dueDate || !assignees) {
+		return sendError(res, "Required Fields not sent!!", BAD_REQUEST);
+	}
+
+	if (!Array.isArray(assignees) || !Array.isArray(assignees)) {
+		return sendError(res, "Invalid Data!!", BAD_REQUEST);
+	}
+	if (!assignees.length || !assignees.length)
+		return sendError(res, "Invalid Data!!", BAD_REQUEST);
+	for (assignee of assignees) {
+		if (!isValidObjectId(assignee))
+			return sendError(res, "Invalid Data!!", BAD_REQUEST);
+	}
+	return next();
+};
+
+module.exports.updateTaskAssigneeValidation = (req, res, next) => {
+	let { assigneeId, assignedBy, groupId, status } = req.body;
+	if (assigneeId || assignedBy || groupId)
+		return sendError(res, "Restricted Fields!!", BAD_REQUEST);
+	if (
+		!["pending", "ongoing", "completed", "closed", "overdue"].includes(
+			String(status)
+		)
+	)
+		return sendError(res, "Invalid status!!", BAD_REQUEST);
 	return next();
 };
