@@ -40,7 +40,7 @@ module.exports.getGroups = async (req, res) => {
 										}
 									},
 									{
-										$sort: { lastLogin: -1 }
+										$sort: { lastActiveAt: -1 }
 									},
 									{
 										$project: {
@@ -76,7 +76,7 @@ module.exports.getGroups = async (req, res) => {
 										}
 									},
 									{
-										$sort: { lastLogin: -1 }
+										$sort: { lastActiveAt: -1 }
 									},
 									{
 										$project: {
@@ -117,7 +117,7 @@ module.exports.getGroups = async (req, res) => {
 										}
 									},
 									{
-										$sort: { lastLogin: -1 }
+										$sort: { lastActiveAt: -1 }
 									},
 									{
 										$project: {
@@ -153,7 +153,7 @@ module.exports.getGroups = async (req, res) => {
 										}
 									},
 									{
-										$sort: { lastLogin: -1 }
+										$sort: { lastActiveAt: -1 }
 									},
 									{
 										$project: {
