@@ -13,8 +13,7 @@ const { catchErrors } = require("../../../config/errorHandler");
 const { allAuth, coreAuth, leadAuth } = require("../../../middlewares/auth");
 const { addGroupValidation } = require("../../../middlewares/validations");
 
-router.get("/", catchErrors(coreAuth), catchErrors(getGroups));
-router.get("/my", catchErrors(allAuth), catchErrors(myGroups));
+router.get("/", catchErrors(allAuth), catchErrors(getGroups));
 router.post(
 	"/",
 	catchErrors(leadAuth),

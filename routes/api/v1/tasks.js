@@ -23,7 +23,7 @@ const {
 
 router.get(
 	"/assignees/:taid",
-	catchErrors(coreAuth),
+	catchErrors(allAuth),
 	catchErrors(getTaskAssignees)
 );
 
@@ -36,8 +36,8 @@ router.put(
 
 // FETCH TASKS
 router.get("/:gid", catchErrors(allAuth), catchErrors(getTasks));
-router.get("/:gid/my", catchErrors(allAuth), catchErrors(getMyTasks));
-router.get("/:gid/:uid", catchErrors(coreAuth), catchErrors(getUserTasks));
+router.get("/user/my", catchErrors(allAuth), catchErrors(getMyTasks));
+router.get("/user/:uid", catchErrors(coreAuth), catchErrors(getUserTasks));
 
 // ADD TASK
 router.post(

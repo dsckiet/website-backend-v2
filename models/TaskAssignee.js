@@ -7,7 +7,7 @@ const TaskAssigneeSchema = new mongoose.Schema(
 		status: {
 			type: String,
 			default: "pending",
-			enum: ["done", "onit", "pending", "overdue"]
+			enum: ["pending", "ongoing", "completed", "closed", "overdue"]
 		},
 		groupId: { type: mongoose.Schema.Types.ObjectId, ref: "Group" }
 	},

@@ -16,6 +16,9 @@ const {
 const ObjectId = require("mongoose").Types.ObjectId;
 
 module.exports.getTasks = async (req, res) => {
+	/*
+	Get tasks of a particular group along with all task assignees
+	*/
 	let { tid } = req.query;
 	let { gid } = req.params;
 	let taskIdFilter = {
@@ -28,7 +31,7 @@ module.exports.getTasks = async (req, res) => {
 		!group.heads.includes(ObjectId(req.user.id)) &&
 		!["lead", "core"].includes(req.user.role)
 	)
-		return sendError(res, "Not allowed to do that!!", FORBIDDEN);
+		return sendError(res, "Not allowed to fetch tasks!!", FORBIDDEN);
 	if (tid) {
 		taskIdFilter["$match"] = { _id: ObjectId(tid) };
 	}
@@ -63,7 +66,10 @@ module.exports.getTasks = async (req, res) => {
 };
 
 module.exports.getUserTasks = async (req, res) => {
-	let { gid, uid } = req.params;
+	/*
+	Get tasks assigned to and by a certain user (only core)
+	*/
+	let { uid } = req.params;
 	let tasks = await TaskAssignee.aggregate([
 		{
 			$lookup: {
@@ -78,28 +84,14 @@ module.exports.getUserTasks = async (req, res) => {
 				"Assigned Tasks": [
 					{
 						$match: {
-							$and: [
-								{
-									groupId: ObjectId(gid)
-								},
-								{
-									assigneeId: ObjectId(uid)
-								}
-							]
+							assigneeId: ObjectId(uid)
 						}
 					}
 				],
 				"Created Tasks": [
 					{
 						$match: {
-							$and: [
-								{
-									groupId: ObjectId(gid)
-								},
-								{
-									assignedBy: ObjectId(uid)
-								}
-							]
+							assignedBy: ObjectId(uid)
 						}
 					}
 				]
@@ -110,7 +102,14 @@ module.exports.getUserTasks = async (req, res) => {
 };
 
 module.exports.getMyTasks = async (req, res) => {
-	let { gid } = req.params;
+	/*
+	Get tasks assigned to and by logged in user
+	*/
+	let { gid } = req.query;
+	let query = {};
+	if (gid) {
+		query["groupId"] = ObjectId(gid);
+	}
 	uid = req.user.id;
 	let tasks = await TaskAssignee.aggregate([
 		{
@@ -127,9 +126,7 @@ module.exports.getMyTasks = async (req, res) => {
 					{
 						$match: {
 							$and: [
-								{
-									groupId: ObjectId(gid)
-								},
+								query,
 								{
 									assigneeId: ObjectId(uid)
 								}
@@ -141,9 +138,7 @@ module.exports.getMyTasks = async (req, res) => {
 					{
 						$match: {
 							$and: [
-								{
-									groupId: ObjectId(gid)
-								},
+								query,
 								{
 									assignedBy: ObjectId(uid)
 								}
@@ -158,6 +153,9 @@ module.exports.getMyTasks = async (req, res) => {
 };
 
 module.exports.addTask = async (req, res) => {
+	/*
+	Create a new task
+	*/
 	let { title, description, dueDate, assignees } = req.body;
 	let { gid } = req.params;
 	let assignedBy = req.user.id;
@@ -201,7 +199,9 @@ module.exports.addTask = async (req, res) => {
 };
 
 module.exports.updateTask = async (req, res) => {
-	// make only title,dueDate,description updatable,
+	/*
+	Heads or Core can update title,dueDate,description
+	*/
 	let { tid } = req.params;
 	let task = await Task.findById(tid);
 	if (!task) return sendError(res, "Task not found!!", NOT_FOUND);
@@ -220,6 +220,9 @@ module.exports.updateTask = async (req, res) => {
 };
 
 module.exports.deleteTask = async (req, res) => {
+	/*
+	Delete a certain task
+	*/
 	let { tid } = req.params;
 	let task = await Task.findById(tid);
 	if (!task) return sendError(res, "Task not found!!", NOT_FOUND);
@@ -236,6 +239,9 @@ module.exports.deleteTask = async (req, res) => {
 };
 
 module.exports.getTaskAssignees = async (req, res) => {
+	/*
+	Get all task assignees for a certain task
+	*/
 	let { taid } = req.params;
 	let taskAssignee = await TaskAssignee.findById(taid);
 	if (!taskAssignee) return sendError(res, "Not Found!!", NOT_FOUND);
@@ -251,6 +257,9 @@ module.exports.getTaskAssignees = async (req, res) => {
 };
 
 module.exports.updateTaskAssignee = async (req, res) => {
+	/*
+	Only status updatable.
+	*/
 	let { taid } = req.params;
 	let taskAssignee = await TaskAssignee.findById(taid);
 	if (!taskAssignee) return sendError(res, "Not Found!!", NOT_FOUND);

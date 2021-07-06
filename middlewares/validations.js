@@ -177,7 +177,7 @@ module.exports.updateTodoValidation = (req, res, next) => {
 		return sendError(res, "Invalid status!!", BAD_REQUEST);
 	}
 	return next();
-}
+};
 module.exports.updateUserValidation = (req, res, next) => {
 	const { role, designation } = req.body;
 	if (role && !["core", "member", "graduate"].includes(req.body.role))
@@ -277,7 +277,11 @@ module.exports.updateTaskAssigneeValidation = (req, res, next) => {
 	let { assigneeId, assignedBy, groupId, status } = req.body;
 	if (assigneeId || assignedBy || groupId)
 		return sendError(res, "Restricted Fields!!", BAD_REQUEST);
-	if (!["pending", "onit", "done", "overdue"].includes(String(status)))
+	if (
+		!["pending", "ongoing", "completed", "closed", "overdue"].includes(
+			String(status)
+		)
+	)
 		return sendError(res, "Invalid status!!", BAD_REQUEST);
 	return next();
 };

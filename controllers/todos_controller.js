@@ -1,4 +1,3 @@
-const Todo = require("../models/Todo");
 const {
 	sendSuccess,
 	formatHtmlDate,
