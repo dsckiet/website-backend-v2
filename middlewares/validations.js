@@ -11,10 +11,14 @@ const ObjectId = require("mongoose").Types.ObjectId;
 const emailRegex = /^\S+@\S+\.\S+/,
 	passwordRegex = /^[\S]{8,}/,
 	phoneRegex = /(^[6-9]{1}[0-9]{9}$)/,
-	urlRegex = /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()!@:%_\+.~#?&\/\/=]*)$/,
-	githubUrlRegex = /^https?:\/\/(www\.)?github.com\b([-a-zA-Z0-9()!@:%_\+.~#?&\/=]*)$/,
-	linkedinUrlRegex = /^https?:\/\/(www\.)?linkedin.com\/in\b([-a-zA-Z0-9()!@:%_\+.~#?&\/=]*)$/,
-	twitterUrlRegex = /^https?:\/\/(www\.)?twitter.com\b([-a-zA-Z0-9()!@:%_\+.~#?&\/=]*)$/;
+	urlRegex =
+		/^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()!@:%_\+.~#?&\/\/=]*)$/,
+	githubUrlRegex =
+		/^https?:\/\/(www\.)?github.com\b([-a-zA-Z0-9()!@:%_\+.~#?&\/=]*)$/,
+	linkedinUrlRegex =
+		/^https?:\/\/(www\.)?linkedin.com\/in\b([-a-zA-Z0-9()!@:%_\+.~#?&\/=]*)$/,
+	twitterUrlRegex =
+		/^https?:\/\/(www\.)?twitter.com\b([-a-zA-Z0-9()!@:%_\+.~#?&\/=]*)$/;
 const branchesArray = ["CS", "IT", "EC", "EN", "ME", "CE", "CO", "CSI", "MCA"];
 module.exports.userValidation = (req, res, next) => {
 	const { name, email, role, designation } = req.body;
@@ -54,15 +58,8 @@ module.exports.checkAddUser = user => {
 };
 
 module.exports.profileUpdateValidation = (req, res, next) => {
-	const {
-		branch,
-		year,
-		github,
-		linkedin,
-		twitter,
-		portfolio,
-		contact
-	} = req.body;
+	const { branch, year, github, linkedin, twitter, portfolio, contact } =
+		req.body;
 	if (branch && !branchesArray.includes(branch))
 		return sendError(res, getMissingFieldError("branch"), BAD_REQUEST);
 	if (
@@ -283,5 +280,27 @@ module.exports.updateTaskAssigneeValidation = (req, res, next) => {
 		)
 	)
 		return sendError(res, "Invalid status!!", BAD_REQUEST);
+	return next();
+};
+
+module.exports.addCommentValidation = (req, res, next) => {
+	let { text } = req.body;
+	if (!text) {
+		return sendError(res, "Cannot add an empty comment", BAD_REQUEST);
+	}
+	return next();
+};
+
+module.exports.updateCommentValidation = (req, res, next) => {
+	let { isResolved } = req.body;
+	if (!isResolved) {
+		return sendError(res, "Please enter the requried fields", BAD_REQUEST);
+	}
+	if (!["true", "false"].includes(isResolved))
+		return sendError(
+			res,
+			"Value of isResolved can only be a boolean",
+			BAD_REQUEST
+		);
 	return next();
 };
