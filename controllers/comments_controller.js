@@ -90,6 +90,7 @@ module.exports.deleteComment = async (req, res) => {
 	) {
 		return sendError(res, "Cannot delete this comment", FORBIDDEN);
 	}
+	await Reply.deleteMany({ cid: ObjectId(cid) }); //Deleting all the replies associated with the comment
 	await comment.delete();
 	return sendSuccess(res, null);
 };

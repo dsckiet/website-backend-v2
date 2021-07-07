@@ -69,6 +69,7 @@ module.exports = () => {
 	const Task = require("./models/Task");
 	const TaskAssignee = require("./models/TaskAssignee");
 	const Comment = require("./models/Comment");
+	const Reply = require("./models/Reply");
 
 	//Routes
 	app.use("/api/v1", require("./routes/api/v1/index"));
@@ -79,6 +80,7 @@ module.exports = () => {
 	app.use("/api/v1/subscriptions", require("./routes/api/v1/subscriptions"));
 	app.use("/api/v1/todos", require("./routes/api/v1/todos"));
 	app.use("/api/v1/comments", require("./routes/api/v1/comments"));
+	app.use("/api/v1/replies", require("./routes/api/v1/replies"));
 
 	app.use("*", notFound);
 

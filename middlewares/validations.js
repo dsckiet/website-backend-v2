@@ -286,7 +286,7 @@ module.exports.updateTaskAssigneeValidation = (req, res, next) => {
 module.exports.addCommentValidation = (req, res, next) => {
 	let { text } = req.body;
 	if (!text) {
-		return sendError(res, "Cannot add an empty comment", BAD_REQUEST);
+		return sendError(res, "text field cannot be empty", BAD_REQUEST);
 	}
 	return next();
 };
