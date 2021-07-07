@@ -64,6 +64,10 @@ module.exports.addReply = async (req, res) => {
 	if (!comment) {
 		return sendError(res, "Not Found!!", NOT_FOUND);
 	}
+	if (!comment.isThread) {
+		comment.isThread = true;
+		await comment.save();
+	}
 	let reply = new Reply({
 		text: text,
 		uid: ObjectId(req.user.id),
