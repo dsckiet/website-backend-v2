@@ -7,7 +7,7 @@ const TaskSchema = new mongoose.Schema(
 		taskAssignees: [
 			{ type: mongoose.Schema.Types.ObjectId, ref: "TaskAssignee" }
 		],
-		dueDate: { Type: Date },
+		dueDate: { type: Date },
 		assignedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
 		groupId: { type: mongoose.Schema.Types.ObjectId, ref: "Group" }
 	},
