@@ -38,6 +38,9 @@ module.exports.getTasks = async (req, res) => {
 	let tasks = await Task.aggregate([
 		taskIdFilter,
 		{
+			$match: { groupId: ObjectId(gid) }
+		},
+		{
 			$lookup: {
 				from: "taskassignees",
 				let: { taskAssigneesArray: "$taskAssignees" },
