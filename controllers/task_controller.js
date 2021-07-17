@@ -216,7 +216,7 @@ module.exports.updateTask = async (req, res) => {
 		return sendError(res, "Not allowed to update tasks", FORBIDDEN);
 
 	if (req.body.dueDate) {
-		req.body.dueDate = formatHtmlDate(dueDate);
+		req.body.dueDate = formatHtmlDate(req.body.dueDate);
 	}
 	task = await task.update({ $set: req.body }, { new: true });
 	return sendSuccess(res, task);
