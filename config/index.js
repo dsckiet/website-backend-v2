@@ -32,6 +32,8 @@ module.exports = {
 			: [
 					"http://localhost:3000",
 					"https://dsckiet-admin.netlify.app",
-					/[^.\s]+deploy\-preview\-([\d]{1,})--dsckiet-admin\.netlify\.app/
+					/[^.\s]+deploy\-preview\-([\d]{1,})--dsckiet-admin\.netlify\.app/,
+					"https://dsckietportal.netlify.app",
+					/[^.\s]+deploy\-preview\-([\d]{1,})--dsckietportal\.netlify\.app/
 			  ]
 };

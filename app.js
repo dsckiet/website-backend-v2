@@ -92,7 +92,8 @@ module.exports = () => {
 		let origin = req.headers.origin;
 		if (
 			ALLOWED_ORIGINS.includes(origin) ||
-			(ALLOWED_ORIGINS[2] && ALLOWED_ORIGINS[2].test(origin))
+			(ALLOWED_ORIGINS[2] && ALLOWED_ORIGINS[2].test(origin)) ||
+			(ALLOWED_ORIGINS[4] && ALLOWED_ORIGINS[4].test(origin))
 		)
 			res.header("Access-Control-Allow-Origin", origin);
 		res.header(
