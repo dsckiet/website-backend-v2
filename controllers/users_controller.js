@@ -347,7 +347,7 @@ module.exports.updateProfile = async (req, res) => {
 		if (uploaded) updateObj["image"] = uploaded;
 	}
 
-	if (dob) updateObj["dob"] = formatHtmlDate(dob);
+	if (dob) updateObj["dob"] = formatHtmlDate(dob).toISOString();
 	if (branch) updateObj["branch"] = branch;
 	if (year) updateObj["year"] = year;
 	if (github) updateObj["github"] = github;

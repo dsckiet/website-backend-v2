@@ -16,7 +16,7 @@ module.exports.getTodos = async (req, res) => {
 
 module.exports.addTodo = async (req, res) => {
 	const { title, description, dueDate } = req.body;
-	if (dueDate) dueDate = formatHtmlDate(dueDate);
+	if (dueDate) dueDate = formatHtmlDate(dueDate).toISOString();
 	const newTodo = new Todo({
 		title,
 		description,

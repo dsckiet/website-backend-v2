@@ -47,6 +47,151 @@ getPushObject = (part, attendInd) => {
 	};
 };
 
+addParticipant = async (name, email, branch, year, phone) => {
+	let participant = await Participant.findOne({
+		$or: [
+			{ email: { $regex: `^${email}$`, $options: "i" } },
+			{
+				$and: [
+					{ name: { $regex: `^${name}$`, $options: "i" } },
+					{ branch },
+					{ year },
+					{
+						$or: [
+							{ email: { $regex: `^${email}$`, $options: "i" } },
+							{ phone }
+						]
+					}
+				]
+			}
+		]
+	});
+
+	if (participant) {
+		return {
+			message: "Already Registered!!",
+			code: BAD_REQUEST,
+			error: true
+		};
+	} else {
+		let password = await generateHash(USER_HASH_LENGTH);
+		participant = new Participant({
+			name,
+			email,
+			branch,
+			year,
+			phone,
+			password,
+			events: [],
+			image: `${AVATAR_URL}${
+				Math.floor(Math.random() * 10000) + 9999
+			}.svg`
+		});
+		participant = await participant.save();
+		const token = participant.generateAuthToken();
+		setToken(String(participant._id), token);
+		let args = {
+			jobName: "sendSystemEmailJob",
+			time: Date.now(),
+			params: {
+				email,
+				password,
+				name,
+				role: "Participant",
+				mailType: "login-creds"
+			}
+		};
+		kue.scheduleJob(args);
+		return {
+			message: "Successfully Registered",
+			error: false,
+			pid: participant._id
+		};
+	}
+};
+
+registerParticipantToEvent = async (pid, eid) => {
+	if (!eid) {
+		return {
+			message: "Invalid Event!!",
+			error: true,
+			code: BAD_REQUEST
+		};
+	}
+
+	let [participant, event] = await Promise.all([
+		Participant.findById(pid),
+		Event.findById(eid)
+	]);
+
+	if (!participant || !event) {
+		return {
+			message: "Invalid Request!!",
+			error: true,
+			code: BAD_REQUEST
+		};
+	}
+
+	if (event.registrations >= event.maxRegister) {
+		return {
+			message: "Maximum registrations limit reached!!",
+			error: true,
+			code: BAD_REQUEST
+		};
+	}
+
+	let eventIndex = participant.events
+		.map(event => {
+			return String(event.eid);
+		})
+		.indexOf(String(eid));
+
+	if (eventIndex !== -1) {
+		return {
+			message: "Already Registered!!",
+			error: true,
+			code: BAD_REQUEST
+		};
+	}
+
+	let attendance = new Attendance({
+		pid: new ObjectId(pid),
+		eid: new ObjectId(eid),
+		daysAttended: []
+	});
+
+	participant.events.push({
+		eid: new ObjectId(eid),
+		aid: new ObjectId(attendance._id),
+		status: "not attended"
+	});
+
+	if (event.maxRegister === event.registrations + 1) {
+		event.isRegistrationOpened = false;
+	}
+
+	event.registrations++;
+
+	[participant, attendance, event] = await Promise.all([
+		participant.save(),
+		attendance.save(),
+		event.save()
+	]);
+
+	let args = {
+		jobName: "sendSystemEmailJob",
+		time: Date.now(),
+		params: {
+			email: participant.email,
+			name: participant.name,
+			event,
+			mailType: "event-registered"
+		}
+	};
+	kue.scheduleJob(args);
+	return { error: false, message: "success", body: event };
+};
+
 module.exports.getParticipants = async (req, res) => {
 	let { eid, query, branch, year, sortBy } = req.query;
 	let filters = {};
@@ -94,58 +239,9 @@ module.exports.getParticipants = async (req, res) => {
 
 module.exports.registerParticipant = async (req, res) => {
 	let { name, email, branch, year, phone } = req.body;
-	let participant = await Participant.findOne({
-		$or: [
-			{ email: { $regex: `^${email}$`, $options: "i" } },
-			{
-				$and: [
-					{ name: { $regex: `^${name}$`, $options: "i" } },
-					{ branch },
-					{ year },
-					{
-						$or: [
-							{ email: { $regex: `^${email}$`, $options: "i" } },
-							{ phone }
-						]
-					}
-				]
-			}
-		]
-	});
-
-	if (participant) {
-		sendError(res, "Already Registered!!", BAD_REQUEST);
-	} else {
-		let password = await generateHash(USER_HASH_LENGTH);
-		participant = new Participant({
-			name,
-			email,
-			branch,
-			year,
-			phone,
-			password,
-			events: [],
-			image: `${AVATAR_URL}${
-				Math.floor(Math.random() * 10000) + 9999
-			}.svg`
-		});
-		participant = await participant.save();
-		const token = participant.generateAuthToken();
-		setToken(String(participant._id), token);
-		let args = {
-			jobName: "sendSystemEmailJob",
-			time: Date.now(),
-			params: {
-				email,
-				password,
-				name,
-				role: "Participant",
-				mailType: "login-creds"
-			}
-		};
-		kue.scheduleJob(args);
-		sendSuccess(res, participant);
-	}
+	let response = await addParticipant(name, email, branch, year, phone);
+	if (response.error) return sendError(res, response.message, response.code);
+	return sendSuccess(res, "Successfully registered");
 };
 
 module.exports.updateParticipant = async (req, res) => {
@@ -316,74 +412,9 @@ module.exports.deleteParticipant = async (req, res) => {
 
 module.exports.registerForEvent = async (req, res) => {
 	let { eid } = req.body;
-	if (!eid) {
-		return sendError(res, "Invalid Event!!", BAD_REQUEST);
-	}
-
-	let [participant, event] = await Promise.all([
-		Participant.findById(req.user.id),
-		Event.findById(eid)
-	]);
-
-	if (!participant || !event) {
-		return sendError(res, "Invalid Request!!", BAD_REQUEST);
-	}
-
-	if (event.registrations >= event.maxRegister) {
-		return sendError(
-			res,
-			"Maximum registrations limit reached!!",
-			BAD_REQUEST
-		);
-	}
-
-	let eventIndex = participant.events
-		.map(event => {
-			return String(event.eid);
-		})
-		.indexOf(String(eid));
-
-	if (eventIndex !== -1) {
-		return sendError(res, "Already Registered!!", BAD_REQUEST);
-	}
-
-	let attendance = new Attendance({
-		pid: new ObjectId(req.user.id),
-		eid: new ObjectId(eid),
-		daysAttended: []
-	});
-
-	participant.events.push({
-		eid: new ObjectId(eid),
-		aid: new ObjectId(attendance._id),
-		status: "not attended"
-	});
-
-	if (event.maxRegister === event.registrations + 1) {
-		event.isRegistrationOpened = false;
-	}
-
-	event.registrations++;
-
-	[participant, attendance, event] = await Promise.all([
-		participant.save(),
-		attendance.save(),
-		event.save()
-	]);
-
-	let args = {
-		jobName: "sendSystemEmailJob",
-		time: Date.now(),
-		params: {
-			email: participant.email,
-			name: participant.name,
-			event,
-			mailType: "event-registered"
-		}
-	};
-	kue.scheduleJob(args);
-
-	sendSuccess(res, event);
+	let response = await registerParticipantToEvent((pid = req.user.id), eid);
+	if (response.error) return sendError(res, response.message, response.code);
+	sendSuccess(res, response.event);
 };
 
 module.exports.participantData = async (req, res) => {
@@ -815,28 +846,24 @@ module.exports.getEventAttendanceStats = async (req, res) => {
 	if (!eid) return sendError(res, "Invalid event", BAD_REQUEST);
 
 	let filter = { eid: new ObjectId(eid) };
-	let [
-		totalRegistrations,
-		present0days,
-		presentAlldays,
-		event
-	] = await Promise.all([
-		Attendance.countDocuments(filter),
-		Participant.countDocuments({
-			events: {
-				$elemMatch: {
-					eid: new ObjectId(eid),
-					status: "not attended"
+	let [totalRegistrations, present0days, presentAlldays, event] =
+		await Promise.all([
+			Attendance.countDocuments(filter),
+			Participant.countDocuments({
+				events: {
+					$elemMatch: {
+						eid: new ObjectId(eid),
+						status: "not attended"
+					}
 				}
-			}
-		}),
-		Participant.countDocuments({
-			events: {
-				$elemMatch: { eid: new ObjectId(eid), status: "attended" }
-			}
-		}),
-		Event.findById(eid)
-	]);
+			}),
+			Participant.countDocuments({
+				events: {
+					$elemMatch: { eid: new ObjectId(eid), status: "attended" }
+				}
+			}),
+			Event.findById(eid)
+		]);
 
 	let eveDays = event.days;
 
@@ -1178,16 +1205,8 @@ module.exports.generateCerti = async (req, res) => {
 	if (participant.events[eventInd].status === "attended") {
 		//get certi meta
 		if (event.certificateMeta !== undefined) {
-			let {
-					pdfFileName,
-					fontFileName,
-					x,
-					y,
-					size,
-					red,
-					green,
-					blue
-				} = event.certificateMeta,
+			let { pdfFileName, fontFileName, x, y, size, red, green, blue } =
+					event.certificateMeta,
 				{ name } = participant;
 
 			//read the pdf file
@@ -1263,4 +1282,13 @@ module.exports.sendEventMails = async (req, res) => {
 	}
 
 	return sendSuccess(res, null);
+};
+
+module.exports.registerBoth = async (req, res) => {
+	let { name, email, branch, year, phone, eid } = req.body;
+	let response = await addParticipant(name, email, branch, year, phone);
+	if (response.error) return sendError(res, response.message, response.code);
+	response = await registerParticipantToEvent(response.pid, eid);
+	if (response.error) return sendError(res, response.message, response.code);
+	return sendSuccess(res, response.body);
 };

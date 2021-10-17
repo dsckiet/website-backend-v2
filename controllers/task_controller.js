@@ -193,7 +193,7 @@ module.exports.addTask = async (req, res) => {
 		taskAssignees: taskAssigneeIdArray,
 		title,
 		description,
-		dueDate: formatHtmlDate(dueDate),
+		dueDate: formatHtmlDate(dueDate).toISOString(),
 		assignedBy,
 		groupId: gid
 	});
@@ -216,7 +216,7 @@ module.exports.updateTask = async (req, res) => {
 		return sendError(res, "Not allowed to update tasks", FORBIDDEN);
 
 	if (req.body.dueDate) {
-		req.body.dueDate = formatHtmlDate(req.body.dueDate);
+		req.body.dueDate = formatHtmlDate(req.body.dueDate).toISOString();
 	}
 	task = await task.update({ $set: req.body }, { new: true });
 	return sendSuccess(res, task);

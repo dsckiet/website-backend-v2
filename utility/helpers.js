@@ -79,7 +79,7 @@ module.exports.toTitleCase = str => {
 
 module.exports.formatHtmlDate = date => {
 	let [yr, mn, dt] = date.split("-");
-	return new Date(yr, mn - 1, dt).toISOString();
+	return new Date(yr, mn - 1, dt);
 };
 
 Sentry.init({

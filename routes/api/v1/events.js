@@ -28,7 +28,8 @@ const {
 	previewCerti,
 	addCerti,
 	generateCerti,
-	sendEventMails
+	sendEventMails,
+	registerBoth
 } = require("../../../controllers/events_controller");
 
 // middlewares
@@ -43,7 +44,8 @@ const {
 	participantValidation,
 	participantUpdateValidation,
 	eventValidation,
-	emailValidation
+	emailValidation,
+	bothValidation
 } = require("../../../middlewares/validations");
 const {
 	multer,
@@ -183,6 +185,12 @@ router.post(
 	"/register",
 	catchErrors(participantAuth),
 	catchErrors(registerForEvent)
+);
+
+router.post(
+	"/registerboth",
+	catchErrors(bothValidation),
+	catchErrors(registerBoth)
 );
 
 // export router
