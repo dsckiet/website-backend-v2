@@ -51,7 +51,7 @@ const getFullHTML = (content, name) => {
                                                             <td style="font-family:Roboto,Oxygen,Ubuntu,Cantarell,'Fira Sans','Droid Sans','Helvetica Neue',sans-serif;box-sizing:border-box;font-size:16px;line-height:24px;vertical-align:top;margin:0;word-wrap:break-word"
                                                                 valign="top">Hi ${getReceiver(
 																	name
-																)}<br>Greetings from Developer Student Circuit KIET!<br>${content}<br /><br/>For
+																)}<br><br>Greetings from Developer Student Circuit KIET!<br>${content}<br /><br/>For
                                                                 more information, please visit <a style="font-weight:700;color:#0850fd;text-decoration:none"
                                                                     href="https://dsckiet.com">dsckiet.com</a><br /><br>
                                                             </td>
@@ -96,7 +96,7 @@ const getFullHTML = (content, name) => {
 module.exports.getMailTemplate = (data, type) => {
 	let templates = {
 		"login-creds": {
-			subject: `Portal Credentials for ${data.name}| DSC KIET`,
+			subject: `Portal Credentials for ${data.name} | DSC KIET`,
 			html: getFullHTML(
 				`
             <br/>
