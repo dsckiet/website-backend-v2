@@ -19,7 +19,8 @@ const { BAD_REQUEST, FORBIDDEN } = require("../utility/statusCodes");
 const {
 	USER_HASH_LENGTH,
 	EVENT_HASH_LENGTH,
-	FRONTEND_URL
+	FRONTEND_URL,
+	PARTICIPANT_URL
 } = require("../config/index");
 // import helper functions
 const {
@@ -303,7 +304,7 @@ module.exports.forgotPassword = async (req, res) => {
 		params: {
 			email,
 			name: participant.name,
-			link: `${FRONTEND_URL}/reset/${participant._id}/${newResetToken.token}`,
+			link: `${PARTICIPANT_URL}/reset/${participant._id}/${newResetToken.token}`,
 			mailType: "reset-pwd-link"
 		}
 	};
