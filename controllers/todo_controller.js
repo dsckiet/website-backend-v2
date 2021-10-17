@@ -16,7 +16,7 @@ module.exports.getTodo = async (req, res) => {
 module.exports.addTodo = async (req, res) => {
 	let { title, description, dueDate } = req.body;
 	if (dueDate) {
-		dueDate = formatHtmlDate(dueDate);
+		dueDate = formatHtmlDate(dueDate).toISOString();
 	}
 	let todo = new Todo({
 		title,
@@ -33,7 +33,7 @@ module.exports.updateTodo = async (req, res) => {
 	let { tid } = req.params;
 	let { dueDate } = req.body;
 	if (dueDate) {
-		req.body.dueDate = formatHtmlDate(dueDate);
+		req.body.dueDate = formatHtmlDate(dueDate).toISOString();
 	}
 	let todo = await Todo.findOneAndUpdate(
 		{ _id: tid, uid: req.user.id },

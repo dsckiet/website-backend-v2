@@ -105,6 +105,22 @@ module.exports.participantValidation = (req, res, next) => {
 	}
 };
 
+module.exports.bothValidation = (req, res, next) => {
+	let { name, email, branch, year, phone, eid } = req.body;
+	if (!name || !email || !branch || !year || !phone || !eid) {
+		return sendError(res, "All fields are mandatory!!", BAD_REQUEST);
+	}
+	if (emailRegex.test(String(email))) {
+		if (phoneRegex.test(Number(phone))) {
+			return next();
+		} else {
+			sendError(res, "Phone not valid!!", BAD_REQUEST);
+		}
+	} else {
+		return sendError(res, "Email not Valid!!", BAD_REQUEST);
+	}
+};
+
 module.exports.participantUpdateValidation = (req, res, next) => {
 	let fields = Object.keys(req.body);
 	let restrictedFields = ["isVerified", "isRevoked", "events", "lastLogin"],
@@ -189,7 +205,7 @@ module.exports.updateTodo = (req, res, next) => {
 		return sendError(res, getMissingFieldError("status"), BAD_REQUEST);
 	if (title) req.body.title = String(title).trim();
 	if (description) req.body.description = String(description).trim();
-	if (dueDate) req.body.dueDate = formatHtmlDate(dueDate);
+	if (dueDate) req.body.dueDate = formatHtmlDate(dueDate).toISOString();
 	return next();
 };
 
