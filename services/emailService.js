@@ -25,8 +25,8 @@ const transporter = nodemailer.createTransport({
 module.exports.sendSystemEmail = async (email, data, type) => {
 	let { subject, html } = getMailTemplate(data, type);
 	let mailOptions = {
-		from: `Developer Student Clubs KIET <${SENDER_EMAIL}>`,
-		replyTo: `Developer Student Clubs KIET <dsckiet@gmail.com>`,
+		from: `Developer Student Circuit KIET <${SENDER_EMAIL}>`,
+		replyTo: `Developer Student Circuit KIET <dsckiet@gmail.com>`,
 		to: email,
 		subject,
 		html,
@@ -45,8 +45,8 @@ module.exports.sendSystemEmail = async (email, data, type) => {
 
 module.exports.sendGeneralEmail = async (email, subject, content) => {
 	let mailOptions = {
-		from: `Developer Student Clubs KIET <${SENDER_EMAIL}>`,
-		replyTo: `Developer Student Clubs KIET <dsckiet@gmail.com>`,
+		from: `Developer Student Circuit KIET <${SENDER_EMAIL}>`,
+		replyTo: `Developer Student Circuit KIET <dsckiet@gmail.com>`,
 		to: email,
 		subject,
 		html: content,
