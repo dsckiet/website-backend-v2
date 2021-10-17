@@ -2,6 +2,7 @@ require("dotenv").config();
 
 module.exports = {
 	FRONTEND_URL: "https://portal.dsckiet.com",
+	PARTICIPANT_URL: "https://events.dsckiet.com",
 	NODE_ENV: process.env.NODE_ENV,
 	PORT: process.env.PORT,
 	MONGO_URI:
@@ -28,7 +29,11 @@ module.exports = {
 	SENTRY_DSN: process.env.SENTRY_DSN,
 	ALLOWED_ORIGINS:
 		process.env.NODE_ENV === "production"
-			? ["https://portal.dsckiet.com", "https://dsckiet.com"]
+			? [
+					"https://portal.dsckiet.com",
+					"https://dsckiet.com",
+					"https://events.dsckiet.com"
+			  ]
 			: [
 					"http://localhost:3000",
 					"https://dsckiet-admin.netlify.app",

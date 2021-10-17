@@ -1,4 +1,4 @@
-const { FRONTEND_URL } = require("../config");
+const { FRONTEND_URL, PARTICIPANT_URL } = require("../config");
 const { toTitleCase } = require("./helpers");
 
 const getReceiver = name => {
@@ -102,7 +102,12 @@ module.exports.getMailTemplate = (data, type) => {
             <br/>
             You have been registered as a ${data.role} on DSC KIET
             Portal. Here are your login
-            credentials:<br /><b >${data.email}</b><br /><b>${data.password}</b><br/><br/>Visit the portal at ${FRONTEND_URL}, Change your password and update your profile details.<br/><br/>Thanks and regards<br/>Team DSCKIET<br/>`,
+            credentials:<br /><b >${data.email}</b><br /><b>${
+					data.password
+				}</b><br/><br/>
+                Visit the portal at ${
+					data.role === "Participant" ? PARTICIPANT_URL : FRONTEND_URL
+				}, Change your password and update your profile details.<br/><br/>Thanks and regards<br/>Team DSCKIET<br/>`,
 				data.name
 			)
 		},
