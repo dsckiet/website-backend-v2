@@ -128,25 +128,25 @@ router.get(
 );
 
 // routes for event certificates
-// router.get(
-// 	"/certificate/:eid",
-// 	catchErrors(participantAuth),
-// 	catchErrors(generateCerti)
-// );
-// router.post(
-// 	"/certificate/preview",
-// 	catchErrors(coreAuth),
-// 	multer.any(),
-// 	certiFileFilter,
-// 	catchErrors(previewCerti)
-// );
-// router.post(
-// 	"/certificate/:eid",
-// 	catchErrors(coreAuth),
-// 	multer.any(),
-// 	certiFileFilter,
-// 	catchErrors(addCerti)
-// );
+router.get(
+	"/certificate/:eid",
+	catchErrors(participantAuth),
+	catchErrors(generateCerti)
+);
+router.post(
+	"/certificate/preview",
+	catchErrors(coreAuth),
+	multer.any(),
+	certiFileFilter,
+	catchErrors(previewCerti)
+);
+router.post(
+	"/certificate/:eid",
+	catchErrors(coreAuth),
+	multer.any(),
+	certiFileFilter,
+	catchErrors(addCerti)
+);
 
 // send emails regarding event route
 router.post("/email", catchErrors(leadAuth), catchErrors(sendEventMails));
