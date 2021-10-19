@@ -29,7 +29,8 @@ const {
 	addCerti,
 	generateCerti,
 	sendEventMails,
-	registerBoth
+	registerBoth,
+	rsvpForEvent
 } = require("../../../controllers/events_controller");
 
 // middlewares
@@ -38,7 +39,8 @@ const {
 	coreAuth,
 	allAuth,
 	leadAuth,
-	participantAuth
+	participantAuth,
+	anyOrNoneAuth
 } = require("../../../middlewares/auth");
 const {
 	participantValidation,
@@ -148,11 +150,14 @@ router.post(
 	catchErrors(addCerti)
 );
 
+// rsvp routes
+router.post("/rsvp", catchErrors(rsvpForEvent));
+
 // send emails regarding event route
 router.post("/email", catchErrors(leadAuth), catchErrors(sendEventMails));
 
 // routes for event details and operations
-router.get("/", catchErrors(getEvents));
+router.get("/", catchErrors(anyOrNoneAuth), catchErrors(getEvents));
 router.post(
 	"/",
 	catchErrors(leadAuth),

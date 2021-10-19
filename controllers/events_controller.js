@@ -10,6 +10,7 @@ const readFileAsync = promisify(fs.readFile);
 const writeFileAsync = promisify(fs.writeFile);
 const mkdirAsync = promisify(fs.mkdir);
 const unlinkAsync = promisify(fs.unlink);
+const _ = require("lodash");
 
 const ObjectId = require("mongoose").Types.ObjectId;
 const { AVATAR_URL } = require("../config/index");
@@ -503,6 +504,21 @@ module.exports.getEvents = async (req, res) => {
 	let { eid } = req.query;
 	if (eid) {
 		let event = await Event.findById(eid);
+		if (!req.user || req.user.role === "participant") {
+			event = _.pick(event, [
+				"_id",
+				"title",
+				"description",
+				"image",
+				"days",
+				"startDate",
+				"endDate",
+				"venue",
+				"time",
+				"isRegistrationOpened",
+				"isRegistrationRequired"
+			]);
+		}
 		sendSuccess(res, event);
 	} else {
 		let allEvents = await Event.find().sort({ createdAt: "desc" });
@@ -521,6 +537,21 @@ module.exports.getEvents = async (req, res) => {
 			).toISOString();
 
 		allEvents.map(event => {
+			if (!req.user || req.user.role === "participant") {
+				event = _.pick(event, [
+					"_id",
+					"title",
+					"description",
+					"image",
+					"days",
+					"startDate",
+					"endDate",
+					"venue",
+					"time",
+					"isRegistrationOpened",
+					"isRegistrationRequired"
+				]);
+			}
 			if (today < new Date(event.startDate).toISOString()) {
 				events.upcomingEvents.push(event);
 			} else if (today > new Date(event.endDate).toISOString()) {
@@ -967,7 +998,19 @@ module.exports.getUserEventAttendance = async (req, res) => {
 	if (!event || !attendance) {
 		return sendError(res, "Invalid Request!!", BAD_REQUEST);
 	}
-
+	event = _.pick(event, [
+		"_id",
+		"title",
+		"description",
+		"image",
+		"days",
+		"startDate",
+		"endDate",
+		"venue",
+		"time",
+		"isRegistrationOpened",
+		"isRegistrationRequired"
+	]);
 	let data = {
 		event,
 		attendance: attendance.daysAttended
@@ -1292,4 +1335,41 @@ module.exports.registerBoth = async (req, res) => {
 	response = await registerParticipantToEvent(response.pid, eid);
 	if (response.error) return sendError(res, response.message, response.code);
 	return sendSuccess(res, response.body);
+};
+
+module.exports.rsvpForEvent = async (req, res) => {
+	const { oid, eventId, participantId } = req.body;
+	let event = await Event.findById(eventId);
+	if (!event) return sendError(res, "Invalid Request.", BAD_REQUEST);
+	// TODO: mongo query for subdoc filter with oid
+	let participant = await Participant.findById(participantId);
+	if (!participant) return sendError(res, "Invalid Request.", BAD_REQUEST);
+	let currTime = new Date(Date.now());
+	if (
+		event.startDate <
+		new Date(
+			currTime.getFullYear(),
+			currTime.getMonth(),
+			currTime.getDate()
+		).toISOString()
+	)
+		return sendError(res, "Event has already started.", BAD_REQUEST);
+	let eventInd = participant.events
+		.map(event => {
+			return String(event.eid);
+		})
+		.indexOf(String(event._id));
+	if (eventInd === -1 || String(participant.events[eventInd]._id) !== oid)
+		return sendError(res, "Invalid Request.", BAD_REQUEST);
+	event.rsvps = participant.events[eventInd].isRsvpAccepted
+		? Number(event.rsvps) - 1
+		: Number(event.rsvps) + 1;
+	await event.save();
+	participant.events[eventInd].isRsvpAccepted = Boolean(
+		!participant.events[eventInd].isRsvpAccepted
+	);
+	await participant.save();
+	return sendSuccess(res, {
+		isRsvpAccepted: participant.events[eventInd].isRsvpAccepted
+	});
 };

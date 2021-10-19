@@ -34,7 +34,8 @@ const ParticipantSchema = new mongoose.Schema(
 					type: String,
 					enum: ["not attended", "partially attended", "attended"],
 					default: "not attended"
-				}
+				},
+				isRsvpAccepted: { type: Boolean, default: false }
 			}
 		],
 		lastLogin: { type: Date, default: Date.now }
