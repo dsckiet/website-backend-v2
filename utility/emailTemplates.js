@@ -52,7 +52,6 @@ const getFullHTML = (content, name) => {
                                                                 valign="top">Hi ${getReceiver(
 																	name
 																)}<br><br>Greetings from Developer Student Circuit KIET!<br /><br />${content}<br /><br />
-																<br /><br />Greetings from Developer Student Circuit KIET!<br /><br />${content}<br /><br />
                                                                     Feel free to drop us an email at
                                                                     <a
                                                                         style="font-weight: 700; color: #0850fd; text-decoration: none"
