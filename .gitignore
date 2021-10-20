@@ -110,3 +110,4 @@ yarn.lock
 # Others
 *.pem
 /public/certificates
+/html-templates

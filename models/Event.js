@@ -15,6 +15,7 @@ const EventSchema = new mongoose.Schema(
 		registrations: { type: Number, default: 0 },
 		rsvps: { type: Number, default: 0 },
 		maxRegister: { type: Number, default: 100 },
+		maxRsvps: { type: Number, default: 100 },
 		code: { type: String, required: true },
 		certificateMeta: {
 			pdfFileName: { type: String },

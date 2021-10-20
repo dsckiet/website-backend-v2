@@ -51,9 +51,16 @@ const getFullHTML = (content, name) => {
                                                             <td style="font-family:Roboto,Oxygen,Ubuntu,Cantarell,'Fira Sans','Droid Sans','Helvetica Neue',sans-serif;box-sizing:border-box;font-size:16px;line-height:24px;vertical-align:top;margin:0;word-wrap:break-word"
                                                                 valign="top">Hi ${getReceiver(
 																	name
-																)}<br><br>Greetings from Developer Student Circuit KIET!<br>${content}<br /><br/>For
-                                                                more information, please visit <a style="font-weight:700;color:#0850fd;text-decoration:none"
-                                                                    href="https://dsckiet.com">dsckiet.com</a><br /><br>
+																)}<br><br>Greetings from Developer Student Circuit KIET!<br /><br />${content}<br /><br />
+																<br /><br />Greetings from Developer Student Circuit KIET!<br /><br />${content}<br /><br />
+                                                                    Feel free to drop us an email at
+                                                                    <a
+                                                                        style="font-weight: 700; color: #0850fd; text-decoration: none"
+                                                                        href="mailto:dsckiet@gmail.com"
+                                                                        >dsckiet@gmail.com </a
+                                                                    >in case of any issues. <br /><br />
+                                                                    Regards<br />
+                                                                    Team DSCKIET
                                                             </td>
                                                         </tr>
                                                     </tbody>
@@ -156,6 +163,61 @@ module.exports.getMailTemplate = (data, type) => {
 			subject: "Thanks for subscribing! | DSC KIET",
 			html: getFullHTML(
 				`Thank you for registering subscribing to the newsletter of DSC KIET. Any and all further information about events will be conveyed through this channel.`
+			)
+		},
+		"rsvp-confirmed-wb": {
+			subject: "Confirmation | Web Bootcamp | DSC KIET",
+			html: getFullHTML(
+				`Your RSVP is confirmed for the upcoming <b>Web Development Bootcamp</b>. <br />
+                <br />
+                Event details:<br />
+                Timing:
+                <b>21-26 Oct 2021 | 5:00 PM</b><br />
+                Venue:
+                <b>Lab-2, 5th Floor, E-Block, KIET Group Of Institutions</b><br /><br />
+                There are a few things you need to keep in mind:<br />
+                <li>
+                    Bring your laptops, a notebook, and a pen if you need to note some points.
+                    make sure to have
+                    <a
+                        style="font-weight: 700; color: #0850fd; text-decoration: none"
+                        href="https://code.visualstudio.com/download"
+                        >VS Code </a
+                    >with
+                    <b>Prettier</b>
+                    and
+                    <b>Live Server</b>
+                    extensions and
+                    <a
+                        style="font-weight: 700; color: #0850fd; text-decoration: none"
+                        href="https://nodejs.org/en/download/"
+                        >Node.js (LTS version)</a
+                    >
+                    installed in your laptop.
+                </li>
+                <li>Make sure you mark your attendance on all days of the bootcamp.</li>
+                <li>
+                    E-certificates and swags will be given to the participants, who complete the
+                    bootcamp with excellence.
+                </li>
+                <li>
+                    If someone is found committing an indiscipline act or damaging college
+                    property during the bootcamp would have serious actions taken against them.
+                </li>
+                <li>
+                    Visit our events portal at
+                    <a
+                        href="https://events.dsckiet.com"
+                        style="font-weight: 700; color: #0850fd; text-decoration: none"
+                        >events.dsckiet.com</a
+                    >
+                    and login with credentials sent to you via email for more information.
+                </li>
+                <li>Make sure to carry your masks and sanitizers.</li>
+                <br />
+                We are excited to host you, don't forget to mark your presence.
+                `,
+				data.name
 			)
 		}
 	};

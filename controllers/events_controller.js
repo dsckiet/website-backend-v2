@@ -960,6 +960,14 @@ module.exports.markUserAttendance = async (req, res) => {
 		);
 	}
 
+	const eventInd = participant.events
+		.map(evnt => {
+			return String(evnt.eid);
+		})
+		.indexOf(String(event._id));
+
+	if (!participant.events[eventInd].isRsvpAccepted)
+		return sendError(res, "You have not accepted the RSVP.", BAD_REQUEST);
 	let attendIndex = attendance.daysAttended
 		.map(date => {
 			return new Date(date).toISOString();
@@ -1037,7 +1045,7 @@ module.exports.submitFeedback = async (req, res) => {
 		Attendance.findOne({
 			eid,
 			pid: req.user.id,
-			"attend.0": { $exists: true }
+			"daysAttended.0": { $exists: true }
 		})
 	]);
 	if (hasGivenFeedback) {
@@ -1051,7 +1059,7 @@ module.exports.submitFeedback = async (req, res) => {
 	} else {
 		let fb = new Feedback({
 			pid: new ObjectId(req.user.id),
-			eid: new ObjectId(eventId),
+			eid: new ObjectId(eid),
 			feedback
 		});
 		fb = await fb.save();
@@ -1297,17 +1305,27 @@ module.exports.generateCerti = async (req, res) => {
 };
 
 module.exports.sendEventMails = async (req, res) => {
-	let { users, subject, content, type } = req.body;
-
+	// TODO: Genralise to serve all purposes
+	let { subject, content, type, eid } = req.body;
+	const users = await Participant.find({ "events.eid": ObjectId(eid) });
 	let batchSize = 50;
 	let initial = 0,
 		i = 0;
 	while (initial < users.length) {
 		let currentBatch = users.slice(initial, initial + batchSize);
-		let start_time = Date.now() + i * 1 * 1000;
+		let start_time = Date.now() + i * 500;
 		//do stuff with currentbatch
 		currentBatch.map((user, index) => {
-			content = content.replace(/{{NAME}}/g, user.name);
+			const eventInd = user.events
+				.map(event => {
+					return String(event.eid);
+				})
+				.indexOf(String(eid));
+			let _content = content;
+			_content = _content.replace(/{{NAME}}/g, user.name);
+			_content = _content.replace(/{{OID}}/g, user.events[eventInd]._id);
+			_content = _content.replace(/{{EID}}/g, eid);
+			_content = _content.replace(/{{PID}}/g, user._id);
 			let args = {
 				jobName: "sendGeneralEmailJob",
 				time: start_time + index,
@@ -1315,7 +1333,7 @@ module.exports.sendEventMails = async (req, res) => {
 					mailType: type,
 					email: user.email,
 					subject,
-					content
+					content: _content
 				}
 			};
 			kue.scheduleJob(args);
@@ -1338,11 +1356,11 @@ module.exports.registerBoth = async (req, res) => {
 };
 
 module.exports.rsvpForEvent = async (req, res) => {
-	const { oid, eventId, participantId } = req.body;
-	let event = await Event.findById(eventId);
+	let { oid, eid, pid, isRsvpAccepted } = req.body;
+	let event = await Event.findById(eid);
 	if (!event) return sendError(res, "Invalid Request.", BAD_REQUEST);
 	// TODO: mongo query for subdoc filter with oid
-	let participant = await Participant.findById(participantId);
+	let participant = await Participant.findById(pid);
 	if (!participant) return sendError(res, "Invalid Request.", BAD_REQUEST);
 	let currTime = new Date(Date.now());
 	if (
@@ -1359,17 +1377,37 @@ module.exports.rsvpForEvent = async (req, res) => {
 			return String(event.eid);
 		})
 		.indexOf(String(event._id));
-	if (eventInd === -1 || String(participant.events[eventInd]._id) !== oid)
+	if (
+		eventInd === -1 ||
+		String(participant.events[eventInd]._id) !== oid ||
+		participant.events[eventInd].status !== "not attended"
+	)
 		return sendError(res, "Invalid Request.", BAD_REQUEST);
-	event.rsvps = participant.events[eventInd].isRsvpAccepted
-		? Number(event.rsvps) - 1
-		: Number(event.rsvps) + 1;
-	await event.save();
-	participant.events[eventInd].isRsvpAccepted = Boolean(
-		!participant.events[eventInd].isRsvpAccepted
-	);
-	await participant.save();
-	return sendSuccess(res, {
-		isRsvpAccepted: participant.events[eventInd].isRsvpAccepted
-	});
+	const currRsvp = Boolean(participant.events[eventInd].isRsvpAccepted);
+	if (currRsvp !== isRsvpAccepted) {
+		if (event.rsvps === event.maxRsvps && isRsvpAccepted)
+			return sendError(
+				res,
+				"You are a bit late, RSVP slots for this event is full. See you in next event:)",
+				BAD_REQUEST
+			);
+		if (currRsvp && !isRsvpAccepted) event.rsvps -= 1;
+		if (!currRsvp && isRsvpAccepted) event.rsvps += 1;
+		await event.save();
+		participant.events[eventInd].isRsvpAccepted = isRsvpAccepted;
+		await participant.save();
+		if (isRsvpAccepted) {
+			let args = {
+				jobName: "sendSystemEmailJob",
+				time: Date.now(),
+				params: {
+					email: participant.email,
+					name: participant.name,
+					mailType: "rsvp-confirmed-wb"
+				}
+			};
+			kue.scheduleJob(args);
+		}
+	}
+	return sendSuccess(res, null);
 };
