@@ -443,6 +443,14 @@ module.exports.participantData = async (req, res) => {
 			}
 		},
 		{
+			$lookup: {
+				from: "attendances",
+				localField: "events.aid",
+				foreignField: "_id",
+				as: "attendanceList"
+			}
+		},
+		{
 			$project: {
 				"eventsList.title": 1,
 				"eventsList.description": 1,
@@ -461,11 +469,13 @@ module.exports.participantData = async (req, res) => {
 				branch: 1,
 				year: 1,
 				phone: 1,
-				image: 1
+				image: 1,
+				"attendanceList._id": 1,
+				"attendanceList.daysAttended": 1,
+				"attendanceList.eid": 1
 			}
 		}
 	]);
-
 	if (!participant) {
 		return sendError(res, "Participant not found!!", BAD_REQUEST);
 	}
@@ -488,7 +498,10 @@ module.exports.participantData = async (req, res) => {
 			.indexOf(String(event.eid));
 		eventsArray.push({
 			...event,
-			details: participant.eventsList[eventListIndex]
+			details: participant.eventsList[eventListIndex],
+			attendance: participant.attendanceList.filter(
+				att => String(att.eid) === String(event.eid)
+			)[0]
 		});
 	});
 
@@ -878,24 +891,21 @@ module.exports.getEventAttendanceStats = async (req, res) => {
 	if (!eid) return sendError(res, "Invalid event", BAD_REQUEST);
 
 	let filter = { eid: new ObjectId(eid) };
-	let [totalRegistrations, present0days, presentAlldays, event] =
-		await Promise.all([
-			Attendance.countDocuments(filter),
-			Participant.countDocuments({
-				events: {
-					$elemMatch: {
-						eid: new ObjectId(eid),
-						status: "not attended"
-					}
-				}
-			}),
-			Participant.countDocuments({
-				events: {
-					$elemMatch: { eid: new ObjectId(eid), status: "attended" }
-				}
-			}),
-			Event.findById(eid)
-		]);
+	const totalRegistrations = await Attendance.countDocuments(filter);
+	const present0days = await Participant.countDocuments({
+		events: {
+			$elemMatch: {
+				eid: new ObjectId(eid),
+				status: "not attended"
+			}
+		}
+	});
+	const presentAlldays = await Participant.countDocuments({
+		events: {
+			$elemMatch: { eid: new ObjectId(eid), status: "attended" }
+		}
+	});
+	const event = await Event.findById(eid);
 
 	let eveDays = event.days;
 
@@ -906,7 +916,7 @@ module.exports.getEventAttendanceStats = async (req, res) => {
 			Attendance.countDocuments({
 				...filter,
 				attend: new Date(
-					new Date(eventDetail.startDate).getTime() +
+					new Date(event.startDate).getTime() +
 						i * 24 * 60 * 60 * 1000
 				).toISOString()
 			})
