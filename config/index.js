@@ -35,10 +35,10 @@ module.exports = {
 					"https://events.dsckiet.com"
 			  ]
 			: [
-					"http://localhost:3000",
 					"https://dsckiet-admin.netlify.app",
-					/[^.\s]+deploy\-preview\-([\d]{1,})--dsckiet-admin\.netlify\.app/,
 					"https://dsckietportal.netlify.app",
+					/https?:\/\/localhost:[0-9]{4,4}/,
+					/[^.\s]+deploy\-preview\-([\d]{1,})--dsckiet-admin\.netlify\.app/,
 					/[^.\s]+deploy\-preview\-([\d]{1,})--dsckietportal\.netlify\.app/
 			  ]
 };
