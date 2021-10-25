@@ -915,7 +915,7 @@ module.exports.getEventAttendanceStats = async (req, res) => {
 		dayWiseQueryArray.push(
 			Attendance.countDocuments({
 				...filter,
-				attend: new Date(
+				daysAttended: new Date(
 					new Date(event.startDate).getTime() +
 						i * 24 * 60 * 60 * 1000
 				).toISOString()
