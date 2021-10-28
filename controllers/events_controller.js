@@ -1266,7 +1266,10 @@ module.exports.generateCerti = async (req, res) => {
 
 	if (participant.events[eventInd].status === "attended") {
 		//get certi meta
-		if (event.certificateMeta !== undefined) {
+		if (
+			event.certificateMeta !== undefined &&
+			event.certificateMeta.pdfFileName
+		) {
 			let { pdfFileName, fontFileName, x, y, size, red, green, blue } =
 					event.certificateMeta,
 				{ name } = participant;

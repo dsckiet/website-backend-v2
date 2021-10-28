@@ -111,3 +111,4 @@ yarn.lock
 *.pem
 /public/certificates
 /html-templates
+/raw-data
