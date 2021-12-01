@@ -528,6 +528,7 @@ module.exports.getEvents = async (req, res) => {
 				"endDate",
 				"venue",
 				"time",
+				"slug",
 				"isRegistrationOpened",
 				"isRegistrationRequired"
 			]);
@@ -561,6 +562,7 @@ module.exports.getEvents = async (req, res) => {
 					"endDate",
 					"venue",
 					"time",
+					"slug",
 					"isRegistrationOpened",
 					"isRegistrationRequired"
 				]);
@@ -584,6 +586,7 @@ module.exports.addEvent = async (req, res) => {
 		startDate,
 		endDate,
 		time,
+		slug,
 		venue,
 		isRegistrationRequired,
 		isRegistrationOpened,
@@ -595,7 +598,9 @@ module.exports.addEvent = async (req, res) => {
 		(formatHtmlDate(endDate) - formatHtmlDate(startDate)) /
 			(1000 * 3600 * 24) +
 		1;
-	let event = new Event({
+	let event = await Event.findOne({ slug });
+	if (event) return sendError(res, "Slug already exists", BAD_REQUEST);
+	event = new Event({
 		title,
 		description,
 		days,
@@ -603,6 +608,7 @@ module.exports.addEvent = async (req, res) => {
 		endDate: formatHtmlDate(endDate).toISOString(),
 		time,
 		venue,
+		slug,
 		isRegistrationOpened,
 		isRegistrationRequired,
 		code,

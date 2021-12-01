@@ -150,12 +150,21 @@ module.exports.eventValidation = (req, res, next) => {
 		startDate,
 		endDate,
 		time,
+		slug,
 		venue,
 		isRegistrationRequired,
 		maxRegister
 	} = req.body;
 
-	if (!title || !description || !startDate || !endDate || !time || !venue) {
+	if (
+		!title ||
+		!description ||
+		!startDate ||
+		!endDate ||
+		!time ||
+		!venue ||
+		!slug
+	) {
 		return sendError(res, "All fields are mandatory!!", BAD_REQUEST);
 	} else if (
 		formatHtmlDate(startDate).toISOString() >
