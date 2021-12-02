@@ -540,7 +540,8 @@ module.exports.getEvents = async (req, res) => {
 		let events = {
 			previousEvents: [],
 			runningEvents: [],
-			upcomingEvents: []
+			upcomingEvents: [],
+			allEvents
 		};
 
 		let currTime = new Date(Date.now()),
