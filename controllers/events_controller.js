@@ -350,9 +350,9 @@ module.exports.resetPassword = async (req, res) => {
 
 module.exports.participantLogin = async (req, res) => {
 	let { email, password } = req.body;
-	let participant = await Participant.findOne({
-		email: { $regex: `^${email}$`, $options: "i" }
-	});
+	email = email.trim().toLowerCase();
+	password = String(password).trim();
+	let participant = await Participant.findOne({ email });
 	if (!participant) return sendError(res, "Invalid User", BAD_REQUEST);
 	const validPassword = await participant.isValidPwd(String(password).trim());
 	if (!validPassword) return sendError(res, "Invalid Password", BAD_REQUEST);
