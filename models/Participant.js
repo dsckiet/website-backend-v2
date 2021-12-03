@@ -44,8 +44,8 @@ const ParticipantSchema = new mongoose.Schema(
 );
 
 ParticipantSchema.pre("save", async function (next) {
-	this.name = toTitleCase(String(this.name));
-	this.email = String(this.email).toLowerCase();
+	this.name = toTitleCase(String(this.name).trim());
+	this.email = String(this.email).toLowerCase().trim();
 	if (!this.isModified("password")) return next();
 	let salt = await bcrypt.genSalt(10);
 	let hash = await bcrypt.hash(this.password, salt);
