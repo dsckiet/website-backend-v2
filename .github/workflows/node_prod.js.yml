@@ -25,7 +25,6 @@ jobs:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
     - run: git push git@github.com:dsckiet/website-backend-v2.git    
-    - run: npm ci
     - run: npm install
     - run: sudo pm2 kill
     - run: sudo pm2 start index
