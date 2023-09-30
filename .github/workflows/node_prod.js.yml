@@ -25,5 +25,6 @@ jobs:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
     - run: npm ci
+    - run: npm install
     - run: sudo pm2 kill
     - run: sudo pm2 start index
