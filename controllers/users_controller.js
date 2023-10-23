@@ -466,7 +466,7 @@ module.exports.temp = async (req, res) => {
 
 	// create random users
 	// console.time("Participants Created in: ");
-	// let branches = ["CS", "IT", "EC", "EN", "ME", "CE", "CO", "CSI", "MCA"],
+	// let branches = ["CSE", "IT", "CSAI", "CSAI&ML","ECE", "EN", "ME", "Civil", "CS", "CSIT", "MCA"],
 	// 	years = [1, 2, 3, 4],
 	// 	chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
 	// 	numbers = "1234567890";

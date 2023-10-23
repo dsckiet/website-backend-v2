@@ -36,7 +36,19 @@ const UserSchema = new mongoose.Schema(
 		year: { type: Number },
 		branch: {
 			type: String,
-			enum: ["CS", "IT", "EC", "EN", "ME", "CE", "CO", "CSI", "MCA"]
+			enum: [
+				"CSE",
+				"IT",
+				"CSAI",
+				"CSAI&ML",
+				"ECE",
+				"EN",
+				"ME",
+				"Civil",
+				"CS",
+				"CSIT",
+				"MCA"
+			]
 		}
 	},
 	{ timestamps: true }

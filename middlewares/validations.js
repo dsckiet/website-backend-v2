@@ -19,7 +19,19 @@ const emailRegex = /^\S+@\S+\.\S+/,
 		/^https?:\/\/(www\.)?linkedin.com\/in\b([-a-zA-Z0-9()!@:%_\+.~#?&\/=]*)$/,
 	twitterUrlRegex =
 		/^https?:\/\/(www\.)?twitter.com\b([-a-zA-Z0-9()!@:%_\+.~#?&\/=]*)$/;
-const branchesArray = ["CS", "IT", "EC", "EN", "ME", "CE", "CO", "CSI", "MCA"];
+const branchesArray = [
+	"CSE",
+	"IT",
+	"CSAI",
+	"CSAI&ML",
+	"ECE",
+	"EN",
+	"ME",
+	"Civil",
+	"CS",
+	"CSIT",
+	"MCA"
+];
 module.exports.userValidation = (req, res, next) => {
 	const { name, email, role, designation } = req.body;
 	if (!name) return sendError(res, getMissingFieldError("name"));
