@@ -34,7 +34,7 @@ const getFullHTML = (content, name) => {
                                             style="font-family:Roboto,Oxygen,Ubuntu,Cantarell,'Fira Sans','Droid Sans','Helvetica Neue',sans-serif;box-sizing:border-box;font-size:14px;margin:0">
                                             <td style="font-family:Roboto,Oxygen,Ubuntu,Cantarell,'Fira Sans','Droid Sans','Helvetica Neue',sans-serif;box-sizing:border-box;font-size:16px;vertical-align:top;font-weight:500;margin:0;padding:40px 40px 0 40px"
                                                 valign="top"><img align="none"
-                                                    src="https://drive.google.com/file/d/1LLAY26oB4bx2L7m0osklvnJXn7KN1x6W/view?usp=drivesdk"
+                                                    src="https://raw.githubusercontent.com/goelaakash79/goelaakash79.github.io/master/images/dsckiet-logo.png"
                                                     alt="GDSC Logo"
                                                     style="widows:212px;height:40px;margin:0" width="468.8" height="38.5"
                                                     class="CToWUd"></td>
