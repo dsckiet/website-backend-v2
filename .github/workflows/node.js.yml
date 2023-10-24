@@ -26,5 +26,5 @@ jobs:
         node-version: ${{ matrix.node-version }}
     - run: git pull
     - run: npm install
-    - run: sudo pm2 restart index
+    - run: pm2 restart index
     #- run: npm test
