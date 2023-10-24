@@ -34,8 +34,8 @@ const getFullHTML = (content, name) => {
                                             style="font-family:Roboto,Oxygen,Ubuntu,Cantarell,'Fira Sans','Droid Sans','Helvetica Neue',sans-serif;box-sizing:border-box;font-size:14px;margin:0">
                                             <td style="font-family:Roboto,Oxygen,Ubuntu,Cantarell,'Fira Sans','Droid Sans','Helvetica Neue',sans-serif;box-sizing:border-box;font-size:16px;vertical-align:top;font-weight:500;margin:0;padding:40px 40px 0 40px"
                                                 valign="top"><img align="none"
-                                                    src="https://drive.google.com/uc?export=view&id=1nj-6ynGsbYz4FH1RrYypPTMkhnocl3lO"
-                                                    alt="DSC Logo"
+                                                    src="https://drive.google.com/file/d/1LLAY26oB4bx2L7m0osklvnJXn7KN1x6W/view?usp=drivesdk"
+                                                    alt="GDSC Logo"
                                                     style="widows:212px;height:40px;margin:0" width="468.8" height="38.5"
                                                     class="CToWUd"></td>
                                         </tr>
@@ -51,7 +51,7 @@ const getFullHTML = (content, name) => {
                                                             <td style="font-family:Roboto,Oxygen,Ubuntu,Cantarell,'Fira Sans','Droid Sans','Helvetica Neue',sans-serif;box-sizing:border-box;font-size:16px;line-height:24px;vertical-align:top;margin:0;word-wrap:break-word"
                                                                 valign="top">Hi ${getReceiver(
 																	name
-																)}<br><br>Greetings from Developer Student Circuit KIET!<br /><br />${content}<br /><br />
+																)}<br><br>Greetings from Google Developer Student Club KIET!<br /><br />${content}<br /><br />
                                                                     Feel free to drop us an email at
                                                                     <a
                                                                         style="font-weight: 700; color: #0850fd; text-decoration: none"
@@ -59,7 +59,7 @@ const getFullHTML = (content, name) => {
                                                                         >dsckiet@gmail.com </a
                                                                     >in case of any issues. <br /><br />
                                                                     Regards<br />
-                                                                    Team DSCKIET
+                                                                    Team GDSCKIET
                                                             </td>
                                                         </tr>
                                                     </tbody>
@@ -77,7 +77,7 @@ const getFullHTML = (content, name) => {
                                                 style="font-family:Roboto,Oxygen,Ubuntu,Cantarell,'Fira Sans','Droid Sans','Helvetica Neue',sans-serif;box-sizing:border-box;font-size:14px;margin:0">
                                                 <td style="font-family:Roboto,Oxygen,Ubuntu,Cantarell,'Fira Sans','Droid Sans','Helvetica Neue',sans-serif;box-sizing:border-box;font-size:12px;vertical-align:top;color:#888;margin:0"
                                                     valign="top">
-                                                    <div><span class="il">Developer Student Circuit KIET</span></div><a href="mailto:dsckiet@gmail.com"
+                                                    <div><span class="il">Google Developer Student Club KIET</span></div><a href="mailto:dsckiet@gmail.com"
                                                         style="font-family:Roboto,Oxygen,Ubuntu,Cantarell,'Fira Sans','Droid Sans','Helvetica Neue',sans-serif;box-sizing:border-box;font-size:12px;color:#888!important;text-decoration:underline!important;margin:0;display:block"
                                                         target="_blank"
                                                         data-saferedirecturl="https://www.google.com/url?q=mailto:dsckiet@gmail.com">Drop
@@ -88,7 +88,7 @@ const getFullHTML = (content, name) => {
                                     </table>
                                 </div>
                             </div>
-                        </td>
+                        </td> 
                         <td style="box-sizing:border-box;vertical-align:top;margin:0" valign="top"></td>
                     </tr>
                 </tbody>
@@ -102,26 +102,26 @@ const getFullHTML = (content, name) => {
 module.exports.getMailTemplate = (data, type) => {
 	let templates = {
 		"login-creds": {
-			subject: `Portal Credentials for ${data.name} | DSC KIET`,
+			subject: `Portal Credentials for ${data.name} | GDSC KIET`,
 			html: getFullHTML(
 				`
             <br/>
-            You have been registered as a ${data.role} on DSC KIET
+            You have been registered as a ${data.role} on GDSC KIET
             Portal. Here are your login
             credentials:<br /><b >${data.email}</b><br /><b>${
 					data.password
 				}</b><br/><br/>
                 Visit the portal at ${
 					data.role === "Participant" ? PARTICIPANT_URL : FRONTEND_URL
-				}, Change your password and update your profile details.<br/><br/>Thanks and regards<br/>Team DSCKIET<br/>`,
+				}, Change your password and update your profile details.<br/><br/>Thanks and regards<br/>Team GDSCKIET<br/>`,
 				data.name
 			)
 		},
 		"reset-pwd-link": {
-			subject: "Password reset request | DSC KIET",
+			subject: "Password reset request | GDSC KIET",
 			html: getFullHTML(
 				`Someone (hopefully you) has requested a password reset for
-                this account on DSC KIET Portal. Here is the reset
+                this account on GDSC KIET Portal. Here is the reset
                 link:<br /><b>${data.link}</b><br />This link is valid for 1
                 hour only.If you did not requested this reset, you can
                 simply ignore this email, your account will remain
@@ -130,7 +130,7 @@ module.exports.getMailTemplate = (data, type) => {
 			)
 		},
 		"reset-pwd-success": {
-			subject: "Password reset success | DSC KIET",
+			subject: "Password reset success | GDSC KIET",
 			html: getFullHTML(
 				`Your password has been successfully reset.
                 If you did not triggered this action, please contact us at
@@ -139,7 +139,7 @@ module.exports.getMailTemplate = (data, type) => {
 			)
 		},
 		"change-pwd-success": {
-			subject: "Password change success | DSC KIET",
+			subject: "Password change success | GDSC KIET",
 			html: getFullHTML(
 				`Your password has been successfully changed.
                 If you did not triggered this action, please contact us at
@@ -148,7 +148,7 @@ module.exports.getMailTemplate = (data, type) => {
 			)
 		},
 		"event-registered": {
-			subject: "Event registration success | DSC KIET",
+			subject: "Event registration success | GDSC KIET",
 			html: getFullHTML(
 				`Thank you for registering in the event - <strong> ${
 					data.event ? data.event.title : ""
@@ -159,13 +159,13 @@ module.exports.getMailTemplate = (data, type) => {
 			)
 		},
 		"subscriber-welcome": {
-			subject: "Thanks for subscribing! | DSC KIET",
+			subject: "Thanks for subscribing! | GDSC KIET",
 			html: getFullHTML(
-				`Thank you for registering subscribing to the newsletter of DSC KIET. Any and all further information about events will be conveyed through this channel.`
+				`Thank you for registering subscribing to the newsletter of GDSC KIET. Any and all further information about events will be conveyed through this channel.`
 			)
 		},
 		"rsvp-confirmed-wb": {
-			subject: "Confirmation | Web Bootcamp | DSC KIET",
+			subject: "Confirmation | Web Bootcamp | GDSC KIET",
 			html: getFullHTML(
 				`Your RSVP is confirmed for the upcoming <b>Web Development Bootcamp</b>. <br />
                 <br />
