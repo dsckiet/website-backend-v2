@@ -36,7 +36,7 @@ const getFullHTML = (content, name) => {
                                                 valign="top"><img align="none"
                                                     src="https://raw.githubusercontent.com/goelaakash79/goelaakash79.github.io/master/images/dsckiet-logo.png"
                                                     alt="GDSC Logo"
-                                                    style="widows:212px;height:40px;margin:0" width="468.8" height="38.5"
+                                                    style="widows:212px;height:45px;margin:0" width="400.8" height="40.5"
                                                     class="CToWUd"></td>
                                         </tr>
                                         <tr
